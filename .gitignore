@@ -12,3 +12,7 @@ local_settings.py
 .vscode/
 __pycache__/
 *.pyc
+
+# Configurações de usuário do Visual Studio
+*.pyproj.user
+.vs/
