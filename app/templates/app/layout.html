@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - LabHub</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'app/content/bootstrap.min.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'app/content/site.css' %}" />
+    <script src="{% static 'app/scripts/modernizr-2.6.2.js' %}"></script>
+    <style>
+        /* CSS para forçar o footer a ficar embaixo */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        /* Envelopa toda a página exceto o footer */
+        .wrapper {
+            min-height: 100%;
+            height: auto !important;
+            height: 100%;
+            /* O margin-bottom negativo deve ter a mesma altura do footer + espaçamento */
+            margin-bottom: -60px;
+            padding-top: 70px; /* Mantém o espaço para a navbar fixa */
+        }
+
+        /* Define uma altura fixa para o footer e o push */
+        .footer, .push {
+            height: 60px;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+        }
+
+        footer {
+            padding-top: 20px;
+            border-top: 1px solid #e5e5e5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a href="{% url 'home' %}" class="navbar-brand">LabHub</a>
+                </div>
+                <div class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav">
+                        <li><a href="{% url 'home' %}">Início</a></li>
+
+                        {% if user.is_authenticated and user.perfil.aprovado %}
+                        {% if user.perfil.tipo == 'ADMINISTRADOR' %}
+                        <li><a href="{% url 'painel' %}">🛠️ Painel Admin</a></li>
+                        {% else %}
+                        <li><a href="{% url 'agendamentos' %}">📅 Meus Agendamentos</a></li>
+                        {% endif %}
+                        {% endif %}
+
+                        <li><a href="{% url 'about' %}">Sobre</a></li>
+                    </ul>
+                    {% include 'app/loginpartial.html' %}
+                </div>
+            </div>
+        </div>
+
+        <div class="container body-content">
+            {% block content %}{% endblock %}
+        </div>
+
+        <div class="push"></div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 - LabHub - Gerenciamento de Equipamentos</p>
+        </div>
+    </footer>
+
+    <script src="{% static 'app/scripts/jquery-1.10.2.js' %}"></script>
+    <script src="{% static 'app/scripts/bootstrap.js' %}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

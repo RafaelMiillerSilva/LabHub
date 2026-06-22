@@ -1,0 +1,150 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+<div class="jumbotron text-center" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 60px 20px; border-radius: 10px;">
+    <h1>LabHub</h1>
+    <p class="lead">Sistema interno de gerenciamento e agendamento de equipamentos escolares.</p>
+    <p>Reserve computadores, tablets e projetores de forma rápida e organizada.</p>
+
+    {% if not user.is_authenticated %}
+    <p><button class="btn btn-primary btn-lg" data-toggle="modal" data-target="#authModal">Acessar o Sistema</button></p>
+    {% endif %}
+</div>
+
+<div class="row">
+    <div class="col-md-4 text-center" style="margin-bottom: 20px;">
+        <h3>⚡ Agendamento Rápido</h3>
+        <p>Escolha o dia, o horário e o equipamento disponível em poucos cliques, sem burocracia.</p>
+    </div>
+    <div class="col-md-4 text-center" style="margin-bottom: 20px;">
+        <h3>📱 100% Mobile</h3>
+        <p>Acesse e faça reservas diretamente do seu smartphone de dentro ou de fora da sala de aula.</p>
+    </div>
+    <div class="col-md-4 text-center" style="margin-bottom: 20px;">
+        <h3>📊 Controle Total</h3>
+        <p>Administradores aprovam cadastros, gerenciam o inventário e evitam conflitos de horários.</p>
+    </div>
+</div>
+
+{% if not user.is_authenticated %}
+<div class="modal fade" id="authModal" tabindex="-1" role="dialog" aria-labelledby="authModalLabel" data-backdrop="static">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title text-center" id="authModalLabel">LabHub</h4>
+            </div>
+
+            <div class="modal-body">
+                <ul class="nav nav-tabs nav-justified" role="tablist" style="margin-bottom: 15px;">
+                    <li role="presentation" class="active"><a href="#loginTab" role="tab" data-toggle="tab">Entrar</a></li>
+                    <li role="presentation"><a href="#cadastroTab" role="tab" data-toggle="tab">Cadastrar</a></li>
+                </ul>
+
+                <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane active" id="loginTab">
+                        
+                        {% if form_login.errors %}
+                        <div class="alert alert-danger" style="padding: 8px 12px; margin-bottom: 15px; font-size: 13px;">
+                            <ul style="margin: 0; padding-left: 15px;">
+                                <li>E-mail ou senha incorretos. Por favor, tente novamente.</li>
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <form action="." method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label>E-mail / Usuário</label>
+                                {{ form_login.username }}
+                            </div>
+                            <div class="form-group">
+                                <label>Senha</label>
+                                {{ form_login.password }}
+                            </div>
+                            
+                            <input type="hidden" name="next" value="/" />
+                            
+                            <button type="submit" name="btn_login" class="btn btn-success btn-block">Entrar</button>
+                        </form>
+                    </div>
+
+                    <div role="tabpanel" class="tab-pane" id="cadastroTab">
+
+                        {% if msg_sucesso_cadastro %}
+                        <div class="alert alert-success text-center" style="padding: 10px; margin-bottom: 15px; font-size: 14px; font-weight: bold;">
+                            ✅ Solicitação enviada com sucesso! Aguarde a aprovação do administrador.
+                        </div>
+                        {% endif %}
+
+                        {% if form_cadastro.errors %}
+                        <div class="alert alert-danger" style="padding: 8px 12px; margin-bottom: 15px; font-size: 13px;">
+                            <ul style="margin: 0; padding-left: 15px;">
+                                {% for field in form_cadastro %}
+                                {% for error in field.errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                                {% endfor %}
+                                {% for error in form_cadastro.non_field_errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <form action="." method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label>Nome de Usuário</label>
+                                {{ form_cadastro.username }}
+                            </div>
+                            <div class="form-group">
+                                <label>E-mail</label>
+                                {{ form_cadastro.email }}
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de Conta</label>
+                                {{ form_cadastro.tipo }}
+                            </div>
+                            <div class="form-group">
+                                <label>Senha</label>
+                                {{ form_cadastro.password }}
+                            </div>
+                            <div class="form-group">
+                                <label>Confirmar Senha</label>
+                                {{ form_cadastro.password_confirm }}
+                            </div>
+                            <button type="submit" name="btn_cadastro" class="btn btn-primary btn-block">Cadastrar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        // Se o usuário não estiver logado, força a abertura do pop-up automaticamente na tela inicial
+        if ($('#authModal').length > 0) {
+            $('#authModal').modal('show');
+        }
+
+        // Se houver erros no cadastro, garante que o pop-up abre direto na aba de cadastro
+        {% if form_cadastro.errors %}
+        $('.nav-tabs a[href="#cadastroTab"]').tab('show');
+        {% endif %}
+
+        // Mantém a aba de cadastro ativa se houver uma mensagem de sucesso nela
+        {% if msg_sucesso_cadastro %}
+        $('.nav-tabs a[href="#cadastroTab"]').tab('show');
+        {% endif %}
+    });
+</script>
+{% endblock %}

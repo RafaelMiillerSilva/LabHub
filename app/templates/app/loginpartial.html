@@ -1,0 +1,22 @@
+{% if user.is_authenticated %}
+<ul class="nav navbar-nav navbar-right" style="margin-right: 0;">
+    <li class="navbar-text" style="color: #9d9d9d; margin: 15px 0; padding: 0 15px;">
+        Olá, {{ user.username }}!
+        <span style="margin-left: 10px;">|</span>
+        <form action="{% url 'logout' %}" method="post" style="display: inline; margin-left: 10px;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-link" style="color: #9d9d9d; text-decoration: none; padding: 0; background: none; border: none; vertical-align: baseline;">
+                Sair
+            </button>
+        </form>
+    </li>
+</ul>
+{% else %}
+<ul class="nav navbar-nav navbar-right">
+    <li>
+        <button type="button" class="btn btn-link navbar-btn" data-toggle="modal" data-target="#authModal" style="color: #9d9d9d; text-decoration: none; padding: 15px 15px; margin: 0; background: none; border: none;">
+            Acessar o Sistema
+        </button>
+    </li>
+</ul>
+{% endif %}

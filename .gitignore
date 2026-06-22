@@ -1,0 +1,14 @@
+# Ambientes Virtuais
+env/
+venv/
+ENV/
+.venv/
+
+# Django temporários e banco de dados local
+db.sqlite3
+*.log
+local_settings.py
+.idea/
+.vscode/
+__pycache__/
+*.pyc
