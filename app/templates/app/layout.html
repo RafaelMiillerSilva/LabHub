@@ -58,11 +58,13 @@
                         <li><a href="{% url 'home' %}">Início</a></li>
 
                         {% if user.is_authenticated and user.perfil.aprovado %}
+
                         {% if user.perfil.tipo == 'ADMINISTRADOR' %}
                         <li><a href="{% url 'painel' %}">🛠️ Painel Admin</a></li>
-                        {% else %}
-                        <li><a href="{% url 'agendamentos' %}">📅 Meus Agendamentos</a></li>
                         {% endif %}
+
+                        <li><a href="{% url 'agendamentos' %}">📅 Meus Agendamentos</a></li>
+
                         {% endif %}
 
                         <li><a href="{% url 'about' %}">Sobre</a></li>

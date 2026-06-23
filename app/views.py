@@ -136,8 +136,10 @@ def negar_usuario(request, perfil_id):
 
 @login_required
 def agendamentos(request):
-    if not hasattr(request.user, 'perfil') or request.user.perfil.tipo != 'PROFESSOR' or not request.user.perfil.aprovado:
+    # Agora apenas verificamos se o usuário tem perfil e se está aprovado
+    if not hasattr(request.user, 'perfil') or not request.user.perfil.aprovado:
         return redirect('home')
+    
     return render(request, 'app/agendamentos.html', {'title': 'Meus Agendamentos'})
 
 
