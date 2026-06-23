@@ -12,6 +12,3 @@ O **LabHub** é um sistema desenvolvido em Django para o gerenciamento e agendam
 - **Python**
 - **Django**
 - **HTML5 / CSS3**
-
----
-*Desenvolvido como projeto acadêmico por [Seu Nome].*
