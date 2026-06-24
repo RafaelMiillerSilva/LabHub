@@ -31,8 +31,10 @@ urlpatterns = [
 
     # Cadastro de turmas e alunos (somente admin)
     path('turmas/',                       views.turmas,         name='turmas'),
+    path('turmas/modelo-alunos/',         views.modelo_planilha_alunos, name='modelo_planilha_alunos'),
     path('turmas/excluir/<int:turma_id>/', views.turma_excluir, name='turma_excluir'),
     path('turmas/<int:turma_id>/',        views.turma_detalhe,  name='turma_detalhe'),
+    path('turmas/<int:turma_id>/importar/', views.importar_alunos, name='importar_alunos'),
     path('turmas/aluno/excluir/<int:aluno_id>/',
          views.aluno_excluir, name='aluno_excluir'),
 
