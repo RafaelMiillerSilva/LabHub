@@ -1,10 +1,178 @@
 {% extends "app/layout.html" %}
 {% block content %}
-<h2>Agendamentos</h2>
-<p class="lead">Olá, {{ user.username }}. Aqui você poderá agendar os computadores e tablets da escola.</p>
 
-<div class="alert alert-info text-center">
-    <h4>Reserva de Equipamentos</h4>
-    <p>O módulo de calendário e escolha de horários estará disponível aqui em breve.</p>
+<style>
+    .cal-card {
+        max-width: 760px;
+        margin: 0 auto;
+        border: 1px solid #e3e6ee;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 6px 22px rgba(30, 60, 114, .10);
+        background: #fff;
+    }
+
+    .cal-header {
+        padding: 18px 22px 10px;
+        border-bottom: 3px solid #1e3c72;
+    }
+
+    /* Ano em destaque (igual ao esboço) */
+    .cal-ano > button {
+        background: #f6c9bf;
+        color: #1e3c72;
+        font-size: 28px;
+        font-weight: 800;
+        line-height: 1;
+        padding: 8px 16px;
+        border: 1px solid #e8a99c;
+        border-radius: 10px;
+    }
+
+        .cal-ano > button:hover {
+            background: #f1b6a9;
+        }
+
+    .cal-mes > button {
+        color: #1e3c72;
+        font-size: 28px;
+        font-weight: 800;
+        text-decoration: none;
+        padding: 8px 6px;
+        background: none;
+        border: none;
+    }
+
+    .cal-nav {
+        margin-top: 8px;
+    }
+
+    .cal-table {
+        width: 100%;
+        table-layout: fixed;
+        margin: 0;
+    }
+
+        .cal-table th {
+            text-align: center;
+            color: #1e3c72;
+            font-size: 13px;
+            letter-spacing: .5px;
+            padding: 12px 0 10px;
+            border-bottom: 2px solid #1e3c72;
+        }
+
+        .cal-table td {
+            padding: 5px;
+            height: 66px;
+            vertical-align: middle;
+        }
+
+    .cal-dia {
+        display: block;
+        width: 100%;
+        height: 54px;
+        line-height: 54px;
+        text-align: center;
+        font-size: 17px;
+        font-weight: 600;
+        color: #2c3e50;
+        background: #f4f6fb;
+        border: 1px solid #e3e6ee;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: all .12s ease;
+    }
+
+        .cal-dia:hover {
+            background: #1e3c72;
+            color: #fff;
+            text-decoration: none;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(30, 60, 114, .25);
+        }
+
+        .cal-dia.hoje {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            border-color: #1e3c72;
+        }
+</style>
+
+<div class="cal-card">
+
+    <!-- Cabeçalho: ANO (esquerda) | MÊS (direita) -->
+    <div class="cal-header">
+        <div class="row">
+            <div class="col-xs-6">
+                <div class="dropdown cal-ano" style="display:inline-block;">
+                    <button class="btn" type="button" data-toggle="dropdown" aria-expanded="false">
+                        {{ ano }} <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% for a in lista_anos %}
+                        <li{% if a == ano %} class="active" {% endif %}>
+                            <a href="?ano={{ a }}&mes={{ mes }}">{{ a }}</a>
+                            </li>
+                            {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="col-xs-6 text-right">
+                <div class="dropdown cal-mes" style="display:inline-block;">
+                    <button class="btn" type="button" data-toggle="dropdown" aria-expanded="false">
+                        {{ mes_nome|upper }} <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right">
+                        {% for num, nome in lista_meses %}
+                        <li{% if num == mes %} class="active" {% endif %}>
+                            <a href="?ano={{ ano }}&mes={{ num }}">{{ nome }}</a>
+                            </li>
+                            {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Setas e atalho "Hoje" -->
+        <div class="cal-nav text-center">
+            <a href="?ano={{ ano_ant }}&mes={{ mes_ant }}" class="btn btn-xs btn-default">◀ Mês anterior</a>
+            <a href="?ano={{ hoje_ano }}&mes={{ hoje_mes }}" class="btn btn-xs btn-primary">Hoje</a>
+            <a href="?ano={{ ano_prox }}&mes={{ mes_prox }}" class="btn btn-xs btn-default">Próximo mês ▶</a>
+        </div>
+    </div>
+
+    <!-- Grade do mês -->
+    <table class="cal-table">
+        <thead>
+            <tr>
+                {% for d in dias_semana %}
+                <th>{{ d|upper }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for semana in semanas %}
+            <tr>
+                {% for dia in semana %}
+                <td>
+                    {% if dia %}
+                    <a href="{% url 'agendamento_detalhe' ano mes dia.numero %}"
+                       class="cal-dia {% if dia.hoje %}hoje{% endif %}"
+                       title="Agendar dia {{ dia.numero }}">
+                        {{ dia.numero }}
+                    </a>
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
+
+<p class="text-center text-muted" style="margin-top:14px;">
+    Clique em um dia para ver as 9 aulas e agendar a sala ou os equipamentos.
+</p>
+
 {% endblock %}

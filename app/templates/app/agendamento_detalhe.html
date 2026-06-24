@@ -1,0 +1,225 @@
+{% extends "app/layout.html" %}
+{% block content %}
+
+<style>
+    .det-head {
+        margin-bottom: 18px;
+    }
+
+        .det-head .voltar {
+            font-size: 14px;
+        }
+
+    .aula-item {
+        display: block;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all .12s ease;
+        background: #fff;
+    }
+
+        .aula-item .aula-titulo {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .aula-item .aula-horario {
+            color: #6c757d;
+            font-size: 13px;
+            font-weight: 400;
+        }
+
+        .aula-item .aula-info {
+            font-size: 14px;
+        }
+
+    /* Disponível (verde) - selecionável */
+    .aula-verde {
+        border-color: #4caf50;
+        background: #f3fbf3;
+    }
+
+        .aula-verde:hover {
+            background: #e7f7e7;
+        }
+
+        .aula-verde input:checked ~ .aula-marca {
+            background: #2e7d32;
+            color: #fff;
+        }
+
+    /* Metade (laranja) - selecionável */
+    .aula-laranja {
+        border-color: #ff9800;
+        background: #fff7ec;
+    }
+
+        .aula-laranja:hover {
+            background: #ffefd6;
+        }
+
+    /* Ocupado / indisponível (vermelho) - bloqueado */
+    .aula-vermelho {
+        border-color: #e53935;
+        background: #fdeceb;
+        cursor: not-allowed;
+        opacity: .95;
+    }
+
+    .badge-status {
+        float: right;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 20px;
+        color: #fff;
+    }
+
+    .bg-verde {
+        background: #2e7d32;
+    }
+
+    .bg-laranja {
+        background: #ef6c00;
+    }
+
+    .bg-vermelho {
+        background: #c62828;
+    }
+
+    .aula-check {
+        margin-right: 8px;
+        transform: scale(1.2);
+        vertical-align: middle;
+    }
+
+    .barra {
+        height: 8px;
+        border-radius: 4px;
+        background: #e9ecef;
+        margin-top: 6px;
+        overflow: hidden;
+    }
+
+        .barra > span {
+            display: block;
+            height: 100%;
+        }
+</style>
+
+<div class="det-head">
+    <a href="{% url 'agendamentos' %}?ano={{ ano }}&mes={{ mes }}" class="voltar">&larr; Voltar ao calendário</a>
+    <h2 style="margin-top:6px;">Agendamento — {{ data|date:"d/m/Y" }}</h2>
+    <p class="lead" style="margin-bottom:0;">{{ dia_semana }}, {{ dia }} de {{ mes_nome }} de {{ ano }}</p>
+</div>
+
+{% if messages %}
+<div style="margin-bottom: 15px;">
+    {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Abas: tipo de agendamento -->
+<ul class="nav nav-tabs" role="tablist" style="margin-bottom: 20px;">
+    <li role="presentation" class="active">
+        <a href="#tab-sala" role="tab" data-toggle="tab">🏫 Sala de Aula</a>
+    </li>
+    <li role="presentation">
+        <a href="#tab-movel" role="tab" data-toggle="tab">💻 Equipamentos Móveis</a>
+    </li>
+</ul>
+
+<div class="tab-content">
+
+    <!-- ===================== ABA 1: SALA DE AULA ===================== -->
+    <div role="tabpanel" class="tab-pane active" id="tab-sala">
+        <p class="text-muted">
+            Selecione as aulas em <strong>verde</strong> (disponíveis) e clique em agendar.
+            As aulas em <strong>vermelho</strong> já estão ocupadas.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="tipo" value="sala">
+
+            {% for a in salas %}
+            {% if a.ocupado %}
+            <div class="aula-item aula-vermelho">
+                <span class="badge-status bg-vermelho">Ocupado</span>
+                <span class="aula-titulo">{{ a.numero }}ª AULA</span>
+                <span class="aula-horario">({{ a.horario }})</span><br>
+                <span class="aula-info">{{ a.turma }} — {{ a.professor }}</span>
+            </div>
+            {% else %}
+            <label class="aula-item aula-verde">
+                <span class="badge-status bg-verde">Disponível</span>
+                <input type="checkbox" class="aula-check" name="aulas" value="{{ a.numero }}">
+                <span class="aula-titulo">{{ a.numero }}ª AULA</span>
+                <span class="aula-horario">({{ a.horario }})</span>
+            </label>
+            {% endif %}
+            {% endfor %}
+
+            <div class="text-right" style="margin-top:16px;">
+                <button type="submit" class="btn btn-primary btn-lg">📌 Agendar Sala</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ================== ABA 2: EQUIPAMENTOS MÓVEIS ================== -->
+    <div role="tabpanel" class="tab-pane" id="tab-movel">
+        <p class="text-muted">
+            <span style="color:#2e7d32;">●</span> Muitos disponíveis &nbsp;
+            <span style="color:#ef6c00;">●</span> Cerca de metade &nbsp;
+            <span style="color:#c62828;">●</span> Nenhum disponível
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="tipo" value="movel">
+
+            <div class="form-group" style="max-width:320px;">
+                <label>Tipo de equipamento</label>
+                <select name="equipamento" class="form-control">
+                    {% for nome, total in equipamentos.items %}
+                    <option value="{{ nome }}">{{ nome }} ({{ total }} no total)</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {% for m in moveis %}
+            <label class="aula-item aula-{{ m.status }}">
+                <span class="badge-status bg-{{ m.status }}">
+                    {{ m.disponivel }} / {{ m.total }}
+                </span>
+                <input type="checkbox" class="aula-check" name="aulas" value="{{ m.numero }}"
+                       {% if m.status == 'vermelho' %}disabled{% endif %}>
+                <span class="aula-titulo">{{ m.numero }}ª AULA</span>
+                <span class="aula-horario">({{ m.horario }})</span>
+                <div class="barra">
+                    <span class="bg-{{ m.status }}"
+                          style="width: {% widthratio m.disponivel m.total 100 %}%;"></span>
+                </div>
+            </label>
+            {% endfor %}
+
+            <div class="text-right" style="margin-top:16px;">
+                <button type="submit" class="btn btn-primary btn-lg">📌 Reservar Equipamentos</button>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}
