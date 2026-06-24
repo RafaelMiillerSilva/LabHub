@@ -7,6 +7,8 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.db import IntegrityError
+from django.http import HttpResponse
 from .forms import (
     CadastroForm, BootstrapAuthenticationForm, SalaForm, EquipamentoForm,
     TurmaForm, AlunoForm,
@@ -540,6 +542,159 @@ def aluno_excluir(request, aluno_id):
         return redirect('turma_detalhe', turma_id=turma_id)
 
     return redirect('turmas')
+
+
+# ---------------------------------------------------------------------------
+# IMPORTAÇÃO DE ALUNOS POR PLANILHA  (.xlsx ou .csv)
+# ---------------------------------------------------------------------------
+
+# Cabeçalhos aceitos para cada coluna (tudo minúsculo, sem espaços nas pontas)
+_ALIAS_NOME = {'nome', 'aluno', 'nome do aluno', 'nome completo', 'nome completo do aluno'}
+_ALIAS_RA = {'ra', 'ra (registro)', 'registro', 'matricula', 'matrícula',
+             'numero', 'número', 'nº', 'n', 'registro do aluno'}
+
+
+def _normalizar_texto(valor):
+    if valor is None:
+        return ''
+    return str(valor).strip()
+
+
+def _normalizar_ra(valor):
+    """RA pode vir como número no Excel (ex: 12345.0). Normaliza para texto limpo."""
+    if valor is None:
+        return ''
+    if isinstance(valor, float) and valor.is_integer():
+        return str(int(valor))
+    return str(valor).strip()
+
+
+def _detectar_separador(texto):
+    primeira_linha = texto.splitlines()[0] if texto.splitlines() else ''
+    return ';' if primeira_linha.count(';') > primeira_linha.count(',') else ','
+
+
+def _ler_planilha(arquivo):
+    """
+    Lê um arquivo .xlsx ou .csv e devolve (linhas, erro).
+    'linhas' é uma lista de listas (a primeira é o cabeçalho).
+    """
+    nome_arquivo = arquivo.name.lower()
+
+    if nome_arquivo.endswith('.csv'):
+        import csv
+        import io
+        dados = arquivo.read()
+        try:
+            texto = dados.decode('utf-8-sig')
+        except UnicodeDecodeError:
+            texto = dados.decode('latin-1')
+        separador = _detectar_separador(texto)
+        leitor = csv.reader(io.StringIO(texto), delimiter=separador)
+        return [list(linha) for linha in leitor], None
+
+    if nome_arquivo.endswith('.xlsx'):
+        try:
+            import openpyxl
+        except ImportError:
+            return None, ('Para importar arquivos .xlsx é preciso instalar a biblioteca '
+                          'openpyxl (pip install openpyxl). Como alternativa, envie um .csv.')
+        wb = openpyxl.load_workbook(arquivo, read_only=True, data_only=True)
+        ws = wb.active
+        linhas = []
+        for row in ws.iter_rows(values_only=True):
+            linhas.append(['' if c is None else c for c in row])
+        return linhas, None
+
+    return None, 'Formato não suportado. Envie um arquivo .xlsx ou .csv.'
+
+
+def _mapear_colunas(cabecalho):
+    """Descobre em quais posições estão as colunas de nome e RA."""
+    nome_idx = ra_idx = None
+    for i, valor in enumerate(cabecalho):
+        v = str(valor).strip().lower()
+        if nome_idx is None and v in _ALIAS_NOME:
+            nome_idx = i
+        if ra_idx is None and v in _ALIAS_RA:
+            ra_idx = i
+    return nome_idx, ra_idx
+
+
+@login_required
+def importar_alunos(request, turma_id):
+    if not _is_admin_aprovado(request.user):
+        return redirect('home')
+
+    turma = get_object_or_404(Turma, id=turma_id)
+
+    if request.method == 'POST' and request.FILES.get('arquivo'):
+        arquivo = request.FILES['arquivo']
+
+        linhas, erro = _ler_planilha(arquivo)
+        if erro:
+            messages.error(request, erro)
+            return redirect('turma_detalhe', turma_id=turma.id)
+        if not linhas:
+            messages.warning(request, 'A planilha está vazia.')
+            return redirect('turma_detalhe', turma_id=turma.id)
+
+        nome_idx, ra_idx = _mapear_colunas(linhas[0])
+        if nome_idx is None or ra_idx is None:
+            messages.error(request, (
+                'Não encontrei as colunas "nome" e "ra" no cabeçalho da planilha. '
+                'Verifique se a primeira linha tem esses títulos (baixe o modelo para conferir o formato).'
+            ))
+            return redirect('turma_detalhe', turma_id=turma.id)
+
+        criados = 0
+        ignorados = 0
+        ras_existentes = set(Aluno.objects.values_list('ra', flat=True))
+
+        for linha in linhas[1:]:
+            if not linha or len(linha) <= max(nome_idx, ra_idx):
+                continue
+            nome = _normalizar_texto(linha[nome_idx])
+            ra = _normalizar_ra(linha[ra_idx])
+
+            # Pula linhas incompletas ou RA já existente (no banco ou já visto no arquivo)
+            if not nome or not ra or ra in ras_existentes:
+                ignorados += 1
+                continue
+
+            try:
+                Aluno.objects.create(turma=turma, nome=nome, ra=ra)
+                ras_existentes.add(ra)
+                criados += 1
+            except IntegrityError:
+                ignorados += 1
+
+        messages.success(request, f'Importação concluída: {criados} aluno(s) adicionado(s).')
+        if ignorados:
+            messages.warning(
+                request,
+                f'{ignorados} linha(s) ignorada(s) — RA duplicado ou dados incompletos.'
+            )
+        return redirect('turma_detalhe', turma_id=turma.id)
+
+    return redirect('turma_detalhe', turma_id=turma.id)
+
+
+@login_required
+def modelo_planilha_alunos(request):
+    """Gera um CSV modelo para o admin preencher e importar."""
+    if not _is_admin_aprovado(request.user):
+        return redirect('home')
+
+    import csv
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="modelo_alunos.csv"'
+    response.write('\ufeff')  # BOM para o Excel reconhecer os acentos
+    writer = csv.writer(response, delimiter=';')
+    writer.writerow(['nome', 'ra'])
+    writer.writerow(['João da Silva', '12345'])
+    writer.writerow(['Maria Souza', '12346'])
+    return response
 
 
 def about(request):
