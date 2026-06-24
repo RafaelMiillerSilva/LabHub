@@ -64,8 +64,11 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="app\templates\app\agendamentos.html" />
+    <Content Include="app\templates\app\agendamento_detalhe.html" />
+    <Content Include="app\templates\app\equipamentos.html" />
     <Content Include="app\templates\app\painel.html" />
     <Content Include="app\templates\app\layout.html" />
+    <Content Include="app\templates\app\salas.html" />
     <Content Include="requirements.txt" />
     <Content Include="app\static\app\content\bootstrap.css" />
     <Content Include="app\static\app\content\bootstrap.min.css" />
