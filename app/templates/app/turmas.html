@@ -1,0 +1,120 @@
+{% extends "app/layout.html" %}
+{% block content %}
+<h2>👥 Turmas</h2>
+<p class="lead">Cadastre as turmas da escola. Clique em <strong>Gerenciar alunos</strong> para adicionar os alunos de cada turma.</p>
+
+{% if messages %}
+<div style="margin-bottom: 15px;">
+    {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'warning' %}warning{% else %}success{% endif %} alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="row">
+
+    <!-- Formulário de cadastro / edição -->
+    <div class="col-md-4">
+        <div class="panel panel-{% if editando %}warning{% else %}primary{% endif %}">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    {% if editando %}✏️ Editar Turma{% else %}➕ Nova Turma{% endif %}
+                </h3>
+            </div>
+            <div class="panel-body">
+
+                {% if form.errors %}
+                <div class="alert alert-danger" style="padding: 8px 12px; font-size: 13px;">
+                    <ul style="margin: 0; padding-left: 15px;">
+                        {% for field in form %}
+                        {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    {% if editando %}<input type="hidden" name="turma_id" value="{{ editando.id }}">{% endif %}
+
+                    <div class="form-group">
+                        <label>Nome da Turma</label>
+                        {{ form.nome }}
+                    </div>
+                    <div class="form-group">
+                        <label>Turno</label>
+                        {{ form.turno }}
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-block">
+                        {% if editando %}💾 Salvar Alterações{% else %}✅ Cadastrar Turma{% endif %}
+                    </button>
+                    {% if editando %}
+                    <a href="{% url 'turmas' %}" class="btn btn-default btn-block">Cancelar edição</a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de turmas -->
+    <div class="col-md-8">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Turmas Cadastradas ({{ turmas|length }})</h3>
+            </div>
+            <div class="panel-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Turma</th>
+                                <th>Turno</th>
+                                <th class="text-center">Alunos</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in turmas %}
+                            <tr>
+                                <td><strong>{{ t.nome }}</strong></td>
+                                <td>{{ t.get_turno_display }}</td>
+                                <td class="text-center">
+                                    <span class="badge">{{ t.total_alunos }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'turma_detalhe' t.id %}" class="btn btn-xs btn-primary">👥 Gerenciar alunos</a>
+                                    <a href="{% url 'turmas' %}?editar={{ t.id }}" class="btn btn-xs btn-info">✏️</a>
+                                    <form action="{% url 'turma_excluir' t.id %}" method="post" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-xs btn-danger"
+                                                onclick="return confirm('Remover a turma {{ t.nome }} e TODOS os seus alunos?')">🗑️</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted" style="padding: 30px;">
+                                    <em>Nenhuma turma cadastrada ainda. Cadastre a primeira ao lado.</em>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

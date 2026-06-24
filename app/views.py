@@ -9,8 +9,9 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from .forms import (
     CadastroForm, BootstrapAuthenticationForm, SalaForm, EquipamentoForm,
+    TurmaForm, AlunoForm,
 )
-from .models import Perfil, HistoricoAcao, Sala, Equipamento
+from .models import Perfil, HistoricoAcao, Sala, Equipamento, Turma, Aluno
 
 
 # ---------------------------------------------------------------------------
@@ -445,6 +446,100 @@ def equipamento_excluir(request, equip_id):
         messages.warning(request, f'Equipamento "{nome}" removido.')
 
     return redirect('equipamentos')
+
+
+# ---------------------------------------------------------------------------
+# CADASTRO DE TURMAS E ALUNOS  (somente administradores)
+# ---------------------------------------------------------------------------
+@login_required
+def turmas(request):
+    if not _is_admin_aprovado(request.user):
+        return redirect('home')
+
+    # ?editar=<id> carrega a turma para edição
+    instancia = None
+    editar_id = request.GET.get('editar')
+    if editar_id:
+        instancia = Turma.objects.filter(id=editar_id).first()
+
+    if request.method == 'POST':
+        post_id = request.POST.get('turma_id')
+        if post_id:
+            instancia = get_object_or_404(Turma, id=post_id)
+        form = TurmaForm(request.POST, instance=instancia)
+        if form.is_valid():
+            turma = form.save()
+            if post_id:
+                messages.success(request, f'Turma "{turma}" atualizada com sucesso!')
+            else:
+                messages.success(request, f'Turma "{turma}" cadastrada com sucesso!')
+            return redirect('turmas')
+    else:
+        form = TurmaForm(instance=instancia)
+
+    return render(request, 'app/turmas.html', {
+        'title': 'Turmas',
+        'form': form,
+        'turmas': Turma.objects.all(),
+        'editando': instancia,
+    })
+
+
+@login_required
+def turma_excluir(request, turma_id):
+    if not _is_admin_aprovado(request.user):
+        return redirect('home')
+
+    if request.method == 'POST':
+        turma = get_object_or_404(Turma, id=turma_id)
+        nome = str(turma)
+        turma.delete()  # apaga os alunos em cascata
+        messages.warning(request, f'Turma "{nome}" removida (junto com seus alunos).')
+
+    return redirect('turmas')
+
+
+@login_required
+def turma_detalhe(request, turma_id):
+    if not _is_admin_aprovado(request.user):
+        return redirect('home')
+
+    turma = get_object_or_404(Turma, id=turma_id)
+
+    # POST aqui = adicionar um aluno manualmente
+    if request.method == 'POST':
+        form = AlunoForm(request.POST)
+        if form.is_valid():
+            aluno = form.save(commit=False)
+            aluno.turma = turma
+            aluno.save()
+            messages.success(request, f'Aluno "{aluno.nome}" adicionado à turma.')
+            return redirect('turma_detalhe', turma_id=turma.id)
+    else:
+        form = AlunoForm()
+
+    return render(request, 'app/turma_detalhe.html', {
+        'title': f'Turma {turma}',
+        'turma': turma,
+        'form': form,
+        'alunos': turma.alunos.all(),
+    })
+
+
+@login_required
+def aluno_excluir(request, aluno_id):
+    if not _is_admin_aprovado(request.user):
+        return redirect('home')
+
+    if request.method == 'POST':
+        aluno = get_object_or_404(Aluno, id=aluno_id)
+        turma_id = aluno.turma_id
+        nome = aluno.nome
+        aluno.delete()
+        messages.warning(request, f'Aluno "{nome}" removido.')
+        return redirect('turma_detalhe', turma_id=turma_id)
+
+    return redirect('turmas')
 
 
 def about(request):
