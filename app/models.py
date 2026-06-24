@@ -44,6 +44,53 @@ class HistoricoAcao(models.Model):
         return f"{self.acao} - {self.username_solicitante} por {self.admin} em {self.data_acao:%d/%m/%Y %H:%M}"
 
 
+# ---------------------------------------------------------------------------
+# Salas de aula (cadastradas pelo administrador)
+# ---------------------------------------------------------------------------
+class Sala(models.Model):
+    nome = models.CharField(max_length=100, unique=True)
+    localizacao = models.CharField(max_length=100, blank=True, verbose_name='Localização')
+    capacidade = models.PositiveIntegerField(default=0, help_text='Número de alunos')
+    ativo = models.BooleanField(default=True, verbose_name='Ativa')
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['nome']
+        verbose_name = 'Sala'
+        verbose_name_plural = 'Salas'
+
+    def __str__(self):
+        return self.nome
+
+
+# ---------------------------------------------------------------------------
+# Equipamentos móveis (notebooks, tablets, celulares, projetores...)
+# ---------------------------------------------------------------------------
+class Equipamento(models.Model):
+    CHOICES_TIPO = (
+        ('NOTEBOOK', 'Notebook'),
+        ('TABLET', 'Tablet'),
+        ('CELULAR', 'Celular'),
+        ('PROJETOR', 'Projetor'),
+        ('OUTRO', 'Outro'),
+    )
+
+    nome = models.CharField(max_length=100)
+    tipo = models.CharField(max_length=20, choices=CHOICES_TIPO, default='NOTEBOOK')
+    quantidade = models.PositiveIntegerField(default=1, help_text='Quantidade total disponível')
+    descricao = models.CharField(max_length=200, blank=True, verbose_name='Descrição')
+    ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['tipo', 'nome']
+        verbose_name = 'Equipamento'
+        verbose_name_plural = 'Equipamentos'
+
+    def __str__(self):
+        return f"{self.nome} ({self.get_tipo_display()})"
+
+
 # Sinais para criar o perfil automaticamente quando um usuário for criado
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
