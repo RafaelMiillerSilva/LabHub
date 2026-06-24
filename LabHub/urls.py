@@ -29,6 +29,13 @@ urlpatterns = [
     path('equipamentos/excluir/<int:equip_id>/',
          views.equipamento_excluir, name='equipamento_excluir'),
 
+    # Cadastro de turmas e alunos (somente admin)
+    path('turmas/',                       views.turmas,         name='turmas'),
+    path('turmas/excluir/<int:turma_id>/', views.turma_excluir, name='turma_excluir'),
+    path('turmas/<int:turma_id>/',        views.turma_detalhe,  name='turma_detalhe'),
+    path('turmas/aluno/excluir/<int:aluno_id>/',
+         views.aluno_excluir, name='aluno_excluir'),
+
     # Painel administrativo
     path('painel/',                       views.painel,         name='painel'),
     path('painel/aprovar/<int:perfil_id>/', views.aprovar_usuario, name='aprovar_usuario'),

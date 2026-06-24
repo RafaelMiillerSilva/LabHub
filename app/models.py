@@ -91,6 +91,54 @@ class Equipamento(models.Model):
         return f"{self.nome} ({self.get_tipo_display()})"
 
 
+# ---------------------------------------------------------------------------
+# Turmas (cadastradas pelo administrador)
+# ---------------------------------------------------------------------------
+class Turma(models.Model):
+    TURNO_CHOICES = (
+        ('MANHA', 'Manhã'),
+        ('TARDE', 'Tarde'),
+        ('INTEGRAL', 'Integral'),
+        ('NOITE', 'Noite'),
+    )
+
+    nome = models.CharField(max_length=50, help_text='Ex: 6º B')
+    turno = models.CharField(max_length=10, choices=TURNO_CHOICES, default='MANHA')
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['nome', 'turno']
+        # Permite "6º B - Manhã" e "6º B - Tarde", mas não duas iguais
+        unique_together = ('nome', 'turno')
+        verbose_name = 'Turma'
+        verbose_name_plural = 'Turmas'
+
+    @property
+    def total_alunos(self):
+        return self.alunos.count()
+
+    def __str__(self):
+        return f"{self.nome} ({self.get_turno_display()})"
+
+
+# ---------------------------------------------------------------------------
+# Alunos (vinculados a uma turma)
+# ---------------------------------------------------------------------------
+class Aluno(models.Model):
+    turma = models.ForeignKey(Turma, on_delete=models.CASCADE, related_name='alunos')
+    nome = models.CharField(max_length=120)
+    ra = models.CharField(max_length=30, unique=True, verbose_name='RA (registro)')
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['nome']
+        verbose_name = 'Aluno'
+        verbose_name_plural = 'Alunos'
+
+    def __str__(self):
+        return f"{self.nome} - RA {self.ra}"
+
+
 # Sinais para criar o perfil automaticamente quando um usuário for criado
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):

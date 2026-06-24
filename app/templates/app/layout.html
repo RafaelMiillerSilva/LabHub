@@ -61,6 +61,7 @@
 
                         {% if user.perfil.tipo == 'ADMINISTRADOR' %}
                         <li><a href="{% url 'painel' %}">🛠️ Painel Admin</a></li>
+                        <li><a href="{% url 'turmas' %}">👥 Turmas</a></li>
                         <li><a href="{% url 'salas' %}">🏫 Salas de Aula</a></li>
                         <li><a href="{% url 'equipamentos' %}">💻 Equipamentos</a></li>
                         {% endif %}

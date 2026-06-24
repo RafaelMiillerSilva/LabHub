@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 from django.db.models import Q
-from .models import Sala, Equipamento
+from .models import Sala, Equipamento, Turma, Aluno
 
 class BootstrapAuthenticationForm(AuthenticationForm):
     """Formulário de autenticação que usa CSS do Bootstrap."""
@@ -145,4 +145,39 @@ class EquipamentoForm(forms.ModelForm):
             'descricao': forms.TextInput(attrs={
                 'class': 'form-control', 'placeholder': 'Observações (opcional)'
             }),
+        }
+
+
+# ---------------------------------------------------------------------------
+# Cadastro de Turmas
+# ---------------------------------------------------------------------------
+class TurmaForm(forms.ModelForm):
+    class Meta:
+        model = Turma
+        fields = ['nome', 'turno']
+        widgets = {
+            'nome': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'Ex: 6º B'
+            }),
+            'turno': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+
+# ---------------------------------------------------------------------------
+# Cadastro de Alunos
+# ---------------------------------------------------------------------------
+class AlunoForm(forms.ModelForm):
+    class Meta:
+        model = Aluno
+        fields = ['nome', 'ra']
+        widgets = {
+            'nome': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'Nome completo do aluno'
+            }),
+            'ra': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'Nº de registro (RA)'
+            }),
+        }
+        labels = {
+            'ra': 'RA (registro)',
         }
