@@ -8,7 +8,6 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 from django.db.models import Q
-from .models import Sala, Equipamento
 
 class BootstrapAuthenticationForm(AuthenticationForm):
     """Formulário de autenticação que usa CSS do Bootstrap."""
@@ -28,6 +27,7 @@ class BootstrapAuthenticationForm(AuthenticationForm):
         })
     )
 
+from django.contrib.auth.models import User
 
 class EmailBackend(ModelBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
@@ -109,40 +109,3 @@ class CadastroForm(forms.ModelForm):
             perfil.tipo = self.cleaned_data["tipo"]
             perfil.save()
         return user
-
-
-# ---------------------------------------------------------------------------
-# Cadastro de Salas
-# ---------------------------------------------------------------------------
-class SalaForm(forms.ModelForm):
-    class Meta:
-        model = Sala
-        fields = ['nome', 'localizacao', 'capacidade', 'ativo']
-        widgets = {
-            'nome': forms.TextInput(attrs={
-                'class': 'form-control', 'placeholder': 'Ex: Laboratório de Informática'
-            }),
-            'localizacao': forms.TextInput(attrs={
-                'class': 'form-control', 'placeholder': 'Ex: Bloco B - 2º andar'
-            }),
-            'capacidade': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
-        }
-
-
-# ---------------------------------------------------------------------------
-# Cadastro de Equipamentos
-# ---------------------------------------------------------------------------
-class EquipamentoForm(forms.ModelForm):
-    class Meta:
-        model = Equipamento
-        fields = ['nome', 'tipo', 'quantidade', 'descricao', 'ativo']
-        widgets = {
-            'nome': forms.TextInput(attrs={
-                'class': 'form-control', 'placeholder': 'Ex: Notebook Dell Latitude'
-            }),
-            'tipo': forms.Select(attrs={'class': 'form-control'}),
-            'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'descricao': forms.TextInput(attrs={
-                'class': 'form-control', 'placeholder': 'Observações (opcional)'
-            }),
-        }
