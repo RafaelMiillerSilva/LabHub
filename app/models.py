@@ -139,6 +139,61 @@ class Aluno(models.Model):
         return f"{self.nome} - RA {self.ra}"
 
 
+# ---------------------------------------------------------------------------
+# Agendamento: uma reserva de UMA aula, em um dia, por um professor,
+# para uma turma. Pode ser de Sala (aponta para uma Sala) ou de
+# Dispositivos (ganha vários ItemDispositivo — isso entra na Etapa 4).
+# ---------------------------------------------------------------------------
+class Agendamento(models.Model):
+    TIPO_CHOICES = (
+        ('SALA', 'Sala de Aula'),
+        ('DISPOSITIVO', 'Equipamentos Móveis'),
+    )
+
+    data = models.DateField()
+    aula = models.PositiveSmallIntegerField()  # 1 a 9
+    tipo = models.CharField(max_length=12, choices=TIPO_CHOICES)
+
+    professor = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='agendamentos'
+    )
+    turma = models.ForeignKey(
+        Turma, on_delete=models.CASCADE, related_name='agendamentos'
+    )
+    # Só preenchido quando tipo == 'SALA'
+    sala = models.ForeignKey(
+        Sala, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='agendamentos'
+    )
+    observacao = models.TextField(blank=True, verbose_name='Observação')
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['data', 'aula']
+        verbose_name = 'Agendamento'
+        verbose_name_plural = 'Agendamentos'
+
+    def __str__(self):
+        return f"{self.data:%d/%m/%Y} - {self.aula}ª aula - {self.get_tipo_display()}"
+
+
+# ---------------------------------------------------------------------------
+# Item de um agendamento de dispositivos: qual equipamento e quantos.
+# Um Agendamento de dispositivos pode ter vários destes (um por tipo/aparelho).
+# ---------------------------------------------------------------------------
+class ItemDispositivo(models.Model):
+    agendamento = models.ForeignKey(
+        Agendamento, on_delete=models.CASCADE, related_name='itens'
+    )
+    equipamento = models.ForeignKey(
+        Equipamento, on_delete=models.CASCADE, related_name='reservas'
+    )
+    quantidade = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.equipamento.nome} x{self.quantidade}"
+
+
 # Sinais para criar o perfil automaticamente quando um usuário for criado
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):

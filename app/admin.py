@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Perfil, Sala, Equipamento, Turma, Aluno
+from .models import Perfil, Sala, Equipamento, Turma, Aluno, Agendamento, ItemDispositivo
 
 @admin.register(Perfil)
 class PerfilAdmin(admin.ModelAdmin):
@@ -40,3 +40,17 @@ class AlunoAdmin(admin.ModelAdmin):
     list_display = ('nome', 'ra', 'turma')
     list_filter = ('turma',)
     search_fields = ('nome', 'ra')
+
+
+class ItemDispositivoInline(admin.TabularInline):
+    model = ItemDispositivo
+    extra = 0
+
+
+@admin.register(Agendamento)
+class AgendamentoAdmin(admin.ModelAdmin):
+    list_display = ('data', 'aula', 'tipo', 'turma', 'sala', 'professor')
+    list_filter = ('tipo', 'data', 'turma')
+    search_fields = ('professor__username', 'turma__nome', 'sala__nome')
+    date_hierarchy = 'data'
+    inlines = [ItemDispositivoInline]

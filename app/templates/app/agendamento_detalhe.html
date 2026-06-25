@@ -14,30 +14,25 @@
         display: block;
         border: 2px solid #ddd;
         border-radius: 10px;
-        padding: 12px 16px;
-        margin-bottom: 10px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
         font-weight: 500;
         cursor: pointer;
         transition: all .12s ease;
         background: #fff;
     }
 
-        .aula-item .aula-titulo {
-            font-size: 16px;
+        .aula-item .nome-sala {
+            font-size: 15px;
             font-weight: 700;
         }
 
-        .aula-item .aula-horario {
-            color: #6c757d;
+        .aula-item .info-sala {
             font-size: 13px;
+            color: #6c757d;
             font-weight: 400;
         }
 
-        .aula-item .aula-info {
-            font-size: 14px;
-        }
-
-    /* Disponível (verde) - selecionável */
     .aula-verde {
         border-color: #4caf50;
         background: #f3fbf3;
@@ -47,27 +42,10 @@
             background: #e7f7e7;
         }
 
-        .aula-verde input:checked ~ .aula-marca {
-            background: #2e7d32;
-            color: #fff;
-        }
-
-    /* Metade (laranja) - selecionável */
-    .aula-laranja {
-        border-color: #ff9800;
-        background: #fff7ec;
-    }
-
-        .aula-laranja:hover {
-            background: #ffefd6;
-        }
-
-    /* Ocupado / indisponível (vermelho) - bloqueado */
     .aula-vermelho {
         border-color: #e53935;
         background: #fdeceb;
         cursor: not-allowed;
-        opacity: .95;
     }
 
     .badge-status {
@@ -83,10 +61,6 @@
         background: #2e7d32;
     }
 
-    .bg-laranja {
-        background: #ef6c00;
-    }
-
     .bg-vermelho {
         background: #c62828;
     }
@@ -97,18 +71,94 @@
         vertical-align: middle;
     }
 
-    .barra {
-        height: 8px;
-        border-radius: 4px;
-        background: #e9ecef;
-        margin-top: 6px;
-        overflow: hidden;
+    .painel-aula .panel-title a {
+        display: block;
+        text-decoration: none;
+        color: #1e3c72;
+        font-weight: 600;
     }
 
-        .barra > span {
-            display: block;
-            height: 100%;
-        }
+    .resumo-livres {
+        font-size: 12px;
+        font-weight: 700;
+        padding: 2px 10px;
+        border-radius: 20px;
+    }
+
+    .livres-ok {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .livres-zero {
+        background: #fdecea;
+        color: #c62828;
+    }
+
+    .bg-laranja {
+        background: #ef6c00;
+    }
+
+    .grupo-tipo {
+        font-weight: 700;
+        color: #1e3c72;
+        margin: 12px 0 6px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 4px;
+    }
+
+    .dispo-row {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        background: #fff;
+    }
+
+    .dispo-verde {
+        border-color: #4caf50;
+        background: #f3fbf3;
+    }
+
+    .dispo-laranja {
+        border-color: #ff9800;
+        background: #fff7ec;
+    }
+
+    .dispo-vermelho {
+        border-color: #e53935;
+        background: #fdeceb;
+    }
+
+    .dispo-controle {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
+    }
+
+    .dispo-slider {
+        flex: 1;
+    }
+
+    .dispo-valor {
+        min-width: 42px;
+        text-align: center;
+        font-weight: 700;
+        font-size: 16px;
+        color: #1e3c72;
+        background: #eef2fb;
+        border-radius: 6px;
+        padding: 2px 6px;
+    }
+
+    .card-reserva {
+        border-left: 4px solid #1e3c72;
+        background: #f7f9fc;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+    }
 </style>
 
 <div class="det-head">
@@ -120,7 +170,7 @@
 {% if messages %}
 <div style="margin-bottom: 15px;">
     {% for message in messages %}
-    <div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible" role="alert">
+    <div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% elif message.tags == 'info' %}info{% else %}success{% endif %} alert-dismissible" role="alert">
         <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
             <span aria-hidden="true">&times;</span>
         </button>
@@ -144,80 +194,199 @@
 
     <!-- ===================== ABA 1: SALA DE AULA ===================== -->
     <div role="tabpanel" class="tab-pane active" id="tab-sala">
+
+        {% if not tem_salas %}
+        <div class="alert alert-warning">
+            Nenhuma sala cadastrada ainda. Cadastre salas em
+            <a href="{% url 'salas' %}">🏫 Salas de Aula</a> para poder agendar.
+        </div>
+        {% elif not turmas %}
+        <div class="alert alert-warning">
+            Nenhuma turma cadastrada. Cadastre turmas em
+            <a href="{% url 'turmas' %}">👥 Turmas</a> para poder agendar.
+        </div>
+        {% else %}
+
         <p class="text-muted">
-            Selecione as aulas em <strong>verde</strong> (disponíveis) e clique em agendar.
-            As aulas em <strong>vermelho</strong> já estão ocupadas.
+            Clique numa aula para ver as salas. As <strong style="color:#2e7d32;">verdes</strong>
+            estão livres (marque para reservar); as <strong style="color:#c62828;">vermelhas</strong>
+            já estão ocupadas.
         </p>
 
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="tipo" value="sala">
 
-            {% for a in salas %}
-            {% if a.ocupado %}
-            <div class="aula-item aula-vermelho">
-                <span class="badge-status bg-vermelho">Ocupado</span>
-                <span class="aula-titulo">{{ a.numero }}ª AULA</span>
-                <span class="aula-horario">({{ a.horario }})</span><br>
-                <span class="aula-info">{{ a.turma }} — {{ a.professor }}</span>
+            <div class="panel-group" id="acordeao-salas">
+                {% for aula in aulas %}
+                <div class="panel panel-default painel-aula">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" data-parent="#acordeao-salas" href="#aula{{ aula.numero }}">
+                                {{ aula.numero }}ª Aula <small class="text-muted">({{ aula.horario }})</small>
+                                <span class="resumo-livres {% if aula.livres %}livres-ok{% else %}livres-zero{% endif %}" style="float:right;">
+                                    {{ aula.livres }} de {{ aula.total }} livres
+                                </span>
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="aula{{ aula.numero }}" class="panel-collapse collapse">
+                        <div class="panel-body">
+                            {% for s in aula.salas %}
+                            {% if s.ocupado %}
+                            <div class="aula-item aula-vermelho">
+                                <span class="badge-status bg-vermelho">Ocupada</span>
+                                <span class="nome-sala">{{ s.sala.nome }}</span><br>
+                                <span class="info-sala">{{ s.turma }} — {{ s.professor }}</span>
+                            </div>
+                            {% else %}
+                            <label class="aula-item aula-verde">
+                                <span class="badge-status bg-verde">Livre</span>
+                                <input type="checkbox" class="aula-check" name="reserva" value="{{ aula.numero }}:{{ s.sala.id }}">
+                                <span class="nome-sala">{{ s.sala.nome }}</span>
+                                {% if s.sala.localizacao %}<span class="info-sala"> — {{ s.sala.localizacao }}</span>{% endif %}
+                            </label>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
-            {% else %}
-            <label class="aula-item aula-verde">
-                <span class="badge-status bg-verde">Disponível</span>
-                <input type="checkbox" class="aula-check" name="aulas" value="{{ a.numero }}">
-                <span class="aula-titulo">{{ a.numero }}ª AULA</span>
-                <span class="aula-horario">({{ a.horario }})</span>
-            </label>
-            {% endif %}
-            {% endfor %}
 
-            <div class="text-right" style="margin-top:16px;">
-                <button type="submit" class="btn btn-primary btn-lg">📌 Agendar Sala</button>
+            <!-- Turma + observação + botão (valem para tudo que foi marcado) -->
+            <div class="panel panel-primary" style="margin-top: 18px;">
+                <div class="panel-body">
+                    <div class="form-group" style="max-width: 360px;">
+                        <label>Turma do agendamento</label>
+                        <select name="turma" class="form-control" required>
+                            <option value="">— selecione a turma —</option>
+                            {% for t in turmas %}
+                            <option value="{{ t.id }}">{{ t.nome }} ({{ t.get_turno_display }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Observação (opcional)</label>
+                        <textarea name="observacao" class="form-control" rows="2"
+                                  placeholder="Ex: aula de reforço, prova, etc."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg">📌 Agendar Salas</button>
+                </div>
             </div>
         </form>
+        {% endif %}
     </div>
 
     <!-- ================== ABA 2: EQUIPAMENTOS MÓVEIS ================== -->
     <div role="tabpanel" class="tab-pane" id="tab-movel">
+
+        {% if not tem_equipamentos %}
+        <div class="alert alert-warning">
+            Nenhum equipamento cadastrado ainda. Cadastre em
+            <a href="{% url 'equipamentos' %}">💻 Equipamentos</a> para poder agendar.
+        </div>
+        {% elif not turmas %}
+        <div class="alert alert-warning">
+            Nenhuma turma cadastrada. Cadastre em
+            <a href="{% url 'turmas' %}">👥 Turmas</a> para poder agendar.
+        </div>
+        {% else %}
+
         <p class="text-muted">
-            <span style="color:#2e7d32;">●</span> Muitos disponíveis &nbsp;
+            <span style="color:#2e7d32;">●</span> Bastante disponível &nbsp;
             <span style="color:#ef6c00;">●</span> Cerca de metade &nbsp;
-            <span style="color:#c62828;">●</span> Nenhum disponível
+            <span style="color:#c62828;">●</span> Esgotado &nbsp;—&nbsp;
+            clique na aula e arraste para escolher a quantidade.
         </p>
 
         <form method="post">
             {% csrf_token %}
-            <input type="hidden" name="tipo" value="movel">
+            <input type="hidden" name="tipo" value="dispositivo">
 
-            <div class="form-group" style="max-width:320px;">
-                <label>Tipo de equipamento</label>
-                <select name="equipamento" class="form-control">
-                    {% for nome, total in equipamentos.items %}
-                    <option value="{{ nome }}">{{ nome }} ({{ total }} no total)</option>
-                    {% endfor %}
-                </select>
+            <div class="panel-group" id="acordeao-disp">
+                {% for aula in aulas_disp %}
+                <div class="panel panel-default painel-aula">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" data-parent="#acordeao-disp" href="#disp{{ aula.numero }}">
+                                {{ aula.numero }}ª Aula <small class="text-muted">({{ aula.horario }})</small>
+                                {% if aula.cards %}
+                                <span class="resumo-livres livres-zero" style="float:right;">{{ aula.cards|length }} reserva(s)</span>
+                                {% endif %}
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="disp{{ aula.numero }}" class="panel-collapse collapse">
+                        <div class="panel-body">
+
+                            {% for grupo in aula.grupos %}
+                            <p class="grupo-tipo">{{ grupo.tipo }}</p>
+                            {% for d in grupo.itens %}
+                            <div class="dispo-row dispo-{{ d.status }}">
+                                <div>
+                                    <span class="nome-sala">{{ d.equip.nome }}</span>
+                                    <span class="badge-status bg-{{ d.status }}">{{ d.restante }} / {{ d.total }}</span>
+                                </div>
+                                {% if d.restante > 0 %}
+                                <div class="dispo-controle">
+                                    <input type="range" class="dispo-slider"
+                                           name="qtd_{{ aula.numero }}_{{ d.equip.id }}"
+                                           min="0" max="{{ d.restante }}" value="0"
+                                           oninput="this.parentNode.querySelector('.dispo-valor').textContent = this.value">
+                                    <span class="dispo-valor">0</span>
+                                </div>
+                                {% else %}
+                                <em class="text-muted" style="font-size:13px;">Esgotado nesta aula</em>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                            {% endfor %}
+
+                            {% if aula.cards %}
+                            <hr>
+                            <p class="grupo-tipo">Reservas desta aula</p>
+                            {% for ag in aula.cards %}
+                            <div class="card-reserva">
+                                <strong>{{ ag.turma.nome }}</strong>
+                                <span class="text-muted">— {{ ag.professor.get_full_name|default:ag.professor.username }}</span>
+                                <div style="margin-top:4px;">
+                                    {% for item in ag.itens.all %}
+                                    <span class="label label-primary">{{ item.equipamento.nome }} × {{ item.quantidade }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
 
-            {% for m in moveis %}
-            <label class="aula-item aula-{{ m.status }}">
-                <span class="badge-status bg-{{ m.status }}">
-                    {{ m.disponivel }} / {{ m.total }}
-                </span>
-                <input type="checkbox" class="aula-check" name="aulas" value="{{ m.numero }}"
-                       {% if m.status == 'vermelho' %}disabled{% endif %}>
-                <span class="aula-titulo">{{ m.numero }}ª AULA</span>
-                <span class="aula-horario">({{ m.horario }})</span>
-                <div class="barra">
-                    <span class="bg-{{ m.status }}"
-                          style="width: {% widthratio m.disponivel m.total 100 %}%;"></span>
+            <!-- Turma + observação + botão -->
+            <div class="panel panel-primary" style="margin-top: 18px;">
+                <div class="panel-body">
+                    <div class="form-group" style="max-width: 360px;">
+                        <label>Turma do agendamento</label>
+                        <select name="turma" class="form-control" required>
+                            <option value="">— selecione a turma —</option>
+                            {% for t in turmas %}
+                            <option value="{{ t.id }}">{{ t.nome }} ({{ t.get_turno_display }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Observação (opcional)</label>
+                        <textarea name="observacao" class="form-control" rows="2"
+                                  placeholder="Ex: projeto de robótica, pesquisa, etc."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg">📌 Agendar Equipamentos</button>
                 </div>
-            </label>
-            {% endfor %}
-
-            <div class="text-right" style="margin-top:16px;">
-                <button type="submit" class="btn btn-primary btn-lg">📌 Reservar Equipamentos</button>
             </div>
         </form>
+        {% endif %}
     </div>
 
 </div>
