@@ -1,5 +1,5 @@
 import calendar
-import random
+from collections import defaultdict
 from datetime import date, timedelta
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -8,12 +8,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import IntegrityError
+from django.db.models import Sum
 from django.http import HttpResponse
 from .forms import (
     CadastroForm, BootstrapAuthenticationForm, SalaForm, EquipamentoForm,
     TurmaForm, AlunoForm,
 )
-from .models import Perfil, HistoricoAcao, Sala, Equipamento, Turma, Aluno
+from .models import (
+    Perfil, HistoricoAcao, Sala, Equipamento, Turma, Aluno,
+    Agendamento, ItemDispositivo,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -45,67 +49,6 @@ AULAS_HORARIOS = [
     ('8ª Aula', '13:50 - 14:40'),
     ('9ª Aula', '14:40 - 15:30'),
 ]
-
-# =====================================================================
-# SIMULAÇÃO  ->  trocar por consultas aos models reais depois
-# (quando você criar o cadastro de Salas e Dispositivos)
-# =====================================================================
-DISPOSITIVOS_SIMULADOS = {
-    'Notebooks': 30,
-    'Tablets': 20,
-    'Celulares': 15,
-}
-
-
-def _simular_dia(data):
-    """
-    Gera dados FALSOS porém ESTÁVEIS para a data informada.
-    Como a 'semente' é o número ordinal da data, o mesmo dia sempre
-    retorna o mesmo resultado (não muda a cada refresh).
-
-    Retorna duas listas, uma para 'Sala de Aula' e outra para
-    'Equipamentos Móveis', cada uma com 9 aulas.
-    """
-    rng = random.Random(data.toordinal())
-    professores = ['Prof. Rafael', 'Profa. Ana', 'Prof. Bruno', 'Profa. Carla', 'Prof. Diego']
-    turmas = ['6º A', '6º B', '7º A', '7º C', '8º B', '9º A', '1º EM', '2º EM']
-
-    total_dispositivos = sum(DISPOSITIVOS_SIMULADOS.values())
-
-    salas, moveis = [], []
-    for numero, (nome, horario) in enumerate(AULAS_HORARIOS, start=1):
-
-        # ---- Sala de aula: ocupada (vermelho) ou livre (verde) ----
-        if rng.random() < 0.4:  # 40% de chance de já estar agendada
-            salas.append({
-                'numero': numero, 'nome': nome, 'horario': horario,
-                'ocupado': True,
-                'turma': rng.choice(turmas),
-                'professor': rng.choice(professores),
-            })
-        else:
-            salas.append({
-                'numero': numero, 'nome': nome, 'horario': horario,
-                'ocupado': False,
-            })
-
-        # ---- Equipamentos móveis: quantidade disponível por aula ----
-        disponivel = rng.randint(0, total_dispositivos)
-        ratio = disponivel / total_dispositivos if total_dispositivos else 0
-        if disponivel == 0:
-            status = 'vermelho'      # nenhum disponível
-        elif ratio <= 0.5:
-            status = 'laranja'       # cerca de metade
-        else:
-            status = 'verde'         # muitos disponíveis
-        moveis.append({
-            'numero': numero, 'nome': nome, 'horario': horario,
-            'disponivel': disponivel, 'total': total_dispositivos,
-            'status': status,
-        })
-
-    return salas, moveis
-# =====================================================================
 
 
 def home(request):
@@ -296,8 +239,151 @@ def agendamentos(request):
 
 
 # ---------------------------------------------------------------------------
-# DETALHE DO DIA: escolhe aulas e tipo de agendamento
+# DETALHE DO DIA: agenda salas (real). Dispositivos entram na Etapa 4.
 # ---------------------------------------------------------------------------
+def _processar_agendamento_sala(request, data, ano, mes, dia):
+    """Grava as reservas de sala marcadas no formulário."""
+    turma_id = request.POST.get('turma')
+    selecionadas = request.POST.getlist('reserva')   # ex.: ['1:3', '2:5']
+    observacao = request.POST.get('observacao', '').strip()
+
+    if not turma_id:
+        messages.warning(request, 'Escolha a turma antes de agendar.')
+        return redirect('agendamento_detalhe', ano=ano, mes=mes, dia=dia)
+    if not selecionadas:
+        messages.warning(request, 'Selecione pelo menos uma sala disponível.')
+        return redirect('agendamento_detalhe', ano=ano, mes=mes, dia=dia)
+
+    turma = get_object_or_404(Turma, id=turma_id)
+    criados = 0
+    conflitos = 0
+
+    for item in selecionadas:
+        try:
+            aula_str, sala_str = item.split(':')
+            aula = int(aula_str)
+            sala_id = int(sala_str)
+        except (ValueError, AttributeError):
+            continue
+
+        # Re-checa o conflito na hora de gravar (evita corrida entre dois usuários)
+        ja_existe = Agendamento.objects.filter(
+            data=data, aula=aula, tipo='SALA', sala_id=sala_id
+        ).exists()
+        if ja_existe:
+            conflitos += 1
+            continue
+
+        Agendamento.objects.create(
+            data=data, aula=aula, tipo='SALA',
+            professor=request.user, turma=turma,
+            sala_id=sala_id, observacao=observacao,
+        )
+        criados += 1
+
+    if criados:
+        messages.success(
+            request,
+            f'{criados} reserva(s) de sala realizada(s) para {data:%d/%m/%Y}.'
+        )
+    if conflitos:
+        messages.warning(
+            request,
+            f'{conflitos} sala(s) já tinham sido reservadas nesse meio tempo e foram ignoradas.'
+        )
+    return redirect('agendamento_detalhe', ano=ano, mes=mes, dia=dia)
+
+
+def _disponibilidade_dispositivos(data):
+    """Quantidade já reservada por (aula, equipamento_id) nesse dia."""
+    linhas = (
+        ItemDispositivo.objects
+        .filter(agendamento__data=data, agendamento__tipo='DISPOSITIVO')
+        .values('agendamento__aula', 'equipamento_id')
+        .annotate(total=Sum('quantidade'))
+    )
+    return {(l['agendamento__aula'], l['equipamento_id']): l['total'] for l in linhas}
+
+
+def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
+    """Grava as reservas de equipamentos (valores dos sliders)."""
+    turma_id = request.POST.get('turma')
+    observacao = request.POST.get('observacao', '').strip()
+
+    if not turma_id:
+        messages.warning(request, 'Escolha a turma antes de agendar.')
+        return redirect('agendamento_detalhe', ano=ano, mes=mes, dia=dia)
+
+    # Lê os sliders: campos qtd_<aula>_<equip_id> com valor > 0
+    selecao = defaultdict(dict)   # {aula: {equip_id: qtd}}
+    for chave, valor in request.POST.items():
+        if not chave.startswith('qtd_'):
+            continue
+        try:
+            _, aula_str, equip_str = chave.split('_')
+            qtd = int(valor)
+        except (ValueError, AttributeError):
+            continue
+        if qtd > 0:
+            selecao[int(aula_str)][int(equip_str)] = qtd
+
+    if not selecao:
+        messages.warning(request, 'Arraste pelo menos um slider para reservar algum equipamento.')
+        return redirect('agendamento_detalhe', ano=ano, mes=mes, dia=dia)
+
+    turma = get_object_or_404(Turma, id=turma_id)
+    reservado = _disponibilidade_dispositivos(data)
+    estoque = {e.id: e.quantidade for e in Equipamento.objects.filter(ativo=True)}
+
+    aulas_agendadas = 0
+    ajustes = 0
+
+    for aula, itens in selecao.items():
+        itens_validos = []
+        for equip_id, qtd in itens.items():
+            total = estoque.get(equip_id)
+            if total is None:
+                continue
+            disponivel = total - reservado.get((aula, equip_id), 0)
+            if disponivel <= 0:
+                ajustes += 1
+                continue
+            usar = min(qtd, disponivel)   # nunca passa do estoque
+            if usar < qtd:
+                ajustes += 1
+            itens_validos.append((equip_id, usar))
+
+        if not itens_validos:
+            continue
+
+        agendamento = Agendamento.objects.create(
+            data=data, aula=aula, tipo='DISPOSITIVO',
+            professor=request.user, turma=turma,
+            sala=None, observacao=observacao,
+        )
+        for equip_id, usar in itens_validos:
+            ItemDispositivo.objects.create(
+                agendamento=agendamento, equipamento_id=equip_id, quantidade=usar
+            )
+            # mantém o controle coerente se a mesma aula tiver vários itens
+            reservado[(aula, equip_id)] = reservado.get((aula, equip_id), 0) + usar
+        aulas_agendadas += 1
+
+    if aulas_agendadas:
+        messages.success(
+            request,
+            f'Equipamentos reservados em {aulas_agendadas} aula(s) no dia {data:%d/%m/%Y}.'
+        )
+    if ajustes:
+        messages.warning(
+            request,
+            f'{ajustes} item(ns) reduzido(s) ou ignorado(s) por falta de estoque disponível.'
+        )
+    if not aulas_agendadas:
+        messages.warning(request, 'Nenhum equipamento pôde ser reservado (estoque esgotado).')
+    return redirect('agendamento_detalhe', ano=ano, mes=mes, dia=dia)
+
+
 @login_required
 def agendamento_detalhe(request, ano, mes, dia):
     if not hasattr(request.user, 'perfil') or not request.user.perfil.aprovado:
@@ -309,32 +395,81 @@ def agendamento_detalhe(request, ano, mes, dia):
         messages.error(request, 'Data inválida.')
         return redirect('agendamentos')
 
-    # ----- Envio do formulário de reserva (simulado, sem salvar no banco) -----
     if request.method == 'POST':
-        tipo = request.POST.get('tipo')           # 'sala' ou 'movel'
-        aulas = request.POST.getlist('aulas')     # ex.: ['1', '3', '4']
-
-        if not aulas:
-            messages.warning(request, 'Selecione pelo menos uma aula para agendar.')
-        else:
-            lista_aulas = ', '.join(f'{a}ª' for a in sorted(aulas, key=int))
-            if tipo == 'movel':
-                equipamento = request.POST.get('equipamento', 'Equipamentos')
-                messages.success(
-                    request,
-                    f'(Simulação) {equipamento} reservados nas aulas {lista_aulas} '
-                    f'do dia {data:%d/%m/%Y}.'
-                )
-            else:
-                messages.success(
-                    request,
-                    f'(Simulação) Sala de aula reservada nas aulas {lista_aulas} '
-                    f'do dia {data:%d/%m/%Y}.'
-                )
+        if request.POST.get('tipo') == 'sala':
+            return _processar_agendamento_sala(request, data, ano, mes, dia)
+        if request.POST.get('tipo') == 'dispositivo':
+            return _processar_agendamento_dispositivo(request, data, ano, mes, dia)
         return redirect('agendamento_detalhe', ano=ano, mes=mes, dia=dia)
 
-    # ----- Exibição -----
-    salas, moveis = _simular_dia(data)
+    # ----- Monta a grade de salas por aula -----
+    salas_ativas = list(Sala.objects.filter(ativo=True))
+
+    # Reservas de sala já existentes nesse dia, indexadas por (aula, sala_id)
+    reservas = (
+        Agendamento.objects
+        .filter(data=data, tipo='SALA')
+        .select_related('sala', 'turma', 'professor')
+    )
+    ocupacao = {(r.aula, r.sala_id): r for r in reservas}
+
+    aulas = []
+    for numero, (nome, horario) in enumerate(AULAS_HORARIOS, start=1):
+        linha_salas = []
+        livres = 0
+        for sala in salas_ativas:
+            reserva = ocupacao.get((numero, sala.id))
+            if reserva:
+                prof = reserva.professor.get_full_name() or reserva.professor.username
+                linha_salas.append({
+                    'sala': sala, 'ocupado': True,
+                    'turma': reserva.turma.nome, 'professor': prof,
+                })
+            else:
+                linha_salas.append({'sala': sala, 'ocupado': False})
+                livres += 1
+        aulas.append({
+            'numero': numero, 'nome': nome, 'horario': horario,
+            'salas': linha_salas, 'livres': livres, 'total': len(salas_ativas),
+        })
+
+    # ----- Monta a grade de dispositivos por aula -----
+    equipamentos_ativos = list(Equipamento.objects.filter(ativo=True))
+    reservado_disp = _disponibilidade_dispositivos(data)
+
+    # Reservas de dispositivos já existentes, agrupadas por aula (para os cards)
+    ags_disp = (
+        Agendamento.objects
+        .filter(data=data, tipo='DISPOSITIVO')
+        .select_related('turma', 'professor')
+        .prefetch_related('itens__equipamento')
+        .order_by('aula')
+    )
+    cards_por_aula = defaultdict(list)
+    for ag in ags_disp:
+        cards_por_aula[ag.aula].append(ag)
+
+    aulas_disp = []
+    for numero, (nome, horario) in enumerate(AULAS_HORARIOS, start=1):
+        grupos = {}
+        for equip in equipamentos_ativos:
+            restante = max(equip.quantidade - reservado_disp.get((numero, equip.id), 0), 0)
+            ratio = restante / equip.quantidade if equip.quantidade else 0
+            if restante == 0:
+                status = 'vermelho'      # nenhum disponível
+            elif ratio <= 0.5:
+                status = 'laranja'       # cerca de metade
+            else:
+                status = 'verde'         # muitos disponíveis
+            grupos.setdefault(equip.get_tipo_display(), []).append({
+                'equip': equip, 'restante': restante,
+                'total': equip.quantidade, 'status': status,
+            })
+        aulas_disp.append({
+            'numero': numero, 'nome': nome, 'horario': horario,
+            'grupos': [{'tipo': k, 'itens': v} for k, v in grupos.items()],
+            'cards': cards_por_aula.get(numero, []),
+        })
 
     context = {
         'title': f'Agendamento {data:%d/%m/%Y}',
@@ -342,9 +477,11 @@ def agendamento_detalhe(request, ano, mes, dia):
         'ano': ano, 'mes': mes, 'dia': dia,
         'dia_semana': DIAS_SEMANA_LONGO[data.weekday()],
         'mes_nome': MESES_PT[mes - 1],
-        'salas': salas,
-        'moveis': moveis,
-        'equipamentos': DISPOSITIVOS_SIMULADOS,
+        'aulas': aulas,
+        'aulas_disp': aulas_disp,
+        'turmas': Turma.objects.all(),
+        'tem_salas': bool(salas_ativas),
+        'tem_equipamentos': bool(equipamentos_ativos),
     }
     return render(request, 'app/agendamento_detalhe.html', context)
 
