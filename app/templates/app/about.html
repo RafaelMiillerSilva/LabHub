@@ -2,9 +2,53 @@
 
 {% block content %}
 
-<h2>{{ title }}.</h2>
-<h3>{{ message }}</h3>
+<div class="jumbotron" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color:#fff; padding: 40px 24px; border-radius: 12px;">
+    <h1 style="margin-top:0;">Sobre o LabHub</h1>
+    <p class="lead" style="margin-bottom:0;">
+        Sistema interno para gerenciar e agendar salas e equipamentos da escola,
+        evitando conflitos de horário e organizando o uso dos recursos.
+    </p>
+</div>
 
-<p>Use this area to provide additional information.</p>
+<div class="row">
+    <div class="col-md-8">
+        <h3>O que é</h3>
+        <p>
+            O LabHub centraliza as reservas de <strong>salas de aula</strong> e de
+            <strong>equipamentos móveis</strong> (notebooks, tablets, celulares e projetores)
+            em um só lugar. Cada dia é dividido em <strong>9 aulas</strong>, e os professores
+            reservam o que precisam para cada horário de forma rápida, pelo computador ou pelo celular.
+        </p>
+
+        <h3>Como funciona</h3>
+        <p>
+            Os professores se cadastram e, após a aprovação de um administrador, passam a acessar
+            o calendário. Ao escolher um dia, é possível reservar uma sala livre ou separar uma
+            quantidade de equipamentos para cada aula — sempre respeitando o que está disponível.
+            Salas já ocupadas aparecem em vermelho com a turma e o professor responsáveis, e o
+            estoque de equipamentos é controlado automaticamente para nunca passar do total existente.
+        </p>
+
+        <h3>Para os administradores</h3>
+        <p>
+            Os administradores aprovam (ou recusam) os cadastros de professores e mantêm os
+            cadastros de <strong>turmas e alunos</strong>, <strong>salas</strong> e
+            <strong>equipamentos</strong> — inclusive importando a lista de alunos por planilha.
+        </p>
+    </div>
+
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading"><h3 class="panel-title">Recursos principais</h3></div>
+            <ul class="list-group">
+                <li class="list-group-item">📅 Calendário com agendamento por aula</li>
+                <li class="list-group-item">🏫 Reserva de salas sem conflito</li>
+                <li class="list-group-item">💻 Controle de estoque de equipamentos</li>
+                <li class="list-group-item">👥 Turmas e alunos (com importação)</li>
+                <li class="list-group-item">📋 Visão geral do dia e cancelamento de reservas</li>
+            </ul>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

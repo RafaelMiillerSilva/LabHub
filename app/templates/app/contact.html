@@ -2,19 +2,41 @@
 
 {% block content %}
 
-<h2>{{ title }}.</h2>
-<h3>{{ message }}</h3>
+<h2>📞 Contato e Suporte</h2>
+<p class="lead">Precisa de ajuda com o LabHub ou com uma reserva? Fale com a coordenação.</p>
 
-<address>
-    One Microsoft Way<br />
-    Redmond, WA 98052-6399<br />
-    <abbr title="Phone">P:</abbr>
-    425.555.0100
-</address>
+<div class="row" style="margin-top: 20px;">
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading"><h3 class="panel-title">Coordenação / Secretaria</h3></div>
+            <div class="panel-body">
+                <p><strong>E-mail:</strong> <a href="mailto:coordenacao@suaescola.edu.br">coordenacao@suaescola.edu.br</a></p>
+                <p><strong>Telefone:</strong> (00) 0000-0000</p>
+                <p><strong>Horário:</strong> Segunda a sexta, das 7h às 17h</p>
+                <p class="text-muted" style="margin-bottom:0;">
+                    Para problemas de acesso (cadastro não aprovado, senha), procure a secretaria.
+                </p>
+            </div>
+        </div>
+    </div>
 
-<address>
-    <strong>Support:</strong>   <a href="mailto:Support@example.com">Support@example.com</a><br />
-    <strong>Marketing:</strong> <a href="mailto:Marketing@example.com">Marketing@example.com</a>
-</address>
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading"><h3 class="panel-title">Suporte técnico (TI)</h3></div>
+            <div class="panel-body">
+                <p><strong>E-mail:</strong> <a href="mailto:ti@suaescola.edu.br">ti@suaescola.edu.br</a></p>
+                <p><strong>Ramal:</strong> 000</p>
+                <p class="text-muted" style="margin-bottom:0;">
+                    Para falhas no sistema, equipamentos com defeito ou dúvidas sobre o uso do LabHub.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info" style="margin-top: 10px;">
+    💡 Dica: ao reservar equipamentos, confira a disponibilidade da aula antes — o sistema mostra
+    quantos aparelhos ainda estão livres em cada horário.
+</div>
 
 {% endblock %}
