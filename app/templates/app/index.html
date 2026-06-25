@@ -1,6 +1,119 @@
 {% extends "app/layout.html" %}
 
 {% block content %}
+
+{% if dashboard %}
+<!-- ============================ PAINEL DO DIA ============================ -->
+<div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color:#fff; padding: 26px 24px; border-radius: 12px;">
+    <h1 style="margin:0 0 4px;">Olá, {{ user.username }}! 👋</h1>
+    <p class="lead" style="margin:0; opacity:.95;">
+        {{ dia_semana }}, {{ hoje_dia }} de {{ mes_nome }} de {{ hoje_ano }} — visão geral de hoje.
+    </p>
+    <div style="margin-top:16px;">
+        <a href="{% url 'agendamento_detalhe' hoje_ano hoje_mes hoje_dia %}" class="btn btn-default">📅 Agendar hoje</a>
+        <a href="{% url 'agendamentos' %}" class="btn btn-default">🗓️ Calendário completo</a>
+        {% if is_admin %}
+        <a href="{% url 'painel' %}" class="btn btn-default">🛠️ Painel Admin</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Cards de resumo -->
+<div class="row" style="margin-top: 20px;">
+    <div class="col-md-4 col-sm-6" style="margin-bottom:15px;">
+        <div class="panel panel-default" style="border-top: 3px solid #2e7d32;">
+            <div class="panel-body text-center">
+                <div style="font-size: 36px; font-weight: 800; color:#1e3c72;">{{ total_sala }}</div>
+                <div class="text-muted">🏫 Reservas de sala hoje</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-sm-6" style="margin-bottom:15px;">
+        <div class="panel panel-default" style="border-top: 3px solid #ef6c00;">
+            <div class="panel-body text-center">
+                <div style="font-size: 36px; font-weight: 800; color:#1e3c72;">{{ total_disp }}</div>
+                <div class="text-muted">💻 Reservas de equipamento hoje</div>
+            </div>
+        </div>
+    </div>
+    {% if is_admin %}
+    <div class="col-md-4 col-sm-6" style="margin-bottom:15px;">
+        <div class="panel panel-default" style="border-top: 3px solid #d9534f;">
+            <div class="panel-body text-center">
+                <div style="font-size: 36px; font-weight: 800; color:#1e3c72;">{{ solicitacoes_pendentes }}</div>
+                <div class="text-muted">🕐 Solicitações de acesso pendentes</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Salas reservadas hoje -->
+<div class="panel panel-default">
+    <div class="panel-heading"><h3 class="panel-title">🏫 Salas reservadas hoje</h3></div>
+    <div class="panel-body">
+        <div class="table-responsive">
+            <table class="table table-striped" style="margin-bottom:0;">
+                <thead>
+                    <tr><th class="text-center">Aula</th><th>Sala</th><th>Turma</th><th>Professor</th></tr>
+                </thead>
+                <tbody>
+                    {% for r in reservas_sala %}
+                    <tr>
+                        <td class="text-center">{{ r.aula }}ª</td>
+                        <td><strong>{{ r.sala.nome }}</strong></td>
+                        <td>{{ r.turma.nome }}</td>
+                        <td>{{ r.professor.get_full_name|default:r.professor.username }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center text-muted" style="padding:24px;"><em>Nenhuma sala reservada para hoje.</em></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Equipamentos reservados hoje -->
+<div class="panel panel-default">
+    <div class="panel-heading"><h3 class="panel-title">💻 Equipamentos reservados hoje</h3></div>
+    <div class="panel-body">
+        <div class="table-responsive">
+            <table class="table table-striped" style="margin-bottom:0;">
+                <thead>
+                    <tr><th class="text-center">Aula</th><th>Equipamentos</th><th>Turma</th><th>Professor</th></tr>
+                </thead>
+                <tbody>
+                    {% for r in reservas_disp %}
+                    <tr>
+                        <td class="text-center">{{ r.aula }}ª</td>
+                        <td>
+                            {% for item in r.itens.all %}
+                            <span class="label label-primary">{{ item.equipamento.nome }} × {{ item.quantidade }}</span>
+                            {% endfor %}
+                        </td>
+                        <td>{{ r.turma.nome }}</td>
+                        <td>{{ r.professor.get_full_name|default:r.professor.username }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center text-muted" style="padding:24px;"><em>Nenhum equipamento reservado para hoje.</em></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% elif msg_pendente %}
+<!-- ===================== CONTA AGUARDANDO APROVAÇÃO ===================== -->
+<div class="jumbotron text-center" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 50px 20px; border-radius: 10px;">
+    <h1>LabHub</h1>
+    <p class="lead">Sua conta foi criada e está <strong>aguardando aprovação</strong> de um administrador.</p>
+    <p>Assim que for aprovada, você poderá acessar o calendário e fazer agendamentos.</p>
+</div>
+
+{% else %}
+<!-- ============================ TELA PÚBLICA ============================ -->
 <div class="jumbotron text-center" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 60px 20px; border-radius: 10px;">
     <h1>LabHub</h1>
     <p class="lead">Sistema interno de gerenciamento e agendamento de equipamentos escolares.</p>
@@ -45,7 +158,7 @@
 
                 <div class="tab-content">
                     <div role="tabpanel" class="tab-pane active" id="loginTab">
-                        
+
                         {% if form_login.errors %}
                         <div class="alert alert-danger" style="padding: 8px 12px; margin-bottom: 15px; font-size: 13px;">
                             <ul style="margin: 0; padding-left: 15px;">
@@ -64,9 +177,7 @@
                                 <label>Senha</label>
                                 {{ form_login.password }}
                             </div>
-                            
                             <input type="hidden" name="next" value="/" />
-                            
                             <button type="submit" name="btn_login" class="btn btn-success btn-block">Entrar</button>
                         </form>
                     </div>
@@ -126,25 +237,24 @@
 </div>
 {% endif %}
 
+{% endif %}
+
 {% endblock %}
 
 {% block scripts %}
+{% if not user.is_authenticated %}
 <script>
     $(document).ready(function () {
-        // Se o usuário não estiver logado, força a abertura do pop-up automaticamente na tela inicial
         if ($('#authModal').length > 0) {
             $('#authModal').modal('show');
         }
-
-        // Se houver erros no cadastro, garante que o pop-up abre direto na aba de cadastro
         {% if form_cadastro.errors %}
         $('.nav-tabs a[href="#cadastroTab"]').tab('show');
         {% endif %}
-
-        // Mantém a aba de cadastro ativa se houver uma mensagem de sucesso nela
         {% if msg_sucesso_cadastro %}
         $('.nav-tabs a[href="#cadastroTab"]').tab('show');
         {% endif %}
     });
 </script>
+{% endif %}
 {% endblock %}
