@@ -19,6 +19,8 @@ urlpatterns = [
     path('agendamentos/',                 views.agendamentos,   name='agendamentos'),
     path('agendamentos/<int:ano>/<int:mes>/<int:dia>/',
          views.agendamento_detalhe, name='agendamento_detalhe'),
+    path('reserva/cancelar/<int:agendamento_id>/',
+         views.cancelar_reserva, name='cancelar_reserva'),
 
     # Cadastro de salas (somente admin)
     path('salas/',                        views.salas,          name='salas'),

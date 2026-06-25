@@ -51,18 +51,52 @@ AULAS_HORARIOS = [
 ]
 
 
+def _home_dashboard(request):
+    """Painel do dia mostrado na tela inicial para usuários aprovados."""
+    hoje = date.today()
+
+    reservas = (
+        Agendamento.objects
+        .filter(data=hoje)
+        .select_related('sala', 'turma', 'professor')
+        .prefetch_related('itens__equipamento')
+        .order_by('aula')
+    )
+    reservas_sala = [r for r in reservas if r.tipo == 'SALA']
+    reservas_disp = [r for r in reservas if r.tipo == 'DISPOSITIVO']
+
+    is_admin = request.user.perfil.tipo == 'ADMINISTRADOR'
+
+    context = {
+        'title': 'Início',
+        'dashboard': True,
+        'hoje': hoje,
+        'dia_semana': DIAS_SEMANA_LONGO[hoje.weekday()],
+        'mes_nome': MESES_PT[hoje.month - 1],
+        'hoje_ano': hoje.year, 'hoje_mes': hoje.month, 'hoje_dia': hoje.day,
+        'reservas_sala': reservas_sala,
+        'reservas_disp': reservas_disp,
+        'total_sala': len(reservas_sala),
+        'total_disp': len(reservas_disp),
+        'is_admin': is_admin,
+    }
+    if is_admin:
+        context['solicitacoes_pendentes'] = Perfil.objects.filter(aprovado=False).count()
+
+    return render(request, 'app/index.html', context)
+
+
 def home(request):
+    # Usuário logado e aprovado -> painel do dia (sem redirecionar)
     if request.user.is_authenticated:
         if hasattr(request.user, 'perfil') and request.user.perfil.aprovado:
-            if request.user.perfil.tipo == 'ADMINISTRADOR':
-                return redirect('painel')
-            return redirect('agendamentos')
-        else:
-            return render(request, 'app/index.html', {
-                'form_login': BootstrapAuthenticationForm(),
-                'form_cadastro': CadastroForm(),
-                'msg_pendente': True
-            })
+            return _home_dashboard(request)
+        # Logado mas ainda não aprovado
+        return render(request, 'app/index.html', {
+            'form_login': BootstrapAuthenticationForm(),
+            'form_cadastro': CadastroForm(),
+            'msg_pendente': True
+        })
 
     form_login = BootstrapAuthenticationForm()
     form_cadastro = CadastroForm()
@@ -74,7 +108,7 @@ def home(request):
                 user = form_login.get_user()
                 if hasattr(user, 'perfil') and user.perfil.aprovado:
                     login(request, user)
-                    return redirect('painel') if user.perfil.tipo == 'ADMINISTRADOR' else redirect('agendamentos')
+                    return redirect('home')   # sempre cai no painel do dia
                 else:
                     return render(request, 'app/index.html', {
                         'form_login': form_login,
@@ -199,8 +233,7 @@ def agendamentos(request):
     if not (1 <= mes <= 12):
         mes = hoje.month
 
-    # Monta a grade do mês com a semana começando no Domingo.
-    # No módulo 'calendar', firstweekday=6 corresponde a Domingo.
+    # Grade do mês com a semana começando no Domingo.
     cal = calendar.Calendar(firstweekday=6)
     semanas = []
     for semana in cal.monthdayscalendar(ano, mes):
@@ -209,9 +242,11 @@ def agendamentos(request):
             if dia == 0:
                 linha.append(None)  # célula vazia (dia de outro mês)
             else:
+                dia_data = date(ano, mes, dia)
                 linha.append({
                     'numero': dia,
-                    'hoje': (dia == hoje.day and mes == hoje.month and ano == hoje.year),
+                    'hoje': (dia_data == hoje),
+                    'passado': (dia_data < hoje),
                 })
         semanas.append(linha)
 
@@ -219,6 +254,15 @@ def agendamentos(request):
     primeiro_dia = date(ano, mes, 1)
     mes_anterior = primeiro_dia - timedelta(days=1)
     proximo_mes = (primeiro_dia.replace(day=28) + timedelta(days=4)).replace(day=1)
+
+    # Minhas reservas (de hoje em diante), para a seção abaixo do calendário
+    minhas_reservas = (
+        Agendamento.objects
+        .filter(professor=request.user, data__gte=hoje)
+        .select_related('sala', 'turma')
+        .prefetch_related('itens__equipamento')
+        .order_by('data', 'aula')
+    )
 
     context = {
         'title': 'Agendamentos',
@@ -231,9 +275,12 @@ def agendamentos(request):
         'ano_ant': mes_anterior.year, 'mes_ant': mes_anterior.month,
         'ano_prox': proximo_mes.year, 'mes_prox': proximo_mes.month,
         'hoje_ano': hoje.year, 'hoje_mes': hoje.month,
-        # dropdowns "clicáveis" de mês e ano
+        # dropdowns
         'lista_meses': list(enumerate(MESES_PT, start=1)),
         'lista_anos': range(hoje.year - 2, hoje.year + 4),
+        # novos
+        'is_admin': request.user.perfil.tipo == 'ADMINISTRADOR',
+        'minhas_reservas': minhas_reservas,
     }
     return render(request, 'app/agendamentos.html', context)
 
@@ -393,6 +440,15 @@ def agendamento_detalhe(request, ano, mes, dia):
         data = date(ano, mes, dia)
     except ValueError:
         messages.error(request, 'Data inválida.')
+        return redirect('agendamentos')
+
+    # Bloqueio de data passada: professor não agenda; admin pode prosseguir
+    is_admin = request.user.perfil.tipo == 'ADMINISTRADOR'
+    if data < date.today() and not is_admin:
+        messages.warning(
+            request,
+            f'{data:%d/%m/%Y} é uma data passada — não é possível agendar.'
+        )
         return redirect('agendamentos')
 
     if request.method == 'POST':
@@ -832,6 +888,30 @@ def modelo_planilha_alunos(request):
     writer.writerow(['João da Silva', '12345'])
     writer.writerow(['Maria Souza', '12346'])
     return response
+
+
+# ---------------------------------------------------------------------------
+# CANCELAR UMA RESERVA (o próprio professor, ou um admin)
+# ---------------------------------------------------------------------------
+@login_required
+def cancelar_reserva(request, agendamento_id):
+    if not (hasattr(request.user, 'perfil') and request.user.perfil.aprovado):
+        return redirect('home')
+
+    if request.method == 'POST':
+        ag = get_object_or_404(Agendamento, id=agendamento_id)
+        is_admin = request.user.perfil.tipo == 'ADMINISTRADOR'
+
+        # Só o dono da reserva ou um admin pode cancelar
+        if ag.professor_id != request.user.id and not is_admin:
+            messages.error(request, 'Você só pode cancelar as suas próprias reservas.')
+            return redirect('agendamentos')
+
+        # Deletar o agendamento remove os itens de dispositivo em cascata
+        ag.delete()
+        messages.warning(request, 'Reserva cancelada com sucesso.')
+
+    return redirect('agendamentos')
 
 
 def about(request):

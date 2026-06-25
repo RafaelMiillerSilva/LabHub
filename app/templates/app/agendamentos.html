@@ -17,7 +17,6 @@
         border-bottom: 3px solid #1e3c72;
     }
 
-    /* Ano em destaque (igual ao esboço) */
     .cal-ano > button {
         background: #f6c9bf;
         color: #1e3c72;
@@ -97,11 +96,32 @@
             color: #fff;
             border-color: #1e3c72;
         }
+
+        .cal-dia.passado {
+            opacity: .4;
+        }
+
+            .cal-dia.passado:hover {
+                background: #b0413e;
+                box-shadow: none;
+                transform: none;
+            }
 </style>
 
-<div class="cal-card">
+{% if messages %}
+<div style="max-width:760px; margin:0 auto 15px;">
+    {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% elif message.tags == 'info' %}info{% else %}success{% endif %} alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 
-    <!-- Cabeçalho: ANO (esquerda) | MÊS (direita) -->
+<div class="cal-card">
     <div class="cal-header">
         <div class="row">
             <div class="col-xs-6">
@@ -133,8 +153,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Setas e atalho "Hoje" -->
         <div class="cal-nav text-center">
             <a href="?ano={{ ano_ant }}&mes={{ mes_ant }}" class="btn btn-xs btn-default">◀ Mês anterior</a>
             <a href="?ano={{ hoje_ano }}&mes={{ hoje_mes }}" class="btn btn-xs btn-primary">Hoje</a>
@@ -142,14 +160,9 @@
         </div>
     </div>
 
-    <!-- Grade do mês -->
     <table class="cal-table">
         <thead>
-            <tr>
-                {% for d in dias_semana %}
-                <th>{{ d|upper }}</th>
-                {% endfor %}
-            </tr>
+            <tr>{% for d in dias_semana %}<th>{{ d|upper }}</th>{% endfor %}</tr>
         </thead>
         <tbody>
             {% for semana in semanas %}
@@ -158,8 +171,8 @@
                 <td>
                     {% if dia %}
                     <a href="{% url 'agendamento_detalhe' ano mes dia.numero %}"
-                       class="cal-dia {% if dia.hoje %}hoje{% endif %}"
-                       title="Agendar dia {{ dia.numero }}">
+                       class="cal-dia {% if dia.hoje %}hoje{% endif %} {% if dia.passado %}passado{% endif %}"
+                       title="Dia {{ dia.numero }}">
                         {{ dia.numero }}
                     </a>
                     {% endif %}
@@ -175,4 +188,99 @@
     Clique em um dia para ver as 9 aulas e agendar a sala ou os equipamentos.
 </p>
 
+<!-- ===================== MINHAS RESERVAS ===================== -->
+<div class="panel panel-default" style="max-width:760px; margin: 20px auto 0;">
+    <div class="panel-heading">
+        <h3 class="panel-title">📋 Minhas reservas (de hoje em diante)</h3>
+    </div>
+    <div class="panel-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover" style="margin-bottom:0;">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th class="text-center">Aula</th>
+                        <th>Reserva</th>
+                        <th>Turma</th>
+                        <th class="text-center">Cancelar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ag in minhas_reservas %}
+                    <tr>
+                        <td>{{ ag.data|date:"d/m/Y" }}</td>
+                        <td class="text-center">{{ ag.aula }}ª</td>
+                        <td>
+                            {% if ag.tipo == 'SALA' %}
+                            🏫 {{ ag.sala.nome }}
+                            {% else %}
+                            💻 {% for item in ag.itens.all %}{{ item.equipamento.nome }} ×{{ item.quantidade }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                            {% endif %}
+                        </td>
+                        <td>{{ ag.turma.nome }}</td>
+                        <td class="text-center">
+                            <form action="{% url 'cancelar_reserva' ag.id %}" method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-xs btn-danger"
+                                        onclick="return confirm('Cancelar esta reserva de {{ ag.data|date:'d/m/Y' }}, {{ ag.aula }}ª aula?')">
+                                    🗑️ Cancelar
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted" style="padding: 24px;">
+                            <em>Você não tem reservas futuras. Clique em um dia para agendar.</em>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== POPUP DE DATA PASSADA ===================== -->
+<div class="modal fade" id="modalPassado" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">⚠️ Data passada</h4>
+            </div>
+            <div class="modal-body">
+                <p>O dia selecionado já passou.</p>
+                {% if is_admin %}
+                <p class="text-muted">Como administrador, você pode prosseguir mesmo assim.</p>
+                {% else %}
+                <p class="text-muted">Não é possível fazer agendamentos em datas passadas.</p>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+                {% if is_admin %}
+                <a id="proceedPastLink" href="#" class="btn btn-primary">Prosseguir</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        // Intercepta clique em dias passados
+        $('.cal-dia.passado').on('click', function (e) {
+            e.preventDefault();
+            var url = $(this).attr('href');
+            $('#proceedPastLink').attr('href', url);
+            $('#modalPassado').modal('show');
+        });
+    });
+</script>
 {% endblock %}
