@@ -1,0 +1,132 @@
+{% extends "app/layout.html" %}
+{% block content %}
+
+<div style="margin-bottom: 18px;">
+    <a href="{% url 'equipamentos' %}" style="font-size: 14px;">&larr; Voltar para Equipamentos</a>
+    <h2 style="margin-top:6px;">
+        {% if editando %}✏️ Editar Equipamento{% else %}➕ Cadastrar Equipamento{% endif %}
+    </h2>
+</div>
+
+{% if form.errors %}
+<div class="alert alert-danger">
+    <ul style="margin:0; padding-left:18px;">
+        {% for field in form %}{% for error in field.errors %}
+        <li>{{ field.label }}: {{ error }}</li>
+        {% endfor %}{% endfor %}
+        {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>{% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-7">
+        <div class="panel panel-primary">
+            <div class="panel-heading"><h3 class="panel-title">Dados do equipamento</h3></div>
+            <div class="panel-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label>Foto (opcional)</label>
+                        {% if editando.tem_foto %}
+                        <div style="margin-bottom:8px;">
+                            <img src="{% url 'foto_equipamento' editando.id %}" alt="foto atual"
+                                 style="max-height:130px; border-radius:8px; border:1px solid #e3e6ee;">
+                            <label class="checkbox-inline" style="margin-left:12px;">
+                                {{ form.remover_foto }} Remover foto
+                            </label>
+                        </div>
+                        {% endif %}
+                        {{ form.foto }}
+                        <span class="help-block" style="font-size:12px;">
+                            A imagem é reduzida e comprimida automaticamente e guardada no banco de dados.
+                        </span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        {{ form.categoria }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Apelido</label>
+                        {{ form.apelido }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Identificação da escola</label>
+                        {{ form.identificacao_escola }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-6 form-group">
+                            <label>Número de patrimônio</label>
+                            {{ form.numero_patrimonio }}
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label>Número de série</label>
+                            {{ form.numero_serie }}
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="grupo-imei">
+                        <label>IMEI <small class="text-muted">(apenas tablets e smartphones)</small></label>
+                        {{ form.imei }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status</label>
+                        {{ form.status }}
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-lg">
+                        {% if editando %}💾 Salvar Alterações{% else %}✅ Cadastrar{% endif %}
+                    </button>
+                    <a href="{% url 'equipamentos' %}" class="btn btn-default btn-lg">Cancelar</a>
+
+                    {% if editando %}
+                    <hr>
+                    <a href="{% url 'etiqueta_equipamento' editando.id %}" class="btn btn-info">🏷️ Baixar etiqueta</a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% if editando %}
+    <div class="col-md-5">
+        <div class="panel panel-default">
+            <div class="panel-heading"><h3 class="panel-title">Excluir</h3></div>
+            <div class="panel-body">
+                <p class="text-muted">Remove este equipamento permanentemente.</p>
+                <form action="{% url 'equipamento_excluir' editando.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger"
+                            onclick="return confirm('Remover o equipamento {{ editando.apelido }}?')">
+                        🗑️ Excluir equipamento
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        var comChip = {{ categorias_com_chip|safe }};
+        var sel = document.getElementById('id_categoria');
+        var grupo = document.getElementById('grupo-imei');
+        function toggle() {
+            var mostra = comChip.indexOf(sel.value) !== -1;
+            grupo.style.display = mostra ? '' : 'none';
+        }
+        if (sel && grupo) { toggle(); sel.addEventListener('change', toggle); }
+    })();
+</script>
+{% endblock %}

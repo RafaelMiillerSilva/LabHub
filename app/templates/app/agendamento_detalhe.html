@@ -322,18 +322,16 @@
                         <div class="panel-body">
 
                             {% for grupo in aula.grupos %}
-                            <p class="grupo-tipo">{{ grupo.tipo }}</p>
-                            {% for d in grupo.itens %}
-                            <div class="dispo-row dispo-{{ d.status }}">
+                            <div class="dispo-row dispo-{{ grupo.status }}">
                                 <div>
-                                    <span class="nome-sala">{{ d.equip.nome }}</span>
-                                    <span class="badge-status bg-{{ d.status }}">{{ d.restante }} / {{ d.total }}</span>
+                                    <span class="nome-sala">{{ grupo.label }}</span>
+                                    <span class="badge-status bg-{{ grupo.status }}">{{ grupo.restante }} / {{ grupo.total }}</span>
                                 </div>
-                                {% if d.restante > 0 %}
+                                {% if grupo.restante > 0 %}
                                 <div class="dispo-controle">
                                     <input type="range" class="dispo-slider"
-                                           name="qtd_{{ aula.numero }}_{{ d.equip.id }}"
-                                           min="0" max="{{ d.restante }}" value="0"
+                                           name="qtd_{{ aula.numero }}_{{ grupo.categoria }}"
+                                           min="0" max="{{ grupo.restante }}" value="0"
                                            oninput="this.parentNode.querySelector('.dispo-valor').textContent = this.value">
                                     <span class="dispo-valor">0</span>
                                 </div>
@@ -341,7 +339,6 @@
                                 <em class="text-muted" style="font-size:13px;">Esgotado nesta aula</em>
                                 {% endif %}
                             </div>
-                            {% endfor %}
                             {% endfor %}
 
                             {% if aula.cards %}
@@ -353,7 +350,7 @@
                                 <span class="text-muted">— {{ ag.professor.get_full_name|default:ag.professor.username }}</span>
                                 <div style="margin-top:4px;">
                                     {% for item in ag.itens.all %}
-                                    <span class="label label-primary">{{ item.equipamento.nome }} × {{ item.quantidade }}</span>
+                                    <span class="label label-primary">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
                                     {% endfor %}
                                 </div>
                                 <a href="{% url 'relacao_agendamento' ag.id %}" class="btn btn-xs btn-default" style="margin-top:6px;">📋 Relação</a>

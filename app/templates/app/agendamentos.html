@@ -215,7 +215,7 @@
                             {% if ag.tipo == 'SALA' %}
                             🏫 {{ ag.sala.nome }}
                             {% else %}
-                            💻 {% for item in ag.itens.all %}{{ item.equipamento.nome }} ×{{ item.quantidade }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                            💻 {% for item in ag.itens.all %}{{ item.get_categoria_display }} ×{{ item.quantidade }}{% if not forloop.last %}, {% endif %}{% endfor %}
                             {% endif %}
                         </td>
                         <td>{{ ag.turma.nome }}</td>

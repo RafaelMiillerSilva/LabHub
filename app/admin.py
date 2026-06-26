@@ -20,9 +20,9 @@ class SalaAdmin(admin.ModelAdmin):
 
 @admin.register(Equipamento)
 class EquipamentoAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'tipo', 'quantidade', 'ativo')
-    list_filter = ('tipo', 'ativo')
-    search_fields = ('nome', 'descricao')
+    list_display = ('apelido', 'categoria', 'numero_patrimonio', 'status')
+    list_filter = ('categoria', 'status')
+    search_fields = ('apelido', 'numero_patrimonio', 'numero_serie', 'imei', 'identificacao_escola')
 
 
 class AlunoInline(admin.TabularInline):

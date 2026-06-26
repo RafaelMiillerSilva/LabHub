@@ -8,8 +8,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import IntegrityError
-from django.db.models import Sum
-from django.http import HttpResponse
+from django.db.models import Sum, Count, Q
+from django.http import HttpResponse, Http404
 from .forms import (
     CadastroForm, BootstrapAuthenticationForm, SalaForm, EquipamentoForm,
     TurmaForm, AlunoForm,
@@ -342,14 +342,25 @@ def _processar_agendamento_sala(request, data, ano, mes, dia):
 
 
 def _disponibilidade_dispositivos(data):
-    """Quantidade já reservada por (aula, equipamento_id) nesse dia."""
+    """Quantidade já reservada por (aula, categoria) nesse dia."""
     linhas = (
         ItemDispositivo.objects
         .filter(agendamento__data=data, agendamento__tipo='DISPOSITIVO')
-        .values('agendamento__aula', 'equipamento_id')
+        .values('agendamento__aula', 'categoria')
         .annotate(total=Sum('quantidade'))
     )
-    return {(l['agendamento__aula'], l['equipamento_id']): l['total'] for l in linhas}
+    return {(l['agendamento__aula'], l['categoria']): l['total'] for l in linhas}
+
+
+def _estoque_por_categoria():
+    """Quantas unidades ATIVAS existem em cada categoria."""
+    linhas = (
+        Equipamento.objects
+        .filter(status='ATIVO')
+        .values('categoria')
+        .annotate(n=Count('id'))
+    )
+    return {l['categoria']: l['n'] for l in linhas}
 
 
 def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
@@ -361,18 +372,18 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
         messages.warning(request, 'Escolha a turma antes de agendar.')
         return redirect('agendamento_detalhe', ano=ano, mes=mes, dia=dia)
 
-    # Lê os sliders: campos qtd_<aula>_<equip_id> com valor > 0
-    selecao = defaultdict(dict)   # {aula: {equip_id: qtd}}
+    # Lê os sliders: campos qtd_<aula>_<categoria> com valor > 0
+    selecao = defaultdict(dict)   # {aula: {categoria: qtd}}
     for chave, valor in request.POST.items():
         if not chave.startswith('qtd_'):
             continue
         try:
-            _, aula_str, equip_str = chave.split('_')
+            _, aula_str, categoria = chave.split('_')
             qtd = int(valor)
         except (ValueError, AttributeError):
             continue
         if qtd > 0:
-            selecao[int(aula_str)][int(equip_str)] = qtd
+            selecao[int(aula_str)][categoria] = qtd
 
     if not selecao:
         messages.warning(request, 'Arraste pelo menos um slider para reservar algum equipamento.')
@@ -380,25 +391,23 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
 
     turma = get_object_or_404(Turma, id=turma_id)
     reservado = _disponibilidade_dispositivos(data)
-    estoque = {e.id: e.quantidade for e in Equipamento.objects.filter(ativo=True)}
+    estoque = _estoque_por_categoria()
 
     aulas_agendadas = 0
     ajustes = 0
 
     for aula, itens in selecao.items():
         itens_validos = []
-        for equip_id, qtd in itens.items():
-            total = estoque.get(equip_id)
-            if total is None:
-                continue
-            disponivel = total - reservado.get((aula, equip_id), 0)
+        for categoria, qtd in itens.items():
+            total = estoque.get(categoria, 0)
+            disponivel = total - reservado.get((aula, categoria), 0)
             if disponivel <= 0:
                 ajustes += 1
                 continue
-            usar = min(qtd, disponivel)   # nunca passa do estoque
+            usar = min(qtd, disponivel)   # nunca passa do estoque disponível
             if usar < qtd:
                 ajustes += 1
-            itens_validos.append((equip_id, usar))
+            itens_validos.append((categoria, usar))
 
         if not itens_validos:
             continue
@@ -408,12 +417,11 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
             professor=request.user, turma=turma,
             sala=None, observacao=observacao,
         )
-        for equip_id, usar in itens_validos:
+        for categoria, usar in itens_validos:
             ItemDispositivo.objects.create(
-                agendamento=agendamento, equipamento_id=equip_id, quantidade=usar
+                agendamento=agendamento, categoria=categoria, quantidade=usar
             )
-            # mantém o controle coerente se a mesma aula tiver vários itens
-            reservado[(aula, equip_id)] = reservado.get((aula, equip_id), 0) + usar
+            reservado[(aula, categoria)] = reservado.get((aula, categoria), 0) + usar
         aulas_agendadas += 1
 
     if aulas_agendadas:
@@ -490,8 +498,8 @@ def agendamento_detalhe(request, ano, mes, dia):
             'salas': linha_salas, 'livres': livres, 'total': len(salas_ativas),
         })
 
-    # ----- Monta a grade de dispositivos por aula -----
-    equipamentos_ativos = list(Equipamento.objects.filter(ativo=True))
+    # ----- Monta a grade de dispositivos por aula (por categoria) -----
+    estoque_categoria = _estoque_por_categoria()   # {categoria: nº de unidades ativas}
     reservado_disp = _disponibilidade_dispositivos(data)
 
     # Reservas de dispositivos já existentes, agrupadas por aula (para os cards)
@@ -499,7 +507,7 @@ def agendamento_detalhe(request, ano, mes, dia):
         Agendamento.objects
         .filter(data=data, tipo='DISPOSITIVO')
         .select_related('turma', 'professor')
-        .prefetch_related('itens__equipamento')
+        .prefetch_related('itens')
         .order_by('aula')
     )
     cards_por_aula = defaultdict(list)
@@ -508,23 +516,26 @@ def agendamento_detalhe(request, ano, mes, dia):
 
     aulas_disp = []
     for numero, (nome, horario) in enumerate(AULAS_HORARIOS, start=1):
-        grupos = {}
-        for equip in equipamentos_ativos:
-            restante = max(equip.quantidade - reservado_disp.get((numero, equip.id), 0), 0)
-            ratio = restante / equip.quantidade if equip.quantidade else 0
+        grupos = []
+        for cat_valor, cat_label in Equipamento.CATEGORIA_CHOICES:
+            total = estoque_categoria.get(cat_valor, 0)
+            if total == 0:
+                continue  # não mostra categorias sem nenhum aparelho ativo
+            restante = max(total - reservado_disp.get((numero, cat_valor), 0), 0)
+            ratio = restante / total if total else 0
             if restante == 0:
-                status = 'vermelho'      # nenhum disponível
+                status = 'vermelho'
             elif ratio <= 0.5:
-                status = 'laranja'       # cerca de metade
+                status = 'laranja'
             else:
-                status = 'verde'         # muitos disponíveis
-            grupos.setdefault(equip.get_tipo_display(), []).append({
-                'equip': equip, 'restante': restante,
-                'total': equip.quantidade, 'status': status,
+                status = 'verde'
+            grupos.append({
+                'categoria': cat_valor, 'label': cat_label,
+                'restante': restante, 'total': total, 'status': status,
             })
         aulas_disp.append({
             'numero': numero, 'nome': nome, 'horario': horario,
-            'grupos': [{'tipo': k, 'itens': v} for k, v in grupos.items()],
+            'grupos': grupos,
             'cards': cards_por_aula.get(numero, []),
         })
 
@@ -538,7 +549,7 @@ def agendamento_detalhe(request, ano, mes, dia):
         'aulas_disp': aulas_disp,
         'turmas': Turma.objects.all(),
         'tem_salas': bool(salas_ativas),
-        'tem_equipamentos': bool(equipamentos_ativos),
+        'tem_equipamentos': bool(estoque_categoria),
     }
     return render(request, 'app/agendamento_detalhe.html', context)
 
@@ -595,39 +606,70 @@ def sala_excluir(request, sala_id):
 
 
 # ---------------------------------------------------------------------------
-# CADASTRO DE EQUIPAMENTOS  (somente administradores)
+# EQUIPAMENTOS  (somente administradores) — cadastro individual de cada aparelho
 # ---------------------------------------------------------------------------
 @login_required
 def equipamentos(request):
     if not _is_admin_aprovado(request.user):
         return redirect('home')
 
-    instancia = None
-    editar_id = request.GET.get('editar')
-    if editar_id:
-        instancia = Equipamento.objects.filter(id=editar_id).first()
+    q = request.GET.get('q', '').strip()
+    lista = Equipamento.objects.defer('foto_dados')   # não carrega os bytes da foto na lista
+    if q:
+        lista = lista.filter(
+            Q(apelido__icontains=q) |
+            Q(identificacao_escola__icontains=q) |
+            Q(numero_patrimonio__icontains=q) |
+            Q(numero_serie__icontains=q) |
+            Q(imei__icontains=q)
+        )
+
+    return render(request, 'app/equipamentos.html', {
+        'title': 'Equipamentos',
+        'equipamentos': lista,
+        'q': q,
+    })
+
+
+@login_required
+def equipamento_form(request, equip_id=None):
+    if not _is_admin_aprovado(request.user):
+        return redirect('home')
+
+    instancia = get_object_or_404(Equipamento, id=equip_id) if equip_id else None
 
     if request.method == 'POST':
-        post_id = request.POST.get('equip_id')
-        if post_id:
-            instancia = get_object_or_404(Equipamento, id=post_id)
-        form = EquipamentoForm(request.POST, instance=instancia)
+        form = EquipamentoForm(request.POST, request.FILES, instance=instancia)
         if form.is_valid():
             equip = form.save()
-            if post_id:
-                messages.success(request, f'Equipamento "{equip.nome}" atualizado com sucesso!')
+            if instancia:
+                messages.success(request, f'Equipamento "{equip.apelido}" atualizado com sucesso!')
             else:
-                messages.success(request, f'Equipamento "{equip.nome}" cadastrado com sucesso!')
+                messages.success(request, f'Equipamento "{equip.apelido}" cadastrado com sucesso!')
             return redirect('equipamentos')
     else:
         form = EquipamentoForm(instance=instancia)
 
-    return render(request, 'app/equipamentos.html', {
-        'title': 'Equipamentos',
+    return render(request, 'app/equipamento_form.html', {
+        'title': 'Editar Equipamento' if instancia else 'Cadastrar Equipamento',
         'form': form,
-        'equipamentos': Equipamento.objects.all(),
         'editando': instancia,
+        'categorias_com_chip': list(Equipamento.CATEGORIAS_COM_CHIP),
     })
+
+
+@login_required
+def foto_equipamento(request, equip_id):
+    """Serve a foto guardada no banco."""
+    if not _is_admin_aprovado(request.user):
+        return redirect('home')
+
+    equip = get_object_or_404(Equipamento, id=equip_id)
+    if not equip.foto_dados:
+        raise Http404('Equipamento sem foto.')
+
+    return HttpResponse(bytes(equip.foto_dados),
+                        content_type=equip.foto_mime or 'image/jpeg')
 
 
 @login_required
@@ -637,11 +679,102 @@ def equipamento_excluir(request, equip_id):
 
     if request.method == 'POST':
         equip = get_object_or_404(Equipamento, id=equip_id)
-        nome = equip.nome
+        apelido = equip.apelido
         equip.delete()
-        messages.warning(request, f'Equipamento "{nome}" removido.')
+        messages.warning(request, f'Equipamento "{apelido}" removido.')
 
     return redirect('equipamentos')
+
+
+# ----- Etiquetas (PNG) -----
+def _gerar_etiqueta_png(equip):
+    """Desenha uma etiqueta retangular com as informações do equipamento."""
+    from PIL import Image, ImageDraw, ImageFont
+
+    W, H = 520, 300
+    AZUL = (30, 60, 114)
+    img = Image.new('RGB', (W, H), 'white')
+    d = ImageDraw.Draw(img)
+
+    def _fonte(tam, negrito=False):
+        nomes = (['DejaVuSans-Bold.ttf', 'arialbd.ttf'] if negrito
+                 else ['DejaVuSans.ttf', 'arial.ttf'])
+        for nome in nomes:
+            try:
+                return ImageFont.truetype(nome, tam)
+            except Exception:
+                continue
+        return ImageFont.load_default()
+
+    # Moldura + faixa de título
+    d.rectangle([4, 4, W - 5, H - 5], outline=AZUL, width=4)
+    d.rectangle([4, 4, W - 5, 58], fill=AZUL)
+    d.text((20, 16), equip.apelido or '—', fill='white', font=_fonte(30, True))
+    d.text((W - 200, 22), equip.get_categoria_display(), fill='white', font=_fonte(18, True))
+
+    linhas = [
+        f"Identificação: {equip.identificacao_escola or '—'}",
+        f"Patrimônio: {equip.numero_patrimonio or '—'}",
+        f"Nº de série: {equip.numero_serie or '—'}",
+    ]
+    if equip.imei:
+        linhas.append(f"IMEI: {equip.imei}")
+    linhas.append(f"Status: {equip.get_status_display()}")
+
+    fonte = _fonte(20)
+    y = 78
+    for ln in linhas:
+        d.text((24, y), ln, fill=(35, 35, 35), font=fonte)
+        y += 34
+
+    return img
+
+
+@login_required
+def etiqueta_equipamento(request, equip_id):
+    if not _is_admin_aprovado(request.user):
+        return redirect('home')
+
+    equip = get_object_or_404(Equipamento, id=equip_id)
+    img = _gerar_etiqueta_png(equip)
+
+    response = HttpResponse(content_type='image/png')
+    response['Content-Disposition'] = f'attachment; filename="etiqueta_{equip.apelido}.png"'
+    img.save(response, 'PNG')
+    return response
+
+
+@login_required
+def etiquetas_lote(request):
+    """Baixa as etiquetas de vários equipamentos de uma vez (ZIP de PNGs)."""
+    if not _is_admin_aprovado(request.user):
+        return redirect('home')
+
+    ids = request.GET.getlist('ids')
+    equips = list(Equipamento.objects.filter(id__in=ids))
+
+    if not equips:
+        messages.warning(request, 'Selecione pelo menos um equipamento para baixar a etiqueta.')
+        return redirect('equipamentos')
+
+    # Um só selecionado -> devolve o PNG direto
+    if len(equips) == 1:
+        return etiqueta_equipamento(request, equips[0].id)
+
+    import io
+    import zipfile
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for equip in equips:
+            img = _gerar_etiqueta_png(equip)
+            png_bytes = io.BytesIO()
+            img.save(png_bytes, 'PNG')
+            zf.writestr(f'etiqueta_{equip.apelido}.png', png_bytes.getvalue())
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.getvalue(), content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename="etiquetas.zip"'
+    return response
 
 
 # ---------------------------------------------------------------------------

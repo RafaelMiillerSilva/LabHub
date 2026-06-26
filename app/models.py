@@ -67,28 +67,47 @@ class Sala(models.Model):
 # Equipamentos móveis (notebooks, tablets, celulares, projetores...)
 # ---------------------------------------------------------------------------
 class Equipamento(models.Model):
-    CHOICES_TIPO = (
-        ('NOTEBOOK', 'Notebook'),
-        ('TABLET', 'Tablet'),
-        ('CELULAR', 'Celular'),
-        ('PROJETOR', 'Projetor'),
-        ('OUTRO', 'Outro'),
+    CATEGORIA_CHOICES = (
+        ('NOTEBOOK', 'Notebooks'),
+        ('CHROMEBOOK', 'Chromebooks'),
+        ('DESKTOP', 'Desktops'),
+        ('TABLET', 'Tablets'),
+        ('SMARTPHONE', 'Smartphones'),
     )
+    STATUS_CHOICES = (
+        ('ATIVO', 'Ativo'),
+        ('MANUTENCAO', 'Em manutenção'),
+        ('QUEBRADO', 'Quebrado'),
+        ('DESATIVADO', 'Desativado'),
+    )
+    # Categorias que possuem chip (e portanto IMEI)
+    CATEGORIAS_COM_CHIP = ('TABLET', 'SMARTPHONE')
 
-    nome = models.CharField(max_length=100)
-    tipo = models.CharField(max_length=20, choices=CHOICES_TIPO, default='NOTEBOOK')
-    quantidade = models.PositiveIntegerField(default=1, help_text='Quantidade total disponível')
-    descricao = models.CharField(max_length=200, blank=True, verbose_name='Descrição')
-    ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    # Foto guardada no próprio banco (bytes), não em arquivo no disco
+    foto_dados = models.BinaryField(blank=True, null=True, editable=False)
+    foto_mime = models.CharField(max_length=50, blank=True, default='')
+    tem_foto = models.BooleanField(default=False)
+    categoria = models.CharField(max_length=15, choices=CATEGORIA_CHOICES, default='NOTEBOOK')
+    apelido = models.CharField(max_length=30, unique=True, default='',
+                               help_text='Ex: C01, CH03')
+    identificacao_escola = models.CharField('Identificação da escola', max_length=60, blank=True, default='')
+    numero_patrimonio = models.CharField('Número de patrimônio', max_length=60, blank=True, default='')
+    numero_serie = models.CharField('Número de série', max_length=80, blank=True, default='')
+    imei = models.CharField('IMEI', max_length=20, blank=True, null=True)
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='ATIVO')
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['tipo', 'nome']
+        ordering = ['categoria', 'apelido']
         verbose_name = 'Equipamento'
         verbose_name_plural = 'Equipamentos'
 
+    @property
+    def disponivel_para_agendamento(self):
+        return self.status == 'ATIVO'
+
     def __str__(self):
-        return f"{self.nome} ({self.get_tipo_display()})"
+        return f"{self.apelido} ({self.get_categoria_display()})"
 
 
 # ---------------------------------------------------------------------------
@@ -185,13 +204,14 @@ class ItemDispositivo(models.Model):
     agendamento = models.ForeignKey(
         Agendamento, on_delete=models.CASCADE, related_name='itens'
     )
-    equipamento = models.ForeignKey(
-        Equipamento, on_delete=models.CASCADE, related_name='reservas'
+    # Reserva é por categoria (conta unidades disponíveis daquele tipo)
+    categoria = models.CharField(
+        max_length=15, choices=Equipamento.CATEGORIA_CHOICES, default='NOTEBOOK'
     )
     quantidade = models.PositiveIntegerField(default=1)
 
     def __str__(self):
-        return f"{self.equipamento.nome} x{self.quantidade}"
+        return f"{self.get_categoria_display()} x{self.quantidade}"
 
 
 # ---------------------------------------------------------------------------

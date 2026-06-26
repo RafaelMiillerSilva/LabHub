@@ -132,20 +132,68 @@ class SalaForm(forms.ModelForm):
 # ---------------------------------------------------------------------------
 # Cadastro de Equipamentos
 # ---------------------------------------------------------------------------
+def _processar_imagem(arquivo, max_lado=800, qualidade=80):
+    """Abre, reduz e comprime a imagem enviada; devolve (bytes, mime)."""
+    from PIL import Image
+    import io
+    img = Image.open(arquivo)
+    img = img.convert('RGB')                 # achata transparência / padroniza
+    img.thumbnail((max_lado, max_lado))      # reduz mantendo proporção
+    buf = io.BytesIO()
+    img.save(buf, format='JPEG', quality=qualidade)
+    return buf.getvalue(), 'image/jpeg'
+
+
 class EquipamentoForm(forms.ModelForm):
+    # Campo de upload do formulário (não é coluna do model);
+    # os bytes processados vão para foto_dados.
+    foto = forms.ImageField(
+        required=False,
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+    remover_foto = forms.BooleanField(required=False)
+
     class Meta:
         model = Equipamento
-        fields = ['nome', 'tipo', 'quantidade', 'descricao', 'ativo']
+        fields = ['categoria', 'apelido', 'identificacao_escola',
+                  'numero_patrimonio', 'numero_serie', 'imei', 'status']
         widgets = {
-            'nome': forms.TextInput(attrs={
-                'class': 'form-control', 'placeholder': 'Ex: Notebook Dell Latitude'
-            }),
-            'tipo': forms.Select(attrs={'class': 'form-control'}),
-            'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'descricao': forms.TextInput(attrs={
-                'class': 'form-control', 'placeholder': 'Observações (opcional)'
-            }),
+            'categoria': forms.Select(attrs={'class': 'form-control', 'id': 'id_categoria'}),
+            'apelido': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: C01, CH03'}),
+            'identificacao_escola': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Identificação da escola'}),
+            'numero_patrimonio': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nº de patrimônio'}),
+            'numero_serie': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nº de série'}),
+            'imei': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apenas tablets/smartphones', 'id': 'id_imei'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
         }
+
+    def clean(self):
+        cleaned = super().clean()
+        categoria = cleaned.get('categoria')
+        # IMEI só faz sentido para aparelhos com chip; nos demais, ignora
+        if categoria not in Equipamento.CATEGORIAS_COM_CHIP:
+            cleaned['imei'] = ''
+        return cleaned
+
+    def save(self, commit=True):
+        equip = super().save(commit=False)
+
+        if self.cleaned_data.get('remover_foto'):
+            equip.foto_dados = None
+            equip.foto_mime = ''
+            equip.tem_foto = False
+        else:
+            foto = self.cleaned_data.get('foto')
+            if foto:
+                dados, mime = _processar_imagem(foto)
+                equip.foto_dados = dados
+                equip.foto_mime = mime
+                equip.tem_foto = True
+        # se não enviou foto nem marcou remover, mantém a existente
+
+        if commit:
+            equip.save()
+        return equip
 
 
 # ---------------------------------------------------------------------------
