@@ -55,7 +55,7 @@
         <div class="table-responsive">
             <table class="table table-striped" style="margin-bottom:0;">
                 <thead>
-                    <tr><th class="text-center">Aula</th><th>Sala</th><th>Turma</th><th>Professor</th></tr>
+                    <tr><th class="text-center">Aula</th><th>Sala</th><th>Turma</th><th>Professor</th><th class="text-center">Relação</th></tr>
                 </thead>
                 <tbody>
                     {% for r in reservas_sala %}
@@ -64,9 +64,10 @@
                         <td><strong>{{ r.sala.nome }}</strong></td>
                         <td>{{ r.turma.nome }}</td>
                         <td>{{ r.professor.get_full_name|default:r.professor.username }}</td>
+                        <td class="text-center"><a href="{% url 'relacao_agendamento' r.id %}" class="btn btn-xs btn-info">📋 Abrir</a></td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="4" class="text-center text-muted" style="padding:24px;"><em>Nenhuma sala reservada para hoje.</em></td></tr>
+                    <tr><td colspan="5" class="text-center text-muted" style="padding:24px;"><em>Nenhuma sala reservada para hoje.</em></td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -81,7 +82,7 @@
         <div class="table-responsive">
             <table class="table table-striped" style="margin-bottom:0;">
                 <thead>
-                    <tr><th class="text-center">Aula</th><th>Equipamentos</th><th>Turma</th><th>Professor</th></tr>
+                    <tr><th class="text-center">Aula</th><th>Equipamentos</th><th>Turma</th><th>Professor</th><th class="text-center">Relação</th></tr>
                 </thead>
                 <tbody>
                     {% for r in reservas_disp %}
@@ -94,9 +95,10 @@
                         </td>
                         <td>{{ r.turma.nome }}</td>
                         <td>{{ r.professor.get_full_name|default:r.professor.username }}</td>
+                        <td class="text-center"><a href="{% url 'relacao_agendamento' r.id %}" class="btn btn-xs btn-info">📋 Abrir</a></td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="4" class="text-center text-muted" style="padding:24px;"><em>Nenhum equipamento reservado para hoje.</em></td></tr>
+                    <tr><td colspan="5" class="text-center text-muted" style="padding:24px;"><em>Nenhum equipamento reservado para hoje.</em></td></tr>
                     {% endfor %}
                 </tbody>
             </table>

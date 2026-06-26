@@ -1,0 +1,102 @@
+{% extends "app/layout.html" %}
+{% block content %}
+
+<div style="margin-bottom: 18px;">
+    <a href="javascript:history.back()" style="font-size: 14px;">&larr; Voltar</a>
+    <h2 style="margin-top:6px;">📋 Relação Alunos × Equipamentos</h2>
+</div>
+
+{% if messages %}
+<div style="margin-bottom: 15px;">
+    {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Cabeçalho do agendamento -->
+<div class="panel panel-default">
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-sm-4">
+                {% if ag.tipo == 'SALA' %}
+                <strong>🏫 Sala:</strong> {{ ag.sala.nome }}
+                {% else %}
+                <strong>💻 Equipamentos:</strong>
+                {% for item in ag.itens.all %}{{ item.equipamento.nome }} ×{{ item.quantidade }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                {% endif %}
+            </div>
+            <div class="col-sm-2"><strong>Data:</strong> {{ ag.data|date:"d/m/Y" }}</div>
+            <div class="col-sm-2"><strong>Aula:</strong> {{ ag.aula }}ª</div>
+            <div class="col-sm-4">
+                <strong>Turma:</strong> {{ ag.turma.nome }} ({{ ag.turma.get_turno_display }})
+                — <span class="text-muted">{{ ag.professor.get_full_name|default:ag.professor.username }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if not pode_editar %}
+<div class="alert alert-info">
+    Você está visualizando esta relação. Apenas o professor responsável ou um administrador pode editá-la.
+</div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Alunos da turma {{ ag.turma.nome }}</h3>
+        </div>
+        <div class="panel-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" style="margin-bottom:0;">
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">#</th>
+                            <th>Nome do aluno</th>
+                            <th>RA</th>
+                            <th style="width:35%;">Equipamento</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for linha in linhas %}
+                        <tr>
+                            <td class="text-muted">{{ forloop.counter }}</td>
+                            <td><strong>{{ linha.aluno.nome }}</strong></td>
+                            <td>{{ linha.aluno.ra }}</td>
+                            <td>
+                                {% if pode_editar %}
+                                <input type="text" class="form-control input-sm"
+                                       name="equip_{{ linha.aluno.id }}"
+                                       value="{{ linha.equipamento }}"
+                                       placeholder="Ex: C13">
+                                {% else %}
+                                {{ linha.equipamento|default:"—" }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted" style="padding: 30px;">
+                                <em>Esta turma ainda não tem alunos cadastrados.</em>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if pode_editar and linhas %}
+    <button type="submit" class="btn btn-primary btn-lg">💾 Salvar relação</button>
+    {% endif %}
+</form>
+
+{% endblock %}
