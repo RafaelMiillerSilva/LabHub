@@ -28,8 +28,13 @@ urlpatterns = [
     path('salas/',                        views.salas,          name='salas'),
     path('salas/excluir/<int:sala_id>/',  views.sala_excluir,   name='sala_excluir'),
 
-    # Cadastro de equipamentos (somente admin)
+    # Equipamentos (somente admin) — cadastro individual + etiquetas
     path('equipamentos/',                 views.equipamentos,        name='equipamentos'),
+    path('equipamentos/novo/',            views.equipamento_form,    name='equipamento_novo'),
+    path('equipamentos/<int:equip_id>/editar/', views.equipamento_form, name='equipamento_editar'),
+    path('equipamentos/etiqueta/<int:equip_id>/', views.etiqueta_equipamento, name='etiqueta_equipamento'),
+    path('equipamentos/etiquetas/',       views.etiquetas_lote,      name='etiquetas_lote'),
+    path('equipamentos/foto/<int:equip_id>/', views.foto_equipamento, name='foto_equipamento'),
     path('equipamentos/excluir/<int:equip_id>/',
          views.equipamento_excluir, name='equipamento_excluir'),
 

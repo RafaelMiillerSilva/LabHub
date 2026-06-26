@@ -90,7 +90,7 @@
                         <td class="text-center">{{ r.aula }}ª</td>
                         <td>
                             {% for item in r.itens.all %}
-                            <span class="label label-primary">{{ item.equipamento.nome }} × {{ item.quantidade }}</span>
+                            <span class="label label-primary">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
                             {% endfor %}
                         </td>
                         <td>{{ r.turma.nome }}</td>

@@ -28,7 +28,7 @@
                 <strong>🏫 Sala:</strong> {{ ag.sala.nome }}
                 {% else %}
                 <strong>💻 Equipamentos:</strong>
-                {% for item in ag.itens.all %}{{ item.equipamento.nome }} ×{{ item.quantidade }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                {% for item in ag.itens.all %}{{ item.get_categoria_display }} ×{{ item.quantidade }}{% if not forloop.last %}, {% endif %}{% endfor %}
                 {% endif %}
             </div>
             <div class="col-sm-2"><strong>Data:</strong> {{ ag.data|date:"d/m/Y" }}</div>
