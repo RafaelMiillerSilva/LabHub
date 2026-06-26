@@ -202,6 +202,7 @@
                         <th class="text-center">Aula</th>
                         <th>Reserva</th>
                         <th>Turma</th>
+                        <th class="text-center">Relação</th>
                         <th class="text-center">Cancelar</th>
                     </tr>
                 </thead>
@@ -219,6 +220,9 @@
                         </td>
                         <td>{{ ag.turma.nome }}</td>
                         <td class="text-center">
+                            <a href="{% url 'relacao_agendamento' ag.id %}" class="btn btn-xs btn-info">📋 Abrir</a>
+                        </td>
+                        <td class="text-center">
                             <form action="{% url 'cancelar_reserva' ag.id %}" method="post" style="display:inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-xs btn-danger"
@@ -230,7 +234,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="text-center text-muted" style="padding: 24px;">
+                        <td colspan="6" class="text-center text-muted" style="padding: 24px;">
                             <em>Você não tem reservas futuras. Clique em um dia para agendar.</em>
                         </td>
                     </tr>

@@ -21,6 +21,8 @@ urlpatterns = [
          views.agendamento_detalhe, name='agendamento_detalhe'),
     path('reserva/cancelar/<int:agendamento_id>/',
          views.cancelar_reserva, name='cancelar_reserva'),
+    path('reserva/<int:agendamento_id>/relacao/',
+         views.relacao_agendamento, name='relacao_agendamento'),
 
     # Cadastro de salas (somente admin)
     path('salas/',                        views.salas,          name='salas'),

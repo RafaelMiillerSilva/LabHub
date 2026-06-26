@@ -238,6 +238,7 @@
                                 <span class="badge-status bg-vermelho">Ocupada</span>
                                 <span class="nome-sala">{{ s.sala.nome }}</span><br>
                                 <span class="info-sala">{{ s.turma }} — {{ s.professor }}</span>
+                                <a href="{% url 'relacao_agendamento' s.ag_id %}" class="btn btn-xs btn-default" style="margin-top:6px;">📋 Relação</a>
                             </div>
                             {% else %}
                             <label class="aula-item aula-verde">
@@ -355,6 +356,7 @@
                                     <span class="label label-primary">{{ item.equipamento.nome }} × {{ item.quantidade }}</span>
                                     {% endfor %}
                                 </div>
+                                <a href="{% url 'relacao_agendamento' ag.id %}" class="btn btn-xs btn-default" style="margin-top:6px;">📋 Relação</a>
                             </div>
                             {% endfor %}
                             {% endif %}

@@ -16,7 +16,7 @@ from .forms import (
 )
 from .models import (
     Perfil, HistoricoAcao, Sala, Equipamento, Turma, Aluno,
-    Agendamento, ItemDispositivo,
+    Agendamento, ItemDispositivo, RelacaoAlunoEquipamento,
 )
 
 
@@ -480,6 +480,7 @@ def agendamento_detalhe(request, ano, mes, dia):
                 linha_salas.append({
                     'sala': sala, 'ocupado': True,
                     'turma': reserva.turma.nome, 'professor': prof,
+                    'ag_id': reserva.id,
                 })
             else:
                 linha_salas.append({'sala': sala, 'ocupado': False})
@@ -912,6 +913,52 @@ def cancelar_reserva(request, agendamento_id):
         messages.warning(request, 'Reserva cancelada com sucesso.')
 
     return redirect('agendamentos')
+
+
+# ---------------------------------------------------------------------------
+# RELAÇÃO ALUNO x EQUIPAMENTO de um agendamento
+# ---------------------------------------------------------------------------
+@login_required
+def relacao_agendamento(request, agendamento_id):
+    if not (hasattr(request.user, 'perfil') and request.user.perfil.aprovado):
+        return redirect('home')
+
+    ag = get_object_or_404(
+        Agendamento.objects
+        .select_related('sala', 'turma', 'professor')
+        .prefetch_related('itens__equipamento'),
+        id=agendamento_id
+    )
+
+    is_admin = request.user.perfil.tipo == 'ADMINISTRADOR'
+    pode_editar = is_admin or ag.professor_id == request.user.id
+
+    alunos = list(ag.turma.alunos.all())
+
+    if request.method == 'POST':
+        if not pode_editar:
+            messages.error(request, 'Você não pode editar a relação desta reserva.')
+            return redirect('relacao_agendamento', agendamento_id=ag.id)
+
+        for aluno in alunos:
+            valor = request.POST.get(f'equip_{aluno.id}', '').strip()
+            RelacaoAlunoEquipamento.objects.update_or_create(
+                agendamento=ag, aluno=aluno,
+                defaults={'equipamento': valor},
+            )
+        messages.success(request, 'Relação de alunos e equipamentos salva com sucesso!')
+        return redirect('relacao_agendamento', agendamento_id=ag.id)
+
+    # Mapa aluno_id -> equipamento já salvo
+    salvos = {r.aluno_id: r.equipamento for r in ag.relacoes.all()}
+    linhas = [{'aluno': a, 'equipamento': salvos.get(a.id, '')} for a in alunos]
+
+    return render(request, 'app/relacao_agendamento.html', {
+        'title': 'Relação Alunos x Equipamentos',
+        'ag': ag,
+        'linhas': linhas,
+        'pode_editar': pode_editar,
+    })
 
 
 def about(request):

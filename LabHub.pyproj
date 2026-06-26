@@ -67,6 +67,7 @@
     <Content Include="app\templates\app\equipamentos.html" />
     <Content Include="app\templates\app\painel.html" />
     <Content Include="app\templates\app\layout.html" />
+    <Content Include="app\templates\app\relacao_agendamento.html" />
     <Content Include="app\templates\app\salas.html" />
     <Content Include="app\templates\app\turmas.html" />
     <Content Include="app\templates\app\turma_detalhe.html" />

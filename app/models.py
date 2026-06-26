@@ -194,6 +194,31 @@ class ItemDispositivo(models.Model):
         return f"{self.equipamento.nome} x{self.quantidade}"
 
 
+# ---------------------------------------------------------------------------
+# Relação aluno x equipamento dentro de um agendamento.
+# O professor registra qual equipamento (ex.: "C13") ficou com cada aluno.
+# ---------------------------------------------------------------------------
+class RelacaoAlunoEquipamento(models.Model):
+    agendamento = models.ForeignKey(
+        Agendamento, on_delete=models.CASCADE, related_name='relacoes'
+    )
+    aluno = models.ForeignKey(
+        Aluno, on_delete=models.CASCADE, related_name='relacoes'
+    )
+    equipamento = models.CharField(
+        max_length=100, blank=True,
+        help_text='Identificação do equipamento com o aluno (ex.: C13)'
+    )
+
+    class Meta:
+        unique_together = ('agendamento', 'aluno')
+        verbose_name = 'Relação aluno/equipamento'
+        verbose_name_plural = 'Relações aluno/equipamento'
+
+    def __str__(self):
+        return f"{self.aluno.nome} -> {self.equipamento or '—'}"
+
+
 # Sinais para criar o perfil automaticamente quando um usuário for criado
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
