@@ -59,7 +59,7 @@ def _home_dashboard(request):
         Agendamento.objects
         .filter(data=hoje)
         .select_related('sala', 'turma', 'professor')
-        .prefetch_related('itens__equipamento')
+        .prefetch_related('itens')
         .order_by('aula')
     )
     reservas_sala = [r for r in reservas if r.tipo == 'SALA']
@@ -260,7 +260,7 @@ def agendamentos(request):
         Agendamento.objects
         .filter(professor=request.user, data__gte=hoje)
         .select_related('sala', 'turma')
-        .prefetch_related('itens__equipamento')
+        .prefetch_related('itens')
         .order_by('data', 'aula')
     )
 
@@ -1058,7 +1058,7 @@ def relacao_agendamento(request, agendamento_id):
     ag = get_object_or_404(
         Agendamento.objects
         .select_related('sala', 'turma', 'professor')
-        .prefetch_related('itens__equipamento'),
+        .prefetch_related('itens'),
         id=agendamento_id
     )
 
