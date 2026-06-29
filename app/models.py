@@ -68,11 +68,11 @@ class Sala(models.Model):
 # ---------------------------------------------------------------------------
 class Equipamento(models.Model):
     CATEGORIA_CHOICES = (
-        ('NOTEBOOK', 'Notebooks'),
-        ('CHROMEBOOK', 'Chromebooks'),
-        ('DESKTOP', 'Desktops'),
-        ('TABLET', 'Tablets'),
-        ('SMARTPHONE', 'Smartphones'),
+        ('NOTEBOOK', 'Notebook'),
+        ('CHROMEBOOK', 'Chromebook'),
+        ('DESKTOP', 'Desktop'),
+        ('TABLET', 'Tablet'),
+        ('SMARTPHONE', 'Smartphone'),
     )
     STATUS_CHOICES = (
         ('ATIVO', 'Ativo'),
