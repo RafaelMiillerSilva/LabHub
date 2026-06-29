@@ -47,8 +47,101 @@
 </div>
 {% endif %}
 
+{% if pode_editar %}
+<!-- Gerenciar a reserva (editar / cancelar) -->
+<div class="panel panel-warning">
+    <div class="panel-heading"><h3 class="panel-title">⚙️ Gerenciar reserva</h3></div>
+    <div class="panel-body">
+        <form method="post" style="margin-bottom:0;">
+            {% csrf_token %}
+            <input type="hidden" name="acao" value="editar">
+
+            <div class="row">
+                {% if is_admin %}
+                <div class="col-sm-4 form-group">
+                    <label>Professor responsável</label>
+                    <select name="professor" class="form-control">
+                        {% for p in professores %}
+                        <option value="{{ p.id }}" {% if p.id == ag.professor_id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <div class="col-sm-4 form-group">
+                    <label>Turma</label>
+                    <select name="turma" class="form-control">
+                        {% for t in turmas %}
+                        <option value="{{ t.id }}" {% if t.id == ag.turma_id %}selected{% endif %}>{{ t.nome }} ({{ t.get_turno_display }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {% if ag.tipo == 'SALA' %}
+                <div class="col-sm-4 form-group">
+                    <label>Sala reservada</label>
+                    <select name="sala" class="form-control">
+                        {% for s in salas_edicao %}
+                        <option value="{{ s.sala.id }}" {% if s.atual %}selected{% endif %}>
+                            {{ s.sala.nome }}{% if not s.atual %} — livre{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if ag.tipo == 'DISPOSITIVO' %}
+            <label>Quantidade de equipamentos</label>
+            <div class="table-responsive" style="max-width:520px;">
+                <table class="table table-condensed">
+                    <thead>
+                        <tr><th>Categoria</th><th style="width:120px;">Quantidade</th><th>Disponível</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for c in categorias_edicao %}
+                        <tr>
+                            <td>{{ c.label }}</td>
+                            <td>
+                                <input type="number" name="qtd_cat_{{ c.categoria }}"
+                                       value="{{ c.atual }}" min="0" max="{{ c.maximo }}"
+                                       class="form-control input-sm">
+                            </td>
+                            <td class="text-muted" style="vertical-align:middle;">até {{ c.maximo }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="help-block" style="margin-top:-6px;">Coloque 0 para remover uma categoria. Se zerar todas, a reserva é cancelada.</p>
+            {% endif %}
+
+            <div class="form-group" style="max-width:520px;">
+                <label>Observação</label>
+                <input type="text" name="observacao" class="form-control" value="{{ ag.observacao }}" placeholder="Opcional">
+            </div>
+
+            <button type="submit" class="btn btn-primary">💾 Salvar alterações</button>
+        </form>
+
+        <hr>
+        <form action="{% url 'cancelar_reserva' ag.id %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger"
+                    onclick="return confirm('Cancelar/desmarcar esta reserva? Esta ação não pode ser desfeita.')">
+                🗑️ Cancelar esta reserva
+            </button>
+        </form>
+        {% if is_admin and ag.professor_id != user.id %}
+        <span class="text-muted" style="margin-left:8px;">Você está gerenciando a reserva de outro professor.</span>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 <form method="post">
     {% csrf_token %}
+    <input type="hidden" name="acao" value="relacao">
     <div class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">Alunos da turma {{ ag.turma.nome }}</h3>
