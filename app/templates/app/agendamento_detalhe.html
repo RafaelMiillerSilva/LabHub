@@ -1,413 +1,604 @@
 {% extends "app/layout.html" %}
 {% block content %}
 
+<!-- ==================== ESTILOS MODERNOS DO DETALHE DO AGENDAMENTO ==================== -->
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    .lh-det-container {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Cabeçalho */
     .det-head {
-        margin-bottom: 18px;
+        margin-bottom: 24px;
     }
 
         .det-head .voltar {
             font-size: 14px;
+            font-weight: 600;
+            color: #1A4A8A;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
         }
 
-    .aula-item {
-        display: block;
-        border: 2px solid #ddd;
-        border-radius: 10px;
-        padding: 10px 14px;
-        margin-bottom: 8px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all .12s ease;
-        background: #fff;
+            .det-head .voltar:hover {
+                color: #153d74;
+            }
+
+    .det-title {
+        font-size: 26px;
+        font-weight: 800;
+        color: #1A1A2E;
+        margin-top: 8px;
+        margin-bottom: 4px;
+        letter-spacing: -0.5px;
     }
 
-        .aula-item .nome-sala {
+    /* Abas Customizadas */
+    .nav-tabs-modern {
+        border-bottom: 2px solid #E5E9F0;
+        display: flex;
+        gap: 8px;
+    }
+
+        .nav-tabs-modern > li > a {
+            border: none !important;
+            background: transparent !important;
+            color: #6B7280 !important;
+            font-weight: 600;
             font-size: 15px;
+            padding: 12px 20px;
+            border-radius: 0;
+            border-bottom: 2px solid transparent !important;
+            transition: all 0.2s ease;
+            margin: 0;
+        }
+
+        .nav-tabs-modern > li.active > a,
+        .nav-tabs-modern > li.active > a:hover,
+        .nav-tabs-modern > li.active > a:focus {
+            color: #1A4A8A !important;
+            border-bottom: 2px solid #1A4A8A !important;
+        }
+
+        .nav-tabs-modern > li > a:hover {
+            color: #1A1A2E !important;
+            border-bottom: 2px solid #6B7280 !important;
+        }
+
+    /* Painéis de Aula (Acordeão) */
+    .painel-aula {
+        background: #ffffff !important;
+        border: 1px solid rgba(0, 0, 0, 0.05) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 2px 12px rgba(15, 38, 69, 0.04) !important;
+        margin-bottom: 12px !important;
+        overflow: hidden;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+        .painel-aula:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(15, 38, 69, 0.06) !important;
+        }
+
+        .painel-aula .panel-heading {
+            background: #ffffff !important;
+            padding: 0 !important;
+            border: none !important;
+        }
+
+        /* Remoção completa da borda preta / outline azul ao focar/clicar */
+        .painel-aula .panel-title a {
+            display: block;
+            padding: 18px 20px;
+            text-decoration: none !important;
+            color: #1A1A2E !important;
             font-weight: 700;
+            font-size: 15px;
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .aula-item .info-sala {
-            font-size: 13px;
-            color: #6c757d;
-            font-weight: 400;
-        }
-
-    .aula-verde {
-        border-color: #4caf50;
-        background: #f3fbf3;
-    }
-
-        .aula-verde:hover {
-            background: #e7f7e7;
-        }
-
-    .aula-vermelho {
-        border-color: #e53935;
-        background: #fdeceb;
-        cursor: not-allowed;
-    }
-
-    .badge-status {
-        float: right;
-        font-size: 12px;
-        font-weight: 700;
-        padding: 3px 10px;
-        border-radius: 20px;
-        color: #fff;
-    }
-
-    .bg-verde {
-        background: #2e7d32;
-    }
-
-    .bg-vermelho {
-        background: #c62828;
-    }
-
-    .aula-check {
-        margin-right: 8px;
-        transform: scale(1.2);
-        vertical-align: middle;
-    }
-
-    .painel-aula .panel-title a {
-        display: block;
-        text-decoration: none;
-        color: #1e3c72;
-        font-weight: 600;
-    }
+            .painel-aula .panel-title a:focus,
+            .painel-aula .panel-title a:active,
+            .painel-aula .panel-title a:visited {
+                outline: none !important;
+                border: none !important;
+                box-shadow: none !important;
+                text-decoration: none !important;
+            }
 
     .resumo-livres {
         font-size: 12px;
         font-weight: 700;
-        padding: 2px 10px;
+        padding: 4px 12px;
         border-radius: 20px;
     }
 
     .livres-ok {
-        background: #e8f5e9;
-        color: #2e7d32;
+        background: #E8F5E9;
+        color: #2E7D32;
     }
 
     .livres-zero {
-        background: #fdecea;
-        color: #c62828;
+        background: #FFEBEE;
+        color: #C62828;
+    }
+
+    .painel-aula .panel-body {
+        border-top: 1px solid #F0F4F8 !important;
+        background: #F7F9FC;
+        padding: 16px 20px;
+    }
+
+    /* Itens de Sala e Equipamentos */
+    .aula-item, .dispo-row {
+        display: block;
+        border: 1px solid #E5E9F0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        font-weight: 500;
+        background: #ffffff;
+        transition: all 0.15s ease;
+    }
+
+    .aula-verde {
+        border-left: 4px solid #4CAF50;
+        cursor: pointer;
+    }
+
+        .aula-verde:hover {
+            background: #F3FBF3;
+            border-color: #4CAF50;
+        }
+
+    .aula-vermelho {
+        border-left: 4px solid #E53935;
+        background: #FAFAFA;
+        cursor: not-allowed;
+    }
+
+    .nome-sala {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1A1A2E;
+    }
+
+    .info-sala {
+        font-size: 13px;
+        color: #6B7280;
+        font-weight: 400;
+        margin-top: 2px;
+        display: inline-block;
+    }
+
+    .badge-status {
+        float: right;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .bg-verde {
+        background: #4CAF50;
+        color: #fff;
+    }
+
+    .bg-vermelho {
+        background: #E53935;
+        color: #fff;
     }
 
     .bg-laranja {
-        background: #ef6c00;
+        background: #EF6C00;
+        color: #fff;
     }
 
-    .grupo-tipo {
-        font-weight: 700;
-        color: #1e3c72;
-        margin: 12px 0 6px;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 4px;
+    .aula-check {
+        margin-right: 10px;
+        transform: scale(1.15);
+        vertical-align: middle;
     }
 
-    .dispo-row {
-        border: 2px solid #ddd;
-        border-radius: 10px;
-        padding: 10px 14px;
-        margin-bottom: 8px;
-        background: #fff;
-    }
-
+    /* Controle de Equipamentos Slider */
     .dispo-verde {
-        border-color: #4caf50;
-        background: #f3fbf3;
+        border-left: 4px solid #4CAF50;
     }
 
     .dispo-laranja {
-        border-color: #ff9800;
-        background: #fff7ec;
+        border-left: 4px solid #FF9800;
     }
 
     .dispo-vermelho {
-        border-color: #e53935;
-        background: #fdeceb;
+        border-left: 4px solid #E53935;
+        background: #FAFAFA;
     }
 
     .dispo-controle {
         display: flex;
         align-items: center;
         gap: 12px;
-        margin-top: 8px;
+        margin-top: 12px;
     }
 
     .dispo-slider {
         flex: 1;
+        height: 6px;
+        -webkit-appearance: none;
+        background: #E5E9F0;
+        border-radius: 4px;
+        outline: none;
     }
 
+        .dispo-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1A4A8A;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+            .dispo-slider::-webkit-slider-thumb:hover {
+                background: #153d74;
+            }
+
     .dispo-valor {
-        min-width: 42px;
+        min-width: 44px;
         text-align: center;
         font-weight: 700;
-        font-size: 16px;
-        color: #1e3c72;
-        background: #eef2fb;
+        font-size: 15px;
+        color: #1A4A8A;
+        background: #EBF2FF;
         border-radius: 6px;
-        padding: 2px 6px;
+        padding: 4px 8px;
+    }
+
+    .grupo-tipo {
+        font-weight: 700;
+        color: #1A1A2E;
+        margin: 18px 0 10px;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
     }
 
     .card-reserva {
-        border-left: 4px solid #1e3c72;
-        background: #f7f9fc;
-        padding: 8px 12px;
-        margin-bottom: 8px;
-        border-radius: 4px;
+        border-left: 4px solid #1A4A8A;
+        background: #ffffff;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        border: 1px solid #E5E9F0;
+        border-left-width: 4px;
+    }
+
+    /* Formulário de Finalização de Agendamento */
+    .panel-finalizar {
+        background: #ffffff !important;
+        border: 1px solid rgba(0, 0, 0, 0.05) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 20px rgba(15, 38, 69, 0.06) !important;
+        margin-top: 24px;
+        overflow: hidden;
+    }
+
+        .panel-finalizar .panel-body {
+            padding: 24px;
+        }
+
+        .panel-finalizar label {
+            font-weight: 600;
+            color: #4B5563;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .panel-finalizar .form-control {
+            border-radius: 8px;
+            border: 1px solid #D1D5DB;
+            padding: 10px 12px;
+            height: auto;
+            font-size: 14px;
+            box-shadow: none !important;
+            transition: border-color 0.15s;
+        }
+
+            .panel-finalizar .form-control:focus {
+                border-color: #1A4A8A;
+            }
+
+    .btn-agendar {
+        background: #1A4A8A !important;
+        border: none !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        font-size: 16px !important;
+        padding: 12px 28px !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 12px rgba(26, 74, 138, 0.2) !important;
+        transition: all 0.15s !important;
+    }
+
+        .btn-agendar:hover {
+            background: #153d74 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(26, 74, 138, 0.3) !important;
+        }
+
+    .alert-modern {
+        border-radius: 8px;
+        border: none;
+        font-weight: 500;
     }
 </style>
 
-<div class="det-head">
-    <a href="{% url 'agendamentos' %}?ano={{ ano }}&mes={{ mes }}" class="voltar">&larr; Voltar ao calendário</a>
-    <h2 style="margin-top:6px;">Agendamento — {{ data|date:"d/m/Y" }}</h2>
-    <p class="lead" style="margin-bottom:0;">{{ dia_semana }}, {{ dia }} de {{ mes_nome }} de {{ ano }}</p>
-</div>
+<div class="lh-det-container">
 
-{% if messages %}
-<div style="margin-bottom: 15px;">
-    {% for message in messages %}
-    <div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% elif message.tags == 'info' %}info{% else %}success{% endif %} alert-dismissible" role="alert">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
-            <span aria-hidden="true">&times;</span>
-        </button>
-        {{ message }}
+    <div class="det-head">
+        <a href="{% url 'agendamentos' %}?ano={{ ano }}&mes={{ mes }}" class="voltar">← Voltar ao calendário</a>
+        <h2 class="det-title">Agendamento — {{ data|date:"d/m/Y" }}</h2>
+        <p class="lead" style="color: #6B7280; font-size: 16px; margin-bottom:0;">{{ dia_semana }}, {{ dia }} de {{ mes_nome }} de {{ ano }}</p>
     </div>
-    {% endfor %}
-</div>
-{% endif %}
 
-<!-- Abas: tipo de agendamento -->
-<ul class="nav nav-tabs" role="tablist" style="margin-bottom: 20px;">
-    <li role="presentation" class="active">
-        <a href="#tab-sala" role="tab" data-toggle="tab">🏫 Sala de Aula</a>
-    </li>
-    <li role="presentation">
-        <a href="#tab-movel" role="tab" data-toggle="tab">💻 Equipamentos Móveis</a>
-    </li>
-</ul>
-
-<div class="tab-content">
-
-    <!-- ===================== ABA 1: SALA DE AULA ===================== -->
-    <div role="tabpanel" class="tab-pane active" id="tab-sala">
-
-        {% if not tem_salas %}
-        <div class="alert alert-warning">
-            Nenhuma sala cadastrada ainda. Cadastre salas em
-            <a href="{% url 'salas' %}">🏫 Salas de Aula</a> para poder agendar.
+    {% if messages %}
+    <div style="margin-bottom: 20px;">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% elif message.tags == 'info' %}info{% else %}success{% endif %} alert-dismissible alert-modern" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            {{ message }}
         </div>
-        {% elif not turmas %}
-        <div class="alert alert-warning">
-            Nenhuma turma cadastrada. Cadastre turmas em
-            <a href="{% url 'turmas' %}">👥 Turmas</a> para poder agendar.
-        </div>
-        {% else %}
+        {% endfor %}
+    </div>
+    {% endif %}
 
-        <p class="text-muted">
-            Clique numa aula para ver as salas. As <strong style="color:#2e7d32;">verdes</strong>
-            estão livres (marque para reservar); as <strong style="color:#c62828;">vermelhas</strong>
-            já estão ocupadas.
-        </p>
+    <!-- Abas Customizadas -->
+    <ul class="nav nav-tabs nav-tabs-modern" role="tablist" style="margin-bottom: 24px;">
+        <li role="presentation" class="active">
+            <a href="#tab-sala" role="tab" data-toggle="tab">🏫 Sala de Aula</a>
+        </li>
+        <li role="presentation">
+            <a href="#tab-movel" role="tab" data-toggle="tab">💻 Equipamentos Móveis</a>
+        </li>
+    </ul>
 
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="tipo" value="sala">
+    <div class="tab-content">
 
-            <div class="panel-group" id="acordeao-salas">
-                {% for aula in aulas %}
-                <div class="panel panel-default painel-aula">
-                    <div class="panel-heading">
-                        <h4 class="panel-title">
-                            <a data-toggle="collapse" data-parent="#acordeao-salas" href="#aula{{ aula.numero }}">
-                                {{ aula.numero }}ª Aula <small class="text-muted">({{ aula.horario }})</small>
-                                <span class="resumo-livres {% if aula.livres %}livres-ok{% else %}livres-zero{% endif %}" style="float:right;">
-                                    {{ aula.livres }} de {{ aula.total }} livres
-                                </span>
-                            </a>
-                        </h4>
-                    </div>
-                    <div id="aula{{ aula.numero }}" class="panel-collapse collapse">
-                        <div class="panel-body">
-                            {% for s in aula.salas %}
-                            {% if s.ocupado %}
-                            <div class="aula-item aula-vermelho">
-                                <span class="badge-status bg-vermelho">Ocupada</span>
-                                <span class="nome-sala">{{ s.sala.nome }}</span><br>
-                                <span class="info-sala">{{ s.turma }} — {{ s.professor }}</span>
-                                <a href="{% url 'relacao_agendamento' s.ag_id %}" class="btn btn-xs btn-default" style="margin-top:6px;">📋 Relação</a>
-                            </div>
-                            {% else %}
-                            <label class="aula-item aula-verde">
-                                <span class="badge-status bg-verde">Livre</span>
-                                <input type="checkbox" class="aula-check" name="reserva" value="{{ aula.numero }}:{{ s.sala.id }}">
-                                <span class="nome-sala">{{ s.sala.nome }}</span>
-                                {% if s.sala.localizacao %}<span class="info-sala"> — {{ s.sala.localizacao }}</span>{% endif %}
-                            </label>
-                            {% endif %}
-                            {% endfor %}
+        <!-- ===================== ABA 1: SALA DE AULA ===================== -->
+        <div role="tabpanel" class="tab-pane active" id="tab-sala">
+
+            {% if not tem_salas %}
+            <div class="alert alert-warning alert-modern">
+                Nenhuma sala cadastrada ainda. Cadastre salas em
+                <a href="{% url 'salas' %}" class="alert-link">🏫 Salas de Aula</a> para poder agendar.
+            </div>
+            {% elif not turmas %}
+            <div class="alert alert-warning alert-modern">
+                Nenhuma turma cadastrada. Cadastre turmas em
+                <a href="{% url 'turmas' %}" class="alert-link">👥 Turmas</a> para poder agendar.
+            </div>
+            {% else %}
+
+            <p class="text-muted" style="margin-bottom: 16px; font-size: 14px;">
+                💡 Clique numa aula para ver as salas. As <strong style="color:#2e7d32;">verdes</strong>
+                estão livres (marque para reservar); as <strong style="color:#c62828;">vermelhas</strong>
+                já estão ocupadas.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="tipo" value="sala">
+
+                <div class="panel-group" id="acordeao-salas" style="margin-bottom: 0;">
+                    {% for aula in aulas %}
+                    <div class="panel panel-default painel-aula">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse" data-parent="#acordeao-salas" href="#aula{{ aula.numero }}">
+                                    {{ aula.numero }}ª Aula <small class="text-muted" style="font-weight: 400; margin-left: 4px;">({{ aula.horario }})</small>
+                                    <span class="resumo-livres {% if aula.livres %}livres-ok{% else %}livres-zero{% endif %}" style="float:right;">
+                                        {{ aula.livres }} de {{ aula.total }} livres
+                                    </span>
+                                </a>
+                            </h4>
                         </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- Turma + observação + botão (valem para tudo que foi marcado) -->
-            <div class="panel panel-primary" style="margin-top: 18px;">
-                <div class="panel-body">
-                    {% if is_admin %}
-                    <div class="form-group" style="max-width: 360px;">
-                        <label>Agendar em nome de</label>
-                        <select name="professor" class="form-control">
-                            {% for p in professores %}
-                            <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    {% endif %}
-                    <div class="form-group" style="max-width: 360px;">
-                        <label>Turma do agendamento</label>
-                        <select name="turma" class="form-control" required>
-                            <option value="">— selecione a turma —</option>
-                            {% for t in turmas %}
-                            <option value="{{ t.id }}">{{ t.nome }} ({{ t.get_turno_display }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Observação (opcional)</label>
-                        <textarea name="observacao" class="form-control" rows="2"
-                                  placeholder="Ex: aula de reforço, prova, etc."></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-lg">📌 Agendar Salas</button>
-                </div>
-            </div>
-        </form>
-        {% endif %}
-    </div>
-
-    <!-- ================== ABA 2: EQUIPAMENTOS MÓVEIS ================== -->
-    <div role="tabpanel" class="tab-pane" id="tab-movel">
-
-        {% if not tem_equipamentos %}
-        <div class="alert alert-warning">
-            Nenhum equipamento cadastrado ainda. Cadastre em
-            <a href="{% url 'equipamentos' %}">💻 Equipamentos</a> para poder agendar.
-        </div>
-        {% elif not turmas %}
-        <div class="alert alert-warning">
-            Nenhuma turma cadastrada. Cadastre em
-            <a href="{% url 'turmas' %}">👥 Turmas</a> para poder agendar.
-        </div>
-        {% else %}
-
-        <p class="text-muted">
-            <span style="color:#2e7d32;">●</span> Bastante disponível &nbsp;
-            <span style="color:#ef6c00;">●</span> Cerca de metade &nbsp;
-            <span style="color:#c62828;">●</span> Esgotado &nbsp;—&nbsp;
-            clique na aula e arraste para escolher a quantidade.
-        </p>
-
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="tipo" value="dispositivo">
-
-            <div class="panel-group" id="acordeao-disp">
-                {% for aula in aulas_disp %}
-                <div class="panel panel-default painel-aula">
-                    <div class="panel-heading">
-                        <h4 class="panel-title">
-                            <a data-toggle="collapse" data-parent="#acordeao-disp" href="#disp{{ aula.numero }}">
-                                {{ aula.numero }}ª Aula <small class="text-muted">({{ aula.horario }})</small>
-                                {% if aula.cards %}
-                                <span class="resumo-livres livres-zero" style="float:right;">{{ aula.cards|length }} reserva(s)</span>
-                                {% endif %}
-                            </a>
-                        </h4>
-                    </div>
-                    <div id="disp{{ aula.numero }}" class="panel-collapse collapse">
-                        <div class="panel-body">
-
-                            {% for grupo in aula.grupos %}
-                            <div class="dispo-row dispo-{{ grupo.status }}">
-                                <div>
-                                    <span class="nome-sala">{{ grupo.label }}</span>
-                                    <span class="badge-status bg-{{ grupo.status }}">{{ grupo.restante }} / {{ grupo.total }}</span>
-                                </div>
-                                {% if grupo.restante > 0 %}
-                                <div class="dispo-controle">
-                                    <input type="range" class="dispo-slider"
-                                           name="qtd_{{ aula.numero }}_{{ grupo.categoria }}"
-                                           min="0" max="{{ grupo.restante }}" value="0"
-                                           oninput="this.parentNode.querySelector('.dispo-valor').textContent = this.value">
-                                    <span class="dispo-valor">0</span>
+                        <div id="aula{{ aula.numero }}" class="panel-collapse collapse">
+                            <div class="panel-body">
+                                {% for s in aula.salas %}
+                                {% if s.ocupado %}
+                                <div class="aula-item aula-vermelho">
+                                    <span class="badge-status bg-vermelho">Ocupada</span>
+                                    <span class="nome-sala">{{ s.sala.nome }}</span><br>
+                                    <span class="info-sala">{{ s.turma }} — {{ s.professor }}</span>
+                                    <div style="margin-top: 6px;">
+                                        <a href="{% url 'relacao_agendamento' s.ag_id %}" class="btn btn-xs btn-default" style="border-radius: 4px; font-weight: 500;">📋 Relação</a>
+                                    </div>
                                 </div>
                                 {% else %}
-                                <em class="text-muted" style="font-size:13px;">Esgotado nesta aula</em>
+                                <label class="aula-item aula-verde">
+                                    <span class="badge-status bg-verde">Livre</span>
+                                    <input type="checkbox" class="aula-check" name="reserva" value="{{ aula.numero }}:{{ s.sala.id }}">
+                                    <span class="nome-sala">{{ s.sala.nome }}</span>
+                                    {% if s.sala.localizacao %}<span class="info-sala"> — {{ s.sala.localizacao }}</span>{% endif %}
+                                </label>
                                 {% endif %}
+                                {% endfor %}
                             </div>
-                            {% endfor %}
-
-                            {% if aula.cards %}
-                            <hr>
-                            <p class="grupo-tipo">Reservas desta aula</p>
-                            {% for ag in aula.cards %}
-                            <div class="card-reserva">
-                                <strong>{{ ag.turma.nome }}</strong>
-                                <span class="text-muted">— {{ ag.professor.get_full_name|default:ag.professor.username }}</span>
-                                <div style="margin-top:4px;">
-                                    {% for item in ag.itens.all %}
-                                    <span class="label label-primary">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
-                                    {% endfor %}
-                                </div>
-                                <a href="{% url 'relacao_agendamento' ag.id %}" class="btn btn-xs btn-default" style="margin-top:6px;">📋 Relação</a>
-                            </div>
-                            {% endfor %}
-                            {% endif %}
-
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
 
-            <!-- Turma + observação + botão -->
-            <div class="panel panel-primary" style="margin-top: 18px;">
-                <div class="panel-body">
-                    {% if is_admin %}
-                    <div class="form-group" style="max-width: 360px;">
-                        <label>Agendar em nome de</label>
-                        <select name="professor" class="form-control">
-                            {% for p in professores %}
-                            <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
-                            {% endfor %}
-                        </select>
+                <!-- Painel Finalizar -->
+                <div class="panel panel-default panel-finalizar">
+                    <div class="panel-body">
+                        {% if is_admin %}
+                        <div class="form-group" style="max-width: 360px;">
+                            <label>Agendar em nome de</label>
+                            <select name="professor" class="form-control">
+                                {% for p in professores %}
+                                <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                        <div class="form-group" style="max-width: 360px;">
+                            <label>Turma do agendamento</label>
+                            <select name="turma" class="form-control" required>
+                                <option value="">— selecione a turma —</option>
+                                {% for t in turmas %}
+                                <option value="{{ t.id }}">{{ t.nome }} ({{ t.get_turno_display }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Observação (opcional)</label>
+                            <textarea name="observacao" class="form-control" rows="2"
+                                      placeholder="Ex: aula de reforço, prova, etc."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-agendar">📌 Agendar Salas</button>
                     </div>
-                    {% endif %}
-                    <div class="form-group" style="max-width: 360px;">
-                        <label>Turma do agendamento</label>
-                        <select name="turma" class="form-control" required>
-                            <option value="">— selecione a turma —</option>
-                            {% for t in turmas %}
-                            <option value="{{ t.id }}">{{ t.nome }} ({{ t.get_turno_display }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Observação (opcional)</label>
-                        <textarea name="observacao" class="form-control" rows="2"
-                                  placeholder="Ex: projeto de robótica, pesquisa, etc."></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-lg">📌 Agendar Equipamentos</button>
                 </div>
+            </form>
+            {% endif %}
+        </div>
+
+        <!-- ================== ABA 2: EQUIPAMENTOS MÓVEIS ================== -->
+        <div role="tabpanel" class="tab-pane" id="tab-movel">
+
+            {% if not tem_equipamentos %}
+            <div class="alert alert-warning alert-modern">
+                Nenhum equipamento cadastrado ainda. Cadastre em
+                <a href="{% url 'equipamentos' %}" class="alert-link">💻 Equipamentos</a> para poder agendar.
             </div>
-        </form>
-        {% endif %}
+            {% elif not turmas %}
+            <div class="alert alert-warning alert-modern">
+                Nenhuma turma cadastrada. Cadastre em
+                <a href="{% url 'turmas' %}" class="alert-link">👥 Turmas</a> para poder agendar.
+            </div>
+            {% else %}
+
+            <p class="text-muted" style="margin-bottom: 16px; font-size: 14px;">
+                <span style="color:#4CAF50;">●</span> Bastante disponível &nbsp;&nbsp;
+                <span style="color:#FF9800;">●</span> Cerca de metade &nbsp;&nbsp;
+                <span style="color:#E53935;">●</span> Esgotado &nbsp;—&nbsp;
+                clique na aula e arraste para escolher a quantidade.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="tipo" value="dispositivo">
+
+                <div class="panel-group" id="acordeao-disp" style="margin-bottom: 0;">
+                    {% for aula in aulas_disp %}
+                    <div class="panel panel-default painel-aula">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse" data-parent="#acordeao-disp" href="#disp{{ aula.numero }}">
+                                    {{ aula.numero }}ª Aula <small class="text-muted" style="font-weight: 400; margin-left: 4px;">({{ aula.horario }})</small>
+                                    {% if aula.cards %}
+                                    <span class="resumo-livres livres-zero" style="float:right;">{{ aula.cards|length }} reserva(s)</span>
+                                    {% endif %}
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="disp{{ aula.numero }}" class="panel-collapse collapse">
+                            <div class="panel-body">
+
+                                {% for grupo in aula.grupos %}
+                                <div class="dispo-row dispo-{{ grupo.status }}">
+                                    <div>
+                                        <span class="nome-sala">{{ grupo.label }}</span>
+                                        <span class="badge-status bg-{{ grupo.status }}">{{ grupo.restante }} / {{ grupo.total }}</span>
+                                    </div>
+                                    {% if grupo.restante > 0 %}
+                                    <div class="dispo-controle">
+                                        <input type="range" class="dispo-slider"
+                                               name="qtd_{{ aula.numero }}_{{ grupo.categoria }}"
+                                               min="0" max="{{ grupo.restante }}" value="0"
+                                               oninput="this.parentNode.querySelector('.dispo-valor').textContent = this.value">
+                                        <span class="dispo-valor">0</span>
+                                    </div>
+                                    {% else %}
+                                    <div style="margin-top: 6px;">
+                                        <em class="text-muted" style="font-size:13px;">Esgotado nesta aula</em>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+
+                                {% if aula.cards %}
+                                <hr style="border-top-color: #E5E9F0;">
+                                <p class="grupo-tipo">Reservas desta aula</p>
+                                {% for ag in aula.cards %}
+                                <div class="card-reserva">
+                                    <strong>{{ ag.turma.nome }}</strong>
+                                    <span class="text-muted">— {{ ag.professor.get_full_name|default:ag.professor.username }}</span>
+                                    <div style="margin-top:6px; display: flex; gap: 4px; flex-wrap: wrap;">
+                                        {% for item in ag.itens.all %}
+                                        <span class="label label-primary" style="background: #1A4A8A; font-weight: 500; font-size: 11px; padding: 3px 8px; border-radius: 4px;">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    <div style="margin-top: 8px;">
+                                        <a href="{% url 'relacao_agendamento' ag.id %}" class="btn btn-xs btn-default" style="border-radius: 4px; font-weight: 500;">📋 Relação</a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% endif %}
+
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Painel Finalizar -->
+                <div class="panel panel-default panel-finalizar">
+                    <div class="panel-body">
+                        {% if is_admin %}
+                        <div class="form-group" style="max-width: 360px;">
+                            <label>Agendar em nome de</label>
+                            <select name="professor" class="form-control">
+                                {% for p in professores %}
+                                <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                        <div class="form-group" style="max-width: 360px;">
+                            <label>Turma do agendamento</label>
+                            <select name="turma" class="form-control" required>
+                                <option value="">— selecione a turma —</option>
+                                {% for t in turmas %}
+                                <option value="{{ t.id }}">{{ t.nome }} ({{ t.get_turno_display }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Observação (opcional)</label>
+                            <textarea name="observacao" class="form-control" rows="2"
+                                      placeholder="Ex: projeto de robótica, pesquisa, etc."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-agendar">📌 Agendar Equipamentos</button>
+                    </div>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+
     </div>
-
 </div>
 
 {% endblock %}
