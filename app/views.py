@@ -719,7 +719,6 @@ def _gerar_etiqueta_png(equip):
     ]
     if equip.imei:
         linhas.append(f"IMEI: {equip.imei}")
-    linhas.append(f"Status: {equip.get_status_display()}")
 
     fonte = _fonte(20)
     y = 78
