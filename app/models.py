@@ -95,6 +95,8 @@ class Equipamento(models.Model):
     numero_serie = models.CharField('Número de série', max_length=80, blank=True, default='')
     imei = models.CharField('IMEI', max_length=20, blank=True, null=True)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='ATIVO')
+    observacao = models.TextField('Observação', blank=True, default='',
+                                  help_text='Anotações sobre o equipamento, histórico de problemas, etc.')
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:

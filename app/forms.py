@@ -156,7 +156,7 @@ class EquipamentoForm(forms.ModelForm):
     class Meta:
         model = Equipamento
         fields = ['categoria', 'apelido', 'identificacao_escola',
-                  'numero_patrimonio', 'numero_serie', 'imei', 'status']
+                  'numero_patrimonio', 'numero_serie', 'imei', 'status', 'observacao']
         widgets = {
             'categoria': forms.Select(attrs={'class': 'form-control', 'id': 'id_categoria'}),
             'apelido': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: C01, CH03'}),
@@ -165,6 +165,7 @@ class EquipamentoForm(forms.ModelForm):
             'numero_serie': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nº de série'}),
             'imei': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apenas tablets/smartphones', 'id': 'id_imei'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
+            'observacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Anotações sobre o equipamento, histórico de problemas, etc.'}),
         }
 
     def clean(self):

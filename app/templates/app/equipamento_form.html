@@ -81,6 +81,14 @@
                         {{ form.status }}
                     </div>
 
+                    <div class="form-group">
+                        <label>Observação <small class="text-muted">(opcional)</small></label>
+                        {{ form.observacao }}
+                        <span class="help-block" style="font-size:12px;">
+                            Anotações sobre o equipamento, histórico de problemas, etc.
+                        </span>
+                    </div>
+
                     <button type="submit" class="btn btn-success btn-lg">
                         {% if editando %}💾 Salvar Alterações{% else %}✅ Cadastrar{% endif %}
                     </button>

@@ -171,6 +171,12 @@
                     <div class="text-muted" style="font-size:12px; margin-top:6px;">Pat.: {{ e.numero_patrimonio }}</div>
                     {% endif %}
 
+                    {% if e.observacao %}
+                    <div class="text-muted" style="font-size:12px; margin-top:4px; font-style:italic;">
+                        {{ e.observacao|truncatechars:60 }}
+                    </div>
+                    {% endif %}
+
                     <div style="margin-top:10px;">
                         <a href="{% url 'equipamento_editar' e.id %}" class="btn btn-xs btn-default">✏️ Editar</a>
                         <a href="{% url 'etiqueta_equipamento' e.id %}" class="btn btn-xs btn-info">🏷️ Etiqueta</a>
