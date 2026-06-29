@@ -9,10 +9,14 @@
     <link rel="stylesheet" type="text/css" href="{% static 'app/content/site.css' %}" />
     <script src="{% static 'app/scripts/modernizr-2.6.2.js' %}"></script>
     <style>
-        /* CSS para forçar o footer a ficar embaixo */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        /* CSS para forçar o footer a ficar embaixo e aplicar o novo design */
         html, body {
             height: 100%;
             margin: 0;
+            background-color: #D9D9D9;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
         /* Envelopa toda a página exceto o footer */
@@ -20,31 +24,109 @@
             min-height: 100%;
             height: auto !important;
             height: 100%;
-            /* O margin-bottom negativo deve ter a mesma altura do footer + espaçamento */
             margin-bottom: -60px;
-            padding-top: 70px; /* Mantém o espaço para a navbar fixa */
+            padding-top: 90px; /* Espaço para a nova navbar flutuante moderna */
         }
+
+        /* BARRA DE NAVEGAÇÃO MODERNA */
+        .navbar-custom {
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.4) !important;
+            border-radius: 12px;
+            margin: 15px 15px 0 15px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+            /* Alinhamento dos itens e textos */
+            .navbar-custom .navbar-brand {
+                color: #1A4A8A !important;
+                font-weight: 700;
+                font-size: 20px;
+                letter-spacing: -0.5px;
+                padding: 15px 20px;
+            }
+
+            .navbar-custom .navbar-nav > li > a {
+                color: #4B5563 !important;
+                font-weight: 500;
+                font-size: 14px;
+                padding: 15px 16px;
+                transition: color 0.2s ease, background-color 0.2s ease;
+                border-radius: 8px;
+                margin: 0 2px;
+            }
+
+                .navbar-custom .navbar-nav > li > a:hover,
+                .navbar-custom .navbar-nav > li > a:focus {
+                    color: #1A4A8A !important;
+                    background-color: rgba(26, 74, 138, 0.08) !important;
+                }
+
+            /* Botão Sanduíche Responsivo customizado */
+            .navbar-custom .navbar-toggle {
+                border: none;
+                background-color: transparent;
+                margin-top: 10px;
+                margin-bottom: 10px;
+                padding: 10px;
+                border-radius: 8px;
+            }
+
+                .navbar-custom .navbar-toggle:hover {
+                    background-color: rgba(0, 0, 0, 0.03) !important;
+                }
+
+                .navbar-custom .navbar-toggle .icon-bar {
+                    background-color: #4B5563 !important;
+                    width: 22px;
+                    height: 2px;
+                    transition: all 0.2s;
+                }
 
         /* Define uma altura fixa para o footer e o push */
         .footer, .push {
             height: 60px;
         }
 
-        .navbar-brand {
-            font-weight: bold;
-        }
-
+        /* RODAPÉ DA MESMA COR DO FUNDO */
         footer {
             padding-top: 20px;
-            border-top: 1px solid #e5e5e5;
+            border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+            background-color: #D9D9D9; /* Mesma cor exata do fundo solicitada */
+            color: #4B5563;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* RESPONSIVIDADE E AJUSTES MOBILE */
+        @media (max-width: 767px) {
+            .navbar-custom {
+                margin: 10px 10px 0 10px;
+            }
+
+            .navbar-collapse {
+                border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
+                box-shadow: none;
+                margin-top: 5px;
+                background-color: transparent;
+                padding-bottom: 10px;
+            }
+
+            .navbar-custom .navbar-nav > li > a {
+                margin: 4px 0;
+                padding: 10px 15px;
+            }
         }
     </style>
 </head>
 
 <body>
     <div class="wrapper">
-        <div class="navbar navbar-inverse navbar-fixed-top">
-            <div class="container">
+        <div class="navbar navbar-custom navbar-fixed-top">
+            <div class="container-fluid">
                 <div class="navbar-header">
                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
                         <span class="icon-bar"></span>

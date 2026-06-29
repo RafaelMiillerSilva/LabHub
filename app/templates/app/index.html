@@ -4,70 +4,92 @@
 
 {% if dashboard %}
 <!-- ============================ PAINEL DO DIA ============================ -->
-<div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color:#fff; padding: 26px 24px; border-radius: 12px;">
-    <h1 style="margin:0 0 4px;">Olá, {{ user.username }}! 👋</h1>
-    <p class="lead" style="margin:0; opacity:.95;">
-        {{ dia_semana }}, {{ hoje_dia }} de {{ mes_nome }} de {{ hoje_ano }} — visão geral de hoje.
-    </p>
-    <div style="margin-top:16px;">
-        <a href="{% url 'agendamento_detalhe' hoje_ano hoje_mes hoje_dia %}" class="btn btn-default">📅 Agendar hoje</a>
-        <a href="{% url 'agendamentos' %}" class="btn btn-default">🗓️ Calendário completo</a>
+
+<div class="lh-hero">
+    <div class="lh-hero__text">
+        <p class="lh-hero__eyebrow">{{ dia_semana }}, {{ hoje_dia }} de {{ mes_nome }} de {{ hoje_ano }}</p>
+        <h1 class="lh-hero__title">Olá, {{ user.username }} 👋</h1>
+        <p class="lh-hero__sub">Veja o que está reservado para hoje.</p>
+    </div>
+    <div class="lh-hero__actions">
+        <a href="{% url 'agendamento_detalhe' hoje_ano hoje_mes hoje_dia %}" class="lh-btn lh-btn--outline">
+            <span>📅</span> Agendar hoje
+        </a>
+        <a href="{% url 'agendamentos' %}" class="lh-btn lh-btn--outline">
+            <span>🗓️</span> Calendário completo
+        </a>
         {% if is_admin %}
-        <a href="{% url 'painel' %}" class="btn btn-default">🛠️ Painel Admin</a>
+        <a href="{% url 'painel' %}" class="lh-btn lh-btn--outline">
+            <span>🛠️</span> Painel Admin
+        </a>
         {% endif %}
     </div>
 </div>
 
 <!-- Cards de resumo -->
-<div class="row" style="margin-top: 20px;">
-    <div class="col-md-4 col-sm-6" style="margin-bottom:15px;">
-        <div class="panel panel-default" style="border-top: 3px solid #2e7d32;">
-            <div class="panel-body text-center">
-                <div style="font-size: 36px; font-weight: 800; color:#1e3c72;">{{ total_sala }}</div>
-                <div class="text-muted">🏫 Reservas de sala hoje</div>
-            </div>
+<div class="lh-stats">
+    <div class="lh-stat lh-stat--green">
+        <div class="lh-stat__icon">🏫</div>
+        <div class="lh-stat__body">
+            <div class="lh-stat__number">{{ total_sala }}</div>
+            <div class="lh-stat__label">Reservas de sala hoje</div>
         </div>
     </div>
-    <div class="col-md-4 col-sm-6" style="margin-bottom:15px;">
-        <div class="panel panel-default" style="border-top: 3px solid #ef6c00;">
-            <div class="panel-body text-center">
-                <div style="font-size: 36px; font-weight: 800; color:#1e3c72;">{{ total_disp }}</div>
-                <div class="text-muted">💻 Reservas de equipamento hoje</div>
-            </div>
+    <div class="lh-stat lh-stat--orange">
+        <div class="lh-stat__icon">💻</div>
+        <div class="lh-stat__body">
+            <div class="lh-stat__number">{{ total_disp }}</div>
+            <div class="lh-stat__label">Reservas de equipamento hoje</div>
         </div>
     </div>
     {% if is_admin %}
-    <div class="col-md-4 col-sm-6" style="margin-bottom:15px;">
-        <div class="panel panel-default" style="border-top: 3px solid #d9534f;">
-            <div class="panel-body text-center">
-                <div style="font-size: 36px; font-weight: 800; color:#1e3c72;">{{ solicitacoes_pendentes }}</div>
-                <div class="text-muted">🕐 Solicitações de acesso pendentes</div>
-            </div>
+    <div class="lh-stat lh-stat--red">
+        <div class="lh-stat__icon">🕐</div>
+        <div class="lh-stat__body">
+            <div class="lh-stat__number">{{ solicitacoes_pendentes }}</div>
+            <div class="lh-stat__label">Solicitações pendentes</div>
         </div>
     </div>
     {% endif %}
 </div>
 
 <!-- Salas reservadas hoje -->
-<div class="panel panel-default">
-    <div class="panel-heading"><h3 class="panel-title">🏫 Salas reservadas hoje</h3></div>
-    <div class="panel-body">
-        <div class="table-responsive">
-            <table class="table table-striped" style="margin-bottom:0;">
+<div class="lh-card">
+    <div class="lh-card__header lh-card__header--green">
+        <h2 class="lh-card__title">🏫 Salas reservadas hoje</h2>
+    </div>
+    <div class="lh-card__body">
+        <div class="lh-table-wrap">
+            <table class="lh-table">
                 <thead>
-                    <tr><th class="text-center">Aula</th><th>Sala</th><th>Turma</th><th>Professor</th><th class="text-center">Relação</th></tr>
+                    <tr>
+                        <th class="text-center" style="width:70px">Aula</th>
+                        <th>Sala</th>
+                        <th>Turma</th>
+                        <th>Professor</th>
+                        <th class="text-center" style="width:100px">Relação</th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for r in reservas_sala %}
                     <tr>
-                        <td class="text-center">{{ r.aula }}ª</td>
+                        <td class="text-center">
+                            <span class="lh-badge lh-badge--blue">{{ r.aula }}ª</span>
+                        </td>
                         <td><strong>{{ r.sala.nome }}</strong></td>
                         <td>{{ r.turma.nome }}</td>
                         <td>{{ r.professor.get_full_name|default:r.professor.username }}</td>
-                        <td class="text-center"><a href="{% url 'relacao_agendamento' r.id %}" class="btn btn-xs btn-info">📋 Abrir</a></td>
+                        <td class="text-center">
+                            <a href="{% url 'relacao_agendamento' r.id %}" class="lh-btn lh-btn--xs lh-btn--info">📋 Abrir</a>
+                        </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="5" class="text-center text-muted" style="padding:24px;"><em>Nenhuma sala reservada para hoje.</em></td></tr>
+                    <tr>
+                        <td colspan="5" class="lh-table__empty">
+                            <span>📭</span>
+                            <p>Nenhuma sala reservada para hoje.</p>
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -76,29 +98,48 @@
 </div>
 
 <!-- Equipamentos reservados hoje -->
-<div class="panel panel-default">
-    <div class="panel-heading"><h3 class="panel-title">💻 Equipamentos reservados hoje</h3></div>
-    <div class="panel-body">
-        <div class="table-responsive">
-            <table class="table table-striped" style="margin-bottom:0;">
+<div class="lh-card">
+    <div class="lh-card__header lh-card__header--orange">
+        <h2 class="lh-card__title">💻 Equipamentos reservados hoje</h2>
+    </div>
+    <div class="lh-card__body">
+        <div class="lh-table-wrap">
+            <table class="lh-table">
                 <thead>
-                    <tr><th class="text-center">Aula</th><th>Equipamentos</th><th>Turma</th><th>Professor</th><th class="text-center">Relação</th></tr>
+                    <tr>
+                        <th class="text-center" style="width:70px">Aula</th>
+                        <th>Equipamentos</th>
+                        <th>Turma</th>
+                        <th>Professor</th>
+                        <th class="text-center" style="width:100px">Relação</th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for r in reservas_disp %}
                     <tr>
-                        <td class="text-center">{{ r.aula }}ª</td>
+                        <td class="text-center">
+                            <span class="lh-badge lh-badge--blue">{{ r.aula }}ª</span>
+                        </td>
                         <td>
-                            {% for item in r.itens.all %}
-                            <span class="label label-primary">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
-                            {% endfor %}
+                            <div class="lh-tags">
+                                {% for item in r.itens.all %}
+                                <span class="lh-tag">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
+                                {% endfor %}
+                            </div>
                         </td>
                         <td>{{ r.turma.nome }}</td>
                         <td>{{ r.professor.get_full_name|default:r.professor.username }}</td>
-                        <td class="text-center"><a href="{% url 'relacao_agendamento' r.id %}" class="btn btn-xs btn-info">📋 Abrir</a></td>
+                        <td class="text-center">
+                            <a href="{% url 'relacao_agendamento' r.id %}" class="lh-btn lh-btn--xs lh-btn--info">📋 Abrir</a>
+                        </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="5" class="text-center text-muted" style="padding:24px;"><em>Nenhum equipamento reservado para hoje.</em></td></tr>
+                    <tr>
+                        <td colspan="5" class="lh-table__empty">
+                            <span>📭</span>
+                            <p>Nenhum equipamento reservado para hoje.</p>
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -106,95 +147,108 @@
     </div>
 </div>
 
+
 {% elif msg_pendente %}
 <!-- ===================== CONTA AGUARDANDO APROVAÇÃO ===================== -->
-<div class="jumbotron text-center" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 50px 20px; border-radius: 10px;">
-    <h1>LabHub</h1>
-    <p class="lead">Sua conta foi criada e está <strong>aguardando aprovação</strong> de um administrador.</p>
-    <p>Assim que for aprovada, você poderá acessar o calendário e fazer agendamentos.</p>
+
+<div class="lh-pending">
+    <div class="lh-pending__icon">⏳</div>
+    <h1 class="lh-pending__title">Aguardando aprovação</h1>
+    <p class="lh-pending__text">Sua conta foi criada e está sendo analisada por um administrador.</p>
+    <p class="lh-pending__sub">Assim que for aprovada, você poderá acessar o calendário e fazer agendamentos.</p>
 </div>
+
 
 {% else %}
 <!-- ============================ TELA PÚBLICA ============================ -->
-<div class="jumbotron text-center" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 60px 20px; border-radius: 10px;">
-    <h1>LabHub</h1>
-    <p class="lead">Sistema interno de gerenciamento e agendamento de equipamentos escolares.</p>
-    <p>Reserve computadores, tablets e projetores de forma rápida e organizada.</p>
 
-    {% if not user.is_authenticated %}
-    <p><button class="btn btn-primary btn-lg" data-toggle="modal" data-target="#authModal">Acessar o Sistema</button></p>
-    {% endif %}
+<div class="lh-public-hero">
+    <div class="lh-public-hero__content">
+        <p class="lh-public-hero__eyebrow">Sistema Escolar de Agendamento</p>
+        <h1 class="lh-public-hero__title">LabHub</h1>
+        <p class="lh-public-hero__desc">Reserve computadores, tablets e projetores de forma rápida e organizada, sem burocracia.</p>
+        {% if not user.is_authenticated %}
+        <button class="lh-btn lh-btn--primary lh-btn--lg" data-toggle="modal" data-target="#authModal">
+            Acessar o Sistema →
+        </button>
+        {% endif %}
+    </div>
 </div>
 
-<div class="row">
-    <div class="col-md-4 text-center" style="margin-bottom: 20px;">
-        <h3>⚡ Agendamento Rápido</h3>
-        <p>Escolha o dia, o horário e o equipamento disponível em poucos cliques, sem burocracia.</p>
+<div class="lh-features">
+    <div class="lh-feature">
+        <div class="lh-feature__icon">⚡</div>
+        <h3 class="lh-feature__title">Agendamento Rápido</h3>
+        <p class="lh-feature__desc">Escolha o dia, o horário e o equipamento disponível em poucos cliques.</p>
     </div>
-    <div class="col-md-4 text-center" style="margin-bottom: 20px;">
-        <h3>📱 100% Mobile</h3>
-        <p>Acesse e faça reservas diretamente do seu smartphone de dentro ou de fora da sala de aula.</p>
+    <div class="lh-feature">
+        <div class="lh-feature__icon">📱</div>
+        <h3 class="lh-feature__title">100% Mobile</h3>
+        <p class="lh-feature__desc">Acesse e faça reservas diretamente do smartphone, dentro ou fora da sala.</p>
     </div>
-    <div class="col-md-4 text-center" style="margin-bottom: 20px;">
-        <h3>📊 Controle Total</h3>
-        <p>Administradores aprovam cadastros, gerenciam o inventário e evitam conflitos de horários.</p>
+    <div class="lh-feature">
+        <div class="lh-feature__icon">📊</div>
+        <h3 class="lh-feature__title">Controle Total</h3>
+        <p class="lh-feature__desc">Admins aprovam cadastros, gerenciam o inventário e evitam conflitos de horários.</p>
     </div>
 </div>
+
 
 {% if not user.is_authenticated %}
+<!-- Modal de autenticação -->
 <div class="modal fade" id="authModal" tabindex="-1" role="dialog" aria-labelledby="authModalLabel" data-backdrop="static">
-    <div class="modal-dialog modal-sm" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title text-center" id="authModalLabel">LabHub</h4>
+    <div class="modal-dialog lh-modal-dialog" role="document">
+        <div class="modal-content lh-modal">
+            <div class="lh-modal__header">
+                <h4 class="lh-modal__title" id="authModalLabel">LabHub</h4>
+                <button type="button" class="lh-modal__close" data-dismiss="modal" aria-label="Fechar">×</button>
             </div>
 
-            <div class="modal-body">
-                <ul class="nav nav-tabs nav-justified" role="tablist" style="margin-bottom: 15px;">
-                    <li role="presentation" class="active"><a href="#loginTab" role="tab" data-toggle="tab">Entrar</a></li>
-                    <li role="presentation"><a href="#cadastroTab" role="tab" data-toggle="tab">Cadastrar</a></li>
-                </ul>
+            <div class="lh-modal__body">
+                <!-- Tabs -->
+                <div class="lh-tabs" role="tablist">
+                    <button class="lh-tab lh-tab--active" data-target="#loginTab" role="tab">Entrar</button>
+                    <button class="lh-tab" data-target="#cadastroTab" role="tab">Cadastrar</button>
+                    <div class="lh-tabs__ink"></div>
+                </div>
 
-                <div class="tab-content">
+                <div class="tab-content" style="padding-top:20px;">
+                    <!-- Login -->
                     <div role="tabpanel" class="tab-pane active" id="loginTab">
-
                         {% if form_login.errors %}
-                        <div class="alert alert-danger" style="padding: 8px 12px; margin-bottom: 15px; font-size: 13px;">
-                            <ul style="margin: 0; padding-left: 15px;">
-                                <li>E-mail ou senha incorretos. Por favor, tente novamente.</li>
-                            </ul>
+                        <div class="lh-alert lh-alert--danger">
+                            E-mail ou senha incorretos. Por favor, tente novamente.
                         </div>
                         {% endif %}
 
                         <form action="." method="post">
                             {% csrf_token %}
-                            <div class="form-group">
-                                <label>E-mail / Usuário</label>
+                            <div class="lh-field">
+                                <label class="lh-label">E-mail / Usuário</label>
                                 {{ form_login.username }}
                             </div>
-                            <div class="form-group">
-                                <label>Senha</label>
+                            <div class="lh-field">
+                                <label class="lh-label">Senha</label>
                                 {{ form_login.password }}
                             </div>
                             <input type="hidden" name="next" value="/" />
-                            <button type="submit" name="btn_login" class="btn btn-success btn-block">Entrar</button>
+                            <button type="submit" name="btn_login" class="lh-btn lh-btn--success lh-btn--block">
+                                Entrar
+                            </button>
                         </form>
                     </div>
 
+                    <!-- Cadastro -->
                     <div role="tabpanel" class="tab-pane" id="cadastroTab">
-
                         {% if msg_sucesso_cadastro %}
-                        <div class="alert alert-success text-center" style="padding: 10px; margin-bottom: 15px; font-size: 14px; font-weight: bold;">
-                            ✅ Solicitação enviada com sucesso! Aguarde a aprovação do administrador.
+                        <div class="lh-alert lh-alert--success">
+                            ✅ Solicitação enviada! Aguarde a aprovação do administrador.
                         </div>
                         {% endif %}
 
                         {% if form_cadastro.errors %}
-                        <div class="alert alert-danger" style="padding: 8px 12px; margin-bottom: 15px; font-size: 13px;">
-                            <ul style="margin: 0; padding-left: 15px;">
+                        <div class="lh-alert lh-alert--danger">
+                            <ul style="margin:0; padding-left:18px;">
                                 {% for field in form_cadastro %}
                                 {% for error in field.errors %}
                                 <li>{{ error }}</li>
@@ -209,27 +263,29 @@
 
                         <form action="." method="post">
                             {% csrf_token %}
-                            <div class="form-group">
-                                <label>Nome de Usuário</label>
+                            <div class="lh-field">
+                                <label class="lh-label">Nome de Usuário</label>
                                 {{ form_cadastro.username }}
                             </div>
-                            <div class="form-group">
-                                <label>E-mail</label>
+                            <div class="lh-field">
+                                <label class="lh-label">E-mail</label>
                                 {{ form_cadastro.email }}
                             </div>
-                            <div class="form-group">
-                                <label>Tipo de Conta</label>
+                            <div class="lh-field">
+                                <label class="lh-label">Tipo de Conta</label>
                                 {{ form_cadastro.tipo }}
                             </div>
-                            <div class="form-group">
-                                <label>Senha</label>
+                            <div class="lh-field">
+                                <label class="lh-label">Senha</label>
                                 {{ form_cadastro.password }}
                             </div>
-                            <div class="form-group">
-                                <label>Confirmar Senha</label>
+                            <div class="lh-field">
+                                <label class="lh-label">Confirmar Senha</label>
                                 {{ form_cadastro.password_confirm }}
                             </div>
-                            <button type="submit" name="btn_cadastro" class="btn btn-primary btn-block">Cadastrar</button>
+                            <button type="submit" name="btn_cadastro" class="lh-btn lh-btn--primary lh-btn--block">
+                                Cadastrar
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -241,21 +297,655 @@
 
 {% endif %}
 
+<!-- ==================== ESTILOS MODERNOS ==================== -->
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    /* ── Tokens ── */
+    :root {
+        --lh-blue-deep: #0F2645;
+        --lh-blue: #1A4A8A;
+        --lh-blue-light: #EBF2FF;
+        --lh-green: #2E7D32;
+        --lh-green-light: #E8F5E9;
+        --lh-orange: #E65100;
+        --lh-orange-light: #FFF3E0;
+        --lh-red: #C62828;
+        --lh-red-light: #FFEBEE;
+        --lh-text: #1A1A2E;
+        --lh-muted: #6B7280;
+        --lh-border: #E5E9F0;
+        --lh-bg: #F7F9FC;
+        --lh-white: #FFFFFF;
+        --lh-radius: 12px;
+        --lh-radius-sm: 7px;
+        --lh-shadow: 0 2px 12px rgba(15,38,69,.08);
+        --lh-shadow-md: 0 4px 24px rgba(15,38,69,.13);
+    }
+
+    .body-content, .body-content * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* ── Hero do dashboard ── */
+    .lh-hero {
+        background: linear-gradient(135deg, var(--lh-blue-deep) 0%, var(--lh-blue) 100%);
+        color: #fff;
+        border-radius: var(--lh-radius);
+        padding: 32px 28px 28px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .lh-hero__eyebrow {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        opacity: .75;
+        margin: 0 0 6px;
+    }
+
+    .lh-hero__title {
+        font-size: 28px;
+        font-weight: 800;
+        margin: 0 0 4px;
+        line-height: 1.2;
+    }
+
+    .lh-hero__sub {
+        font-size: 15px;
+        opacity: .85;
+        margin: 0;
+    }
+
+    .lh-hero__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+    }
+
+    /* ── Stats ── */
+    .lh-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .lh-stat {
+        background: var(--lh-white);
+        border-radius: var(--lh-radius);
+        box-shadow: var(--lh-shadow);
+        padding: 20px 22px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        border-left: 4px solid transparent;
+        transition: box-shadow .18s;
+    }
+
+        .lh-stat:hover {
+            box-shadow: var(--lh-shadow-md);
+        }
+
+    .lh-stat--green {
+        border-left-color: var(--lh-green);
+    }
+
+    .lh-stat--orange {
+        border-left-color: var(--lh-orange);
+    }
+
+    .lh-stat--red {
+        border-left-color: var(--lh-red);
+    }
+
+    .lh-stat__icon {
+        font-size: 28px;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+
+    .lh-stat__number {
+        font-size: 36px;
+        font-weight: 800;
+        color: var(--lh-blue-deep);
+        line-height: 1;
+        margin-bottom: 2px;
+    }
+
+    .lh-stat__label {
+        font-size: 13px;
+        color: var(--lh-muted);
+        font-weight: 500;
+    }
+
+    /* ── Card ── */
+    .lh-card {
+        background: var(--lh-white);
+        border-radius: var(--lh-radius);
+        box-shadow: var(--lh-shadow);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .lh-card__header {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--lh-border);
+        background: var(--lh-bg);
+    }
+
+    .lh-card__header--green {
+        border-left: 4px solid var(--lh-green);
+    }
+
+    .lh-card__header--orange {
+        border-left: 4px solid var(--lh-orange);
+    }
+
+    .lh-card__title {
+        font-size: 15px;
+        font-weight: 700;
+        margin: 0;
+        color: var(--lh-text);
+    }
+
+    .lh-card__body {
+        padding: 0;
+    }
+
+    /* ── Tabela ── */
+    .lh-table-wrap {
+        overflow-x: auto;
+    }
+
+    .lh-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+        .lh-table thead th {
+            background: var(--lh-bg);
+            color: var(--lh-muted);
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--lh-border);
+            white-space: nowrap;
+        }
+
+        .lh-table tbody td {
+            padding: 13px 16px;
+            border-bottom: 1px solid var(--lh-border);
+            color: var(--lh-text);
+            vertical-align: middle;
+        }
+
+        .lh-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .lh-table tbody tr:hover td {
+            background: var(--lh-blue-light);
+        }
+
+    .lh-table__empty {
+        text-align: center;
+        padding: 36px 16px !important;
+        color: var(--lh-muted);
+    }
+
+        .lh-table__empty span {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .lh-table__empty p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+    .text-center {
+        text-align: center;
+    }
+
+    /* ── Badge e tags ── */
+    .lh-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .lh-badge--blue {
+        background: var(--lh-blue-light);
+        color: var(--lh-blue);
+    }
+
+    .lh-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .lh-tag {
+        background: var(--lh-blue-light);
+        color: var(--lh-blue);
+        border-radius: 5px;
+        padding: 3px 9px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    /* ── Botões ── */
+    .lh-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 18px;
+        border-radius: var(--lh-radius-sm);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        border: none;
+        transition: background .16s, transform .1s, box-shadow .16s;
+        white-space: nowrap;
+        font-family: inherit;
+    }
+
+        .lh-btn:active {
+            transform: scale(.97);
+        }
+
+    .lh-btn--outline {
+        background: rgba(255,255,255,.15);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,.35);
+    }
+
+        .lh-btn--outline:hover {
+            background: rgba(255,255,255,.25);
+            color: #fff;
+            text-decoration: none;
+        }
+
+    .lh-btn--primary {
+        background: var(--lh-blue);
+        color: #fff;
+    }
+
+        .lh-btn--primary:hover {
+            background: #153d74;
+            color: #fff;
+            text-decoration: none;
+        }
+
+    .lh-btn--success {
+        background: var(--lh-green);
+        color: #fff;
+    }
+
+        .lh-btn--success:hover {
+            background: #1b5e20;
+            color: #fff;
+            text-decoration: none;
+        }
+
+    .lh-btn--info {
+        background: var(--lh-blue-light);
+        color: var(--lh-blue);
+    }
+
+        .lh-btn--info:hover {
+            background: #d0e4ff;
+            color: var(--lh-blue);
+            text-decoration: none;
+        }
+
+    .lh-btn--lg {
+        padding: 13px 28px;
+        font-size: 16px;
+    }
+
+    .lh-btn--block {
+        display: flex;
+        width: 100%;
+        justify-content: center;
+        margin-top: 6px;
+    }
+
+    .lh-btn--xs {
+        padding: 5px 11px;
+        font-size: 12px;
+    }
+
+    /* ── Pending ── */
+    .lh-pending {
+        text-align: center;
+        padding: 72px 24px;
+        background: linear-gradient(135deg, var(--lh-blue-deep) 0%, var(--lh-blue) 100%);
+        border-radius: var(--lh-radius);
+        color: #fff;
+    }
+
+    .lh-pending__icon {
+        font-size: 56px;
+        margin-bottom: 16px;
+    }
+
+    .lh-pending__title {
+        font-size: 28px;
+        font-weight: 800;
+        margin: 0 0 12px;
+    }
+
+    .lh-pending__text {
+        font-size: 17px;
+        opacity: .9;
+        margin: 0 0 8px;
+    }
+
+    .lh-pending__sub {
+        font-size: 14px;
+        opacity: .7;
+        margin: 0;
+    }
+
+    /* ── Tela pública hero ── */
+    .lh-public-hero {
+        background: linear-gradient(135deg, var(--lh-blue-deep) 0%, var(--lh-blue) 100%);
+        border-radius: var(--lh-radius);
+        padding: 60px 40px;
+        margin-bottom: 32px;
+        color: #fff;
+        text-align: center;
+    }
+
+    .lh-public-hero__eyebrow {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        opacity: .7;
+        margin: 0 0 12px;
+    }
+
+    .lh-public-hero__title {
+        font-size: 52px;
+        font-weight: 800;
+        margin: 0 0 16px;
+        letter-spacing: -.02em;
+        line-height: 1;
+    }
+
+    .lh-public-hero__desc {
+        font-size: 17px;
+        opacity: .88;
+        margin: 0 auto 28px;
+        max-width: 480px;
+        line-height: 1.6;
+    }
+
+    /* ── Features ── */
+    .lh-features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+
+    .lh-feature {
+        background: var(--lh-white);
+        border-radius: var(--lh-radius);
+        box-shadow: var(--lh-shadow);
+        padding: 28px 24px;
+        text-align: center;
+        transition: box-shadow .18s, transform .18s;
+    }
+
+        .lh-feature:hover {
+            box-shadow: var(--lh-shadow-md);
+            transform: translateY(-2px);
+        }
+
+    .lh-feature__icon {
+        font-size: 36px;
+        margin-bottom: 12px;
+    }
+
+    .lh-feature__title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--lh-text);
+        margin: 0 0 8px;
+    }
+
+    .lh-feature__desc {
+        font-size: 14px;
+        color: var(--lh-muted);
+        margin: 0;
+        line-height: 1.55;
+    }
+
+    /* ── Modal ── */
+    .lh-modal-dialog {
+        max-width: 420px;
+        margin: 60px auto;
+    }
+
+    .lh-modal {
+        border: none;
+        border-radius: var(--lh-radius);
+        box-shadow: var(--lh-shadow-md);
+        overflow: hidden;
+    }
+
+    .lh-modal__header {
+        background: linear-gradient(135deg, var(--lh-blue-deep), var(--lh-blue));
+        color: #fff;
+        padding: 18px 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .lh-modal__title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+    .lh-modal__close {
+        background: none;
+        border: none;
+        color: rgba(255,255,255,.8);
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+        transition: color .15s;
+    }
+
+        .lh-modal__close:hover {
+            color: #fff;
+        }
+
+    .lh-modal__body {
+        padding: 22px;
+    }
+
+    /* ── Tabs do modal ── */
+    .lh-tabs {
+        display: flex;
+        border-bottom: 2px solid var(--lh-border);
+        gap: 0;
+    }
+
+    .lh-tab {
+        flex: 1;
+        padding: 9px 0;
+        background: none;
+        border: none;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--lh-muted);
+        cursor: pointer;
+        transition: color .15s;
+        position: relative;
+        bottom: -2px;
+        border-bottom: 2px solid transparent;
+    }
+
+        .lh-tab:hover {
+            color: var(--lh-blue);
+        }
+
+    .lh-tab--active {
+        color: var(--lh-blue);
+        border-bottom-color: var(--lh-blue);
+    }
+
+    /* ── Campos do formulário ── */
+    .lh-field {
+        margin-bottom: 14px;
+    }
+
+    .lh-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--lh-muted);
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+
+    .lh-field input,
+    .lh-field select,
+    .lh-modal input[type="text"],
+    .lh-modal input[type="password"],
+    .lh-modal input[type="email"],
+    .lh-modal select {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1.5px solid var(--lh-border);
+        border-radius: var(--lh-radius-sm);
+        font-size: 14px;
+        font-family: inherit;
+        color: var(--lh-text);
+        background: var(--lh-bg);
+        transition: border-color .15s, box-shadow .15s;
+        box-sizing: border-box;
+    }
+
+        .lh-field input:focus,
+        .lh-field select:focus,
+        .lh-modal input:focus,
+        .lh-modal select:focus {
+            outline: none;
+            border-color: var(--lh-blue);
+            box-shadow: 0 0 0 3px rgba(26,74,138,.12);
+            background: var(--lh-white);
+        }
+
+    /* ── Alertas ── */
+    .lh-alert {
+        border-radius: var(--lh-radius-sm);
+        padding: 11px 14px;
+        font-size: 13px;
+        margin-bottom: 14px;
+        font-weight: 500;
+    }
+
+    .lh-alert--danger {
+        background: var(--lh-red-light);
+        color: var(--lh-red);
+        border-left: 3px solid var(--lh-red);
+    }
+
+    .lh-alert--success {
+        background: var(--lh-green-light);
+        color: var(--lh-green);
+        border-left: 3px solid var(--lh-green);
+    }
+
+    /* ── Responsivo ── */
+    @media (max-width: 600px) {
+        .lh-hero {
+            flex-direction: column;
+            padding: 24px 18px 20px;
+        }
+
+        .lh-hero__title {
+            font-size: 22px;
+        }
+
+        .lh-public-hero {
+            padding: 44px 20px;
+        }
+
+        .lh-public-hero__title {
+            font-size: 38px;
+        }
+
+        .lh-stats {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .lh-modal-dialog {
+            margin: 16px;
+            max-width: 100%;
+        }
+
+        .lh-table thead th,
+        .lh-table tbody td {
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+    }
+</style>
+
 {% endblock %}
 
 {% block scripts %}
 {% if not user.is_authenticated %}
 <script>
     $(document).ready(function () {
+        /* Abre o modal automaticamente */
         if ($('#authModal').length > 0) {
             $('#authModal').modal('show');
         }
-        {% if form_cadastro.errors %}
-        $('.nav-tabs a[href="#cadastroTab"]').tab('show');
+
+        /* Ativa a aba de cadastro se houver erro ou sucesso */
+        {% if form_cadastro.errors or msg_sucesso_cadastro %}
+        activateTab('[data-target="#cadastroTab"]');
         {% endif %}
-        {% if msg_sucesso_cadastro %}
-        $('.nav-tabs a[href="#cadastroTab"]').tab('show');
-        {% endif %}
+
+        /* Tab switching com lh-tab */
+        $('.lh-tab').on('click', function () {
+            var target = $(this).data('target');
+            $('.lh-tab').removeClass('lh-tab--active');
+            $(this).addClass('lh-tab--active');
+            $('.tab-pane').removeClass('active');
+            $(target).addClass('active');
+        });
+
+        function activateTab(selector) {
+            $(selector).trigger('click');
+        }
     });
 </script>
 {% endif %}

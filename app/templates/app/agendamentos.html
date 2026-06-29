@@ -1,276 +1,451 @@
 {% extends "app/layout.html" %}
 {% block content %}
 
+<!-- ==================== ESTILOS MODERNOS DO CALENDÁRIO ==================== -->
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700;800&display=swap');
+
+    .cal-container-wrap {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* ── Card do Calendário ── */
     .cal-card {
         max-width: 760px;
         margin: 0 auto;
-        border: 1px solid #e3e6ee;
-        border-radius: 14px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 6px 22px rgba(30, 60, 114, .10);
-        background: #fff;
+        box-shadow: 0 4px 24px rgba(15, 38, 69, 0.08);
+        background: #ffffff;
     }
 
     .cal-header {
-        padding: 18px 22px 10px;
-        border-bottom: 3px solid #1e3c72;
+        padding: 24px;
+        background: #ffffff;
+        border-bottom: 1px solid #E5E9F0;
     }
 
-    .cal-ano > button {
-        background: #f6c9bf;
-        color: #1e3c72;
-        font-size: 28px;
+    /* Alinhamento na mesma linha/reta */
+    .cal-controls-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .cal-dropdowns-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* ── Dropdowns de Ano e Mês ── */
+    .cal-ano > .btn,
+    .cal-mes > .btn {
+        background: #EBF2FF !important;
+        color: #1A4A8A !important;
+        font-size: 18px;
         font-weight: 800;
         line-height: 1;
-        padding: 8px 16px;
-        border: 1px solid #e8a99c;
-        border-radius: 10px;
+        padding: 10px 16px;
+        border: none !important;
+        border-radius: 8px;
+        transition: background-color 0.2s;
     }
 
-        .cal-ano > button:hover {
-            background: #f1b6a9;
+        .cal-ano > .btn:hover,
+        .cal-mes > .btn:hover {
+            background: #d0e4ff !important;
         }
 
-    .cal-mes > button {
-        color: #1e3c72;
-        font-size: 28px;
-        font-weight: 800;
-        text-decoration: none;
-        padding: 8px 6px;
-        background: none;
-        border: none;
-    }
-
+    /* ── Navegação Mensal alinhada ── */
     .cal-nav {
-        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
+        .cal-nav .btn {
+            font-weight: 600;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 13px;
+            transition: all 0.15s;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .cal-nav .btn-default {
+            background: #F7F9FC;
+            border: 1px solid #E5E9F0;
+            color: #6B7280;
+        }
+
+            .cal-nav .btn-default:hover {
+                background: #E5E9F0;
+                color: #1A1A2E;
+            }
+
+        .cal-nav .btn-primary {
+            background: #1A4A8A;
+            border: none;
+            color: #ffffff;
+        }
+
+            .cal-nav .btn-primary:hover {
+                background: #153d74;
+            }
+
+    /* ── Tabela do Calendário ── */
     .cal-table {
         width: 100%;
         table-layout: fixed;
         margin: 0;
+        background: #ffffff;
     }
 
         .cal-table th {
             text-align: center;
-            color: #1e3c72;
-            font-size: 13px;
-            letter-spacing: .5px;
-            padding: 12px 0 10px;
-            border-bottom: 2px solid #1e3c72;
+            color: #6B7280;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            padding: 14px 0;
+            background: #F7F9FC;
+            border-bottom: 1px solid #E5E9F0;
         }
 
         .cal-table td {
-            padding: 5px;
-            height: 66px;
+            padding: 6px;
+            height: 70px;
             vertical-align: middle;
+            border-bottom: 1px solid #F0F4F8;
         }
 
+    /* ── Botões de Dias ── */
     .cal-dia {
         display: block;
         width: 100%;
-        height: 54px;
+        height: 56px;
         line-height: 54px;
         text-align: center;
-        font-size: 17px;
+        font-size: 16px;
         font-weight: 600;
-        color: #2c3e50;
-        background: #f4f6fb;
-        border: 1px solid #e3e6ee;
-        border-radius: 10px;
+        color: #1A1A2E;
+        background: #ffffff;
+        border: 1px solid #E5E9F0;
+        border-radius: 8px;
         text-decoration: none;
-        transition: all .12s ease;
+        transition: all .15s ease;
     }
 
         .cal-dia:hover {
-            background: #1e3c72;
-            color: #fff;
+            background: #1A4A8A;
+            color: #ffffff;
             text-decoration: none;
             transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(30, 60, 114, .25);
+            box-shadow: 0 4px 12px rgba(26, 74, 138, 0.2);
         }
 
         .cal-dia.hoje {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: #fff;
-            border-color: #1e3c72;
+            background: linear-gradient(135deg, #0F2645 0%, #1A4A8A 100%);
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 4px 12px rgba(15, 38, 69, 0.15);
         }
 
         .cal-dia.passado {
             opacity: .4;
+            background: #F7F9FC;
         }
 
             .cal-dia.passado:hover {
-                background: #b0413e;
-                box-shadow: none;
-                transform: none;
+                background: #C62828;
+                color: #ffffff;
+                opacity: 1;
+                box-shadow: 0 4px 12px rgba(198, 40, 40, 0.2);
+                border-color: #C62828;
             }
+
+    /* ── Tabela de Minhas Reservas ── */
+    .lh-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(15, 38, 69, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .lh-card-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #E5E9F0;
+        background: #F7F9FC;
+    }
+
+    .lh-card-title {
+        font-size: 15px;
+        font-weight: 700;
+        margin: 0;
+        color: #1A1A2E;
+    }
+
+    .lh-table {
+        width: 100%;
+        font-size: 14px;
+    }
+
+        .lh-table th {
+            background: #F7F9FC;
+            color: #6B7280;
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            padding: 12px 16px;
+            border-bottom: 1px solid #E5E9F0;
+        }
+
+        .lh-table td {
+            padding: 13px 16px;
+            border-bottom: 1px solid #E5E9F0;
+            color: #1A1A2E;
+            vertical-align: middle;
+        }
+
+        .lh-table tbody tr:hover td {
+            background: #EBF2FF;
+        }
+
+    .lh-btn-xs {
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: background 0.15s;
+    }
+
+    .lh-btn-info {
+        background: #EBF2FF;
+        color: #1A4A8A;
+    }
+
+        .lh-btn-info:hover {
+            background: #d0e4ff;
+        }
+
+    .lh-btn-danger {
+        background: #FFEBEE;
+        color: #C62828;
+    }
+
+        .lh-btn-danger:hover {
+            background: #ffcdd2;
+        }
+
+    /* ── Modais ── */
+    .modal-content {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #E5E9F0;
+        background: #F7F9FC;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #E5E9F0;
+    }
+
+    .alert-modern {
+        border-radius: 8px;
+        border: none;
+        font-weight: 500;
+        font-size: 14px;
+    }
 </style>
 
-{% if messages %}
-<div style="max-width:760px; margin:0 auto 15px;">
-    {% for message in messages %}
-    <div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% elif message.tags == 'info' %}info{% else %}success{% endif %} alert-dismissible" role="alert">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
-            <span aria-hidden="true">&times;</span>
-        </button>
-        {{ message }}
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
+<div class="cal-container-wrap">
 
-<div class="cal-card">
-    <div class="cal-header">
-        <div class="row">
-            <div class="col-xs-6">
-                <div class="dropdown cal-ano" style="display:inline-block;">
-                    <button class="btn" type="button" data-toggle="dropdown" aria-expanded="false">
-                        {{ ano }} <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        {% for a in lista_anos %}
-                        <li{% if a == ano %} class="active" {% endif %}>
-                            <a href="?ano={{ a }}&mes={{ mes }}">{{ a }}</a>
-                            </li>
-                            {% endfor %}
-                    </ul>
+    <!-- Mensagens do Sistema -->
+    {% if messages %}
+    <div style="max-width:760px; margin:0 auto 20px;">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% elif message.tags == 'info' %}info{% else %}success{% endif %} alert-dismissible alert-modern" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Card Principal do Calendário -->
+    <div class="cal-card">
+        <div class="cal-header">
+            <div class="cal-controls-row">
+                <!-- Seletores de Mês e Ano lado a lado -->
+                <div class="cal-dropdowns-group">
+                    <div class="dropdown cal-mes">
+                        <button class="btn" type="button" data-toggle="dropdown" aria-expanded="false">
+                            {{ mes_nome|upper }} <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            {% for num, nome in lista_meses %}
+                            <li{% if num == mes %} class="active" {% endif %}>
+                                <a href="?ano={{ ano }}&mes={{ num }}">{{ nome }}</a>
+                                </li>
+                                {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="dropdown cal-ano">
+                        <button class="btn" type="button" data-toggle="dropdown" aria-expanded="false">
+                            {{ ano }} <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            {% for a in lista_anos %}
+                            <li{% if a == ano %} class="active" {% endif %}>
+                                <a href="?ano={{ a }}&mes={{ mes }}">{{ a }}</a>
+                                </li>
+                                {% endfor %}
+                        </ul>
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-6 text-right">
-                <div class="dropdown cal-mes" style="display:inline-block;">
-                    <button class="btn" type="button" data-toggle="dropdown" aria-expanded="false">
-                        {{ mes_nome|upper }} <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-right">
-                        {% for num, nome in lista_meses %}
-                        <li{% if num == mes %} class="active" {% endif %}>
-                            <a href="?ano={{ ano }}&mes={{ num }}">{{ nome }}</a>
-                            </li>
-                            {% endfor %}
-                    </ul>
+
+                <!-- Botões de navegação na mesma linha -->
+                <div class="cal-nav">
+                    <a href="?ano={{ ano_ant }}&mes={{ mes_ant }}" class="btn btn-default">◀ Mês anterior</a>
+                    <a href="?ano={{ hoje_ano }}&mes={{ hoje_mes }}" class="btn btn-primary">Hoje</a>
+                    <a href="?ano={{ ano_prox }}&mes={{ mes_prox }}" class="btn btn-default">Próximo mês ▶</a>
                 </div>
             </div>
         </div>
-        <div class="cal-nav text-center">
-            <a href="?ano={{ ano_ant }}&mes={{ mes_ant }}" class="btn btn-xs btn-default">◀ Mês anterior</a>
-            <a href="?ano={{ hoje_ano }}&mes={{ hoje_mes }}" class="btn btn-xs btn-primary">Hoje</a>
-            <a href="?ano={{ ano_prox }}&mes={{ mes_prox }}" class="btn btn-xs btn-default">Próximo mês ▶</a>
-        </div>
-    </div>
 
-    <table class="cal-table">
-        <thead>
-            <tr>{% for d in dias_semana %}<th>{{ d|upper }}</th>{% endfor %}</tr>
-        </thead>
-        <tbody>
-            {% for semana in semanas %}
-            <tr>
-                {% for dia in semana %}
-                <td>
-                    {% if dia %}
-                    <a href="{% url 'agendamento_detalhe' ano mes dia.numero %}"
-                       class="cal-dia {% if dia.hoje %}hoje{% endif %} {% if dia.passado %}passado{% endif %}"
-                       title="Dia {{ dia.numero }}">
-                        {{ dia.numero }}
-                    </a>
-                    {% endif %}
-                </td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<p class="text-center text-muted" style="margin-top:14px;">
-    Clique em um dia para ver as 9 aulas e agendar a sala ou os equipamentos.
-</p>
-
-<!-- ===================== MINHAS RESERVAS ===================== -->
-<div class="panel panel-default" style="max-width:760px; margin: 20px auto 0;">
-    <div class="panel-heading">
-        <h3 class="panel-title">📋 Minhas reservas (de hoje em diante)</h3>
-    </div>
-    <div class="panel-body">
-        <div class="table-responsive">
-            <table class="table table-striped table-hover" style="margin-bottom:0;">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th class="text-center">Aula</th>
-                        <th>Reserva</th>
-                        <th>Turma</th>
-                        <th class="text-center">Relação</th>
-                        <th class="text-center">Cancelar</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ag in minhas_reservas %}
-                    <tr>
-                        <td>{{ ag.data|date:"d/m/Y" }}</td>
-                        <td class="text-center">{{ ag.aula }}ª</td>
-                        <td>
-                            {% if ag.tipo == 'SALA' %}
-                            🏫 {{ ag.sala.nome }}
-                            {% else %}
-                            💻 {% for item in ag.itens.all %}{{ item.get_categoria_display }} ×{{ item.quantidade }}{% if not forloop.last %}, {% endif %}{% endfor %}
-                            {% endif %}
-                        </td>
-                        <td>{{ ag.turma.nome }}</td>
-                        <td class="text-center">
-                            <a href="{% url 'relacao_agendamento' ag.id %}" class="btn btn-xs btn-info">📋 Abrir</a>
-                        </td>
-                        <td class="text-center">
-                            <form action="{% url 'cancelar_reserva' ag.id %}" method="post" style="display:inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-xs btn-danger"
-                                        onclick="return confirm('Cancelar esta reserva de {{ ag.data|date:'d/m/Y' }}, {{ ag.aula }}ª aula?')">
-                                    🗑️ Cancelar
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center text-muted" style="padding: 24px;">
-                            <em>Você não tem reservas futuras. Clique em um dia para agendar.</em>
-                        </td>
-                    </tr>
+        <table class="cal-table">
+            <thead>
+                <tr>{% for d in dias_semana %}<th>{{ d|upper }}</th>{% endfor %}</tr>
+            </thead>
+            <tbody>
+                {% for semana in semanas %}
+                <tr>
+                    {% for dia in semana %}
+                    <td>
+                        {% if dia %}
+                        <a href="{% url 'agendamento_detalhe' ano mes dia.numero %}"
+                           class="cal-dia {% if dia.hoje %}hoje{% endif %} {% if dia.passado %}passado{% endif %}"
+                           title="Dia {{ dia.numero }}">
+                            {{ dia.numero }}
+                        </a>
+                        {% endif %}
+                    </td>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</div>
 
-<!-- ===================== POPUP DE DATA PASSADA ===================== -->
-<div class="modal fade" id="modalPassado" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-sm" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title">⚠️ Data passada</h4>
-            </div>
-            <div class="modal-body">
-                <p>O dia selecionado já passou.</p>
-                {% if is_admin %}
-                <p class="text-muted">Como administrador, você pode prosseguir mesmo assim.</p>
-                {% else %}
-                <p class="text-muted">Não é possível fazer agendamentos em datas passadas.</p>
-                {% endif %}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
-                {% if is_admin %}
-                <a id="proceedPastLink" href="#" class="btn btn-primary">Prosseguir</a>
-                {% endif %}
+    <p class="text-center text-muted" style="margin: 16px 0 32px; font-size: 14px;">
+        💡 Clique em um dia para ver as 9 aulas e agendar salas ou equipamentos.
+    </p>
+
+    <!-- ===================== BLOCO: MINHAS RESERVAS ===================== -->
+    <div class="lh-card" style="max-width:760px; margin: 0 auto 40px;">
+        <div class="lh-card-header">
+            <h3 class="lh-card-title">📋 Minhas reservas (de hoje em diante)</h3>
+        </div>
+        <div class="lh-card-body" style="padding: 0;">
+            <div class="table-responsive" style="margin: 0; border: none;">
+                <table class="table lh-table" style="margin-bottom:0;">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th class="text-center">Aula</th>
+                            <th>Reserva</th>
+                            <th>Turma</th>
+                            <th class="text-center">Relação</th>
+                            <th class="text-center">Cancelar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ag in minhas_reservas %}
+                        <tr>
+                            <td><strong>{{ ag.data|date:"d/m/Y" }}</strong></td>
+                            <td class="text-center"><span style="background: #EBF2FF; color: #1A4A8A; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 13px;">{{ ag.aula }}ª</span></td>
+                            <td>
+                                {% if ag.tipo == 'SALA' %}
+                                🏫 {{ ag.sala.nome }}
+                                {% else %}
+                                💻 {% for item in ag.itens.all %}{{ item.get_categoria_display }} ×{{ item.quantidade }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                {% endif %}
+                            </td>
+                            <td>{{ ag.turma.nome }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'relacao_agendamento' ag.id %}" class="lh-btn-xs lh-btn-info">📋 Abrir</a>
+                            </td>
+                            <td class="text-center">
+                                <form action="{% url 'cancelar_reserva' ag.id %}" method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="lh-btn-xs lh-btn-danger"
+                                            onclick="return confirm('Cancelar esta reserva de {{ ag.data|date:'d/m/Y' }}, {{ ag.aula }}ª aula?')">
+                                         🗑️ Cancelar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted" style="padding: 32px;">
+                                <span>📭</span>
+                                <p style="margin-top: 8px; font-style: italic;">Você não tem reservas futuras. Clique em um dia para agendar.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
+
+    <!-- ===================== POPUP DE DATA PASSADA ===================== -->
+    <div class="modal fade" id="modalPassado" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" style="font-weight: 700; color: #C62828;">⚠️ Data passada</h4>
+                </div>
+                <div class="modal-body">
+                    <p style="font-weight: 500;">O dia selecionado já passou.</p>
+                    {% if is_admin %}
+                    <p class="text-muted" style="font-size: 13px;">Como administrador, você pode prosseguir mesmo assim.</p>
+                    {% else %}
+                    <p class="text-muted" style="font-size: 13px;">Não é possível fazer agendamentos em datas passadas.</p>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" style="font-weight: 600; border-radius: 6px;">Fechar</button>
+                    {% if is_admin %}
+                    <a id="proceedPastLink" href="#" class="btn btn-primary" style="font-weight: 600; border-radius: 6px; background: #1A4A8A; border: none;">Prosseguir</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 {% endblock %}
@@ -278,7 +453,6 @@
 {% block scripts %}
 <script>
     $(document).ready(function () {
-        // Intercepta clique em dias passados
         $('.cal-dia.passado').on('click', function (e) {
             e.preventDefault();
             var url = $(this).attr('href');
