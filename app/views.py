@@ -288,6 +288,21 @@ def agendamentos(request):
 # ---------------------------------------------------------------------------
 # DETALHE DO DIA: agenda salas (real). Dispositivos entram na Etapa 4.
 # ---------------------------------------------------------------------------
+def _resolver_professor(request):
+    """Admin pode agendar em nome de outro professor; os demais só por si."""
+    is_admin = request.user.perfil.tipo == 'ADMINISTRADOR'
+    prof_id = request.POST.get('professor')
+    if is_admin and prof_id:
+        prof = User.objects.filter(id=prof_id).first()
+        if prof:
+            return prof
+    return request.user
+
+
+def _professores_aprovados():
+    return User.objects.filter(perfil__aprovado=True).order_by('username')
+
+
 def _processar_agendamento_sala(request, data, ano, mes, dia):
     """Grava as reservas de sala marcadas no formulário."""
     turma_id = request.POST.get('turma')
@@ -302,6 +317,7 @@ def _processar_agendamento_sala(request, data, ano, mes, dia):
         return redirect('agendamento_detalhe', ano=ano, mes=mes, dia=dia)
 
     turma = get_object_or_404(Turma, id=turma_id)
+    professor = _resolver_professor(request)
     criados = 0
     conflitos = 0
 
@@ -313,7 +329,6 @@ def _processar_agendamento_sala(request, data, ano, mes, dia):
         except (ValueError, AttributeError):
             continue
 
-        # Re-checa o conflito na hora de gravar (evita corrida entre dois usuários)
         ja_existe = Agendamento.objects.filter(
             data=data, aula=aula, tipo='SALA', sala_id=sala_id
         ).exists()
@@ -323,7 +338,7 @@ def _processar_agendamento_sala(request, data, ano, mes, dia):
 
         Agendamento.objects.create(
             data=data, aula=aula, tipo='SALA',
-            professor=request.user, turma=turma,
+            professor=professor, turma=turma,
             sala_id=sala_id, observacao=observacao,
         )
         criados += 1
@@ -390,6 +405,7 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
         return redirect('agendamento_detalhe', ano=ano, mes=mes, dia=dia)
 
     turma = get_object_or_404(Turma, id=turma_id)
+    professor = _resolver_professor(request)
     reservado = _disponibilidade_dispositivos(data)
     estoque = _estoque_por_categoria()
 
@@ -414,7 +430,7 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
 
         agendamento = Agendamento.objects.create(
             data=data, aula=aula, tipo='DISPOSITIVO',
-            professor=request.user, turma=turma,
+            professor=professor, turma=turma,
             sala=None, observacao=observacao,
         )
         for categoria, usar in itens_validos:
@@ -550,6 +566,8 @@ def agendamento_detalhe(request, ano, mes, dia):
         'turmas': Turma.objects.all(),
         'tem_salas': bool(salas_ativas),
         'tem_equipamentos': bool(estoque_categoria),
+        'is_admin': is_admin,
+        'professores': _professores_aprovados() if is_admin else None,
     }
     return render(request, 'app/agendamento_detalhe.html', context)
 
@@ -1050,6 +1068,77 @@ def cancelar_reserva(request, agendamento_id):
 # ---------------------------------------------------------------------------
 # RELAÇÃO ALUNO x EQUIPAMENTO de um agendamento
 # ---------------------------------------------------------------------------
+def _salas_para_edicao(ag):
+    """Salas que o admin pode escolher ao editar uma reserva de sala:
+    a sala atual + as que estão livres naquela data/aula."""
+    ocupadas = set(
+        Agendamento.objects
+        .filter(data=ag.data, aula=ag.aula, tipo='SALA')
+        .exclude(id=ag.id)
+        .values_list('sala_id', flat=True)
+    )
+    opcoes = []
+    for s in Sala.objects.filter(ativo=True):
+        if s.id not in ocupadas or s.id == ag.sala_id:
+            opcoes.append({'sala': s, 'atual': s.id == ag.sala_id})
+    return opcoes
+
+
+def _categorias_para_edicao(ag):
+    """Quantidades editáveis por categoria numa reserva de equipamento,
+    com o máximo permitido (estoque livre + o que já é desta reserva)."""
+    estoque = _estoque_por_categoria()
+    reservado_total = _disponibilidade_dispositivos(ag.data)
+    atuais = {it.categoria: it.quantidade for it in ag.itens.all()}
+
+    opcoes = []
+    for cat_valor, cat_label in Equipamento.CATEGORIA_CHOICES:
+        total = estoque.get(cat_valor, 0)
+        atual = atuais.get(cat_valor, 0)
+        if total == 0 and atual == 0:
+            continue
+        reservado_outros = reservado_total.get((ag.aula, cat_valor), 0) - atual
+        maximo = max(total - reservado_outros, 0)
+        opcoes.append({
+            'categoria': cat_valor, 'label': cat_label,
+            'atual': atual, 'maximo': maximo,
+        })
+    return opcoes
+
+
+def _aplicar_edicao_dispositivo(request, ag):
+    """Aplica as novas quantidades por categoria (campos qtd_cat_<categoria>)."""
+    estoque = _estoque_por_categoria()
+    reservado_total = _disponibilidade_dispositivos(ag.data)
+    atuais = {it.categoria: it for it in ag.itens.all()}
+
+    for cat_valor, _label in Equipamento.CATEGORIA_CHOICES:
+        campo = request.POST.get(f'qtd_cat_{cat_valor}')
+        if campo is None:
+            continue
+        try:
+            novo = max(int(campo), 0)
+        except (TypeError, ValueError):
+            continue
+
+        atual_qtd = atuais[cat_valor].quantidade if cat_valor in atuais else 0
+        reservado_outros = reservado_total.get((ag.aula, cat_valor), 0) - atual_qtd
+        maximo = max(estoque.get(cat_valor, 0) - reservado_outros, 0)
+        novo = min(novo, maximo)
+
+        if novo > 0:
+            if cat_valor in atuais:
+                item = atuais[cat_valor]
+                item.quantidade = novo
+                item.save()
+            else:
+                ItemDispositivo.objects.create(
+                    agendamento=ag, categoria=cat_valor, quantidade=novo
+                )
+        elif cat_valor in atuais:
+            atuais[cat_valor].delete()
+
+
 @login_required
 def relacao_agendamento(request, agendamento_id):
     if not (hasattr(request.user, 'perfil') and request.user.perfil.aprovado):
@@ -1069,9 +1158,56 @@ def relacao_agendamento(request, agendamento_id):
 
     if request.method == 'POST':
         if not pode_editar:
-            messages.error(request, 'Você não pode editar a relação desta reserva.')
+            messages.error(request, 'Você não pode editar esta reserva.')
             return redirect('relacao_agendamento', agendamento_id=ag.id)
 
+        acao = request.POST.get('acao', 'relacao')
+
+        # --- Editar a reserva (professor/turma/observação/sala/quantidades) ---
+        if acao == 'editar':
+            ag.observacao = request.POST.get('observacao', '').strip()
+
+            turma = Turma.objects.filter(id=request.POST.get('turma')).first()
+            if turma and turma.id != ag.turma_id:
+                # Mudou a turma: a relação aluno/equipamento antiga não vale mais
+                ag.relacoes.all().delete()
+                ag.turma = turma
+
+            # Só admin pode trocar o professor responsável
+            if is_admin:
+                prof = User.objects.filter(id=request.POST.get('professor')).first()
+                if prof:
+                    ag.professor = prof
+
+            # Trocar a sala (reservas de sala)
+            if ag.tipo == 'SALA':
+                nova = request.POST.get('sala', '')
+                if nova.isdigit() and int(nova) != ag.sala_id:
+                    nova_id = int(nova)
+                    ocupada = (
+                        Agendamento.objects
+                        .filter(data=ag.data, aula=ag.aula, tipo='SALA', sala_id=nova_id)
+                        .exclude(id=ag.id).exists()
+                    )
+                    if ocupada:
+                        messages.warning(request, 'A sala escolhida já está ocupada nessa aula; mantida a anterior.')
+                    else:
+                        ag.sala_id = nova_id
+
+            ag.save()
+
+            # Editar as quantidades (reservas de equipamento)
+            if ag.tipo == 'DISPOSITIVO':
+                _aplicar_edicao_dispositivo(request, ag)
+                if not ag.itens.exists():
+                    ag.delete()
+                    messages.warning(request, 'A reserva ficou sem equipamentos e foi removida.')
+                    return redirect('agendamentos')
+
+            messages.success(request, 'Reserva atualizada com sucesso!')
+            return redirect('relacao_agendamento', agendamento_id=ag.id)
+
+        # --- Salvar a relação aluno x equipamento (padrão) ---
         for aluno in alunos:
             valor = request.POST.get(f'equip_{aluno.id}', '').strip()
             RelacaoAlunoEquipamento.objects.update_or_create(
@@ -1090,6 +1226,11 @@ def relacao_agendamento(request, agendamento_id):
         'ag': ag,
         'linhas': linhas,
         'pode_editar': pode_editar,
+        'is_admin': is_admin,
+        'turmas': Turma.objects.all(),
+        'professores': _professores_aprovados() if is_admin else None,
+        'salas_edicao': _salas_para_edicao(ag) if pode_editar and ag.tipo == 'SALA' else None,
+        'categorias_edicao': _categorias_para_edicao(ag) if pode_editar and ag.tipo == 'DISPOSITIVO' else None,
     })
 
 

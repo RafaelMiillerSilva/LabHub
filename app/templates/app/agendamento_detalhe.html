@@ -258,6 +258,16 @@
             <!-- Turma + observação + botão (valem para tudo que foi marcado) -->
             <div class="panel panel-primary" style="margin-top: 18px;">
                 <div class="panel-body">
+                    {% if is_admin %}
+                    <div class="form-group" style="max-width: 360px;">
+                        <label>Agendar em nome de</label>
+                        <select name="professor" class="form-control">
+                            {% for p in professores %}
+                            <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
                     <div class="form-group" style="max-width: 360px;">
                         <label>Turma do agendamento</label>
                         <select name="turma" class="form-control" required>
@@ -367,6 +377,16 @@
             <!-- Turma + observação + botão -->
             <div class="panel panel-primary" style="margin-top: 18px;">
                 <div class="panel-body">
+                    {% if is_admin %}
+                    <div class="form-group" style="max-width: 360px;">
+                        <label>Agendar em nome de</label>
+                        <select name="professor" class="form-control">
+                            {% for p in professores %}
+                            <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
                     <div class="form-group" style="max-width: 360px;">
                         <label>Turma do agendamento</label>
                         <select name="turma" class="form-control" required>
