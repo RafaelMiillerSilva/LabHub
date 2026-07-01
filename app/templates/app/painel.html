@@ -3,6 +3,9 @@
 <h2>🛠️ Painel Administrativo</h2>
 <p class="lead">Gerencie as solicitações de acesso ao sistema LabHub.</p>
 
+<!-- Avisos das ações reativas (AJAX) -->
+<div id="painel-flash"></div>
+
 {% if messages %}
 <div style="margin-bottom: 15px;">
     {% for message in messages %}
@@ -21,15 +24,13 @@
     <li role="presentation" class="{% if aba == 'solicitacoes' %}active{% endif %}">
         <a href="#solicitacoes" role="tab" data-toggle="tab">
             🕐 Solicitações Pendentes
-            {% if solicitacoes %}
-            <span class="badge" style="background-color: #d9534f;">{{ solicitacoes|length }}</span>
-            {% endif %}
+            <span class="badge" id="badge-solicitacoes" style="background-color: #d9534f; {% if not solicitacoes %}display:none;{% endif %}">{{ solicitacoes|length }}</span>
         </a>
     </li>
     <li role="presentation" class="{% if aba == 'usuarios' %}active{% endif %}">
         <a href="#usuarios" role="tab" data-toggle="tab">
             👤 Usuários
-            {% if usuarios %}<span class="badge">{{ usuarios|length }}</span>{% endif %}
+            <span class="badge" id="badge-usuarios" {% if not usuarios %}style="display:none;" {% endif %}>{{ usuarios|length }}</span>
         </a>
     </li>
     <li role="presentation" class="{% if aba == 'historico' %}active{% endif %}">
@@ -58,9 +59,9 @@
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tbody-solicitacoes">
                             {% for soc in solicitacoes %}
-                            <tr>
+                            <tr data-perfil-id="{{ soc.id }}">
                                 <td><strong>{{ soc.user.username }}</strong></td>
                                 <td>{{ soc.user.email }}</td>
                                 <td>
@@ -72,25 +73,25 @@
                                 </td>
                                 <td>
                                     <!-- Botão Aprovar -->
-                                    <form action="{% url 'aprovar_usuario' soc.id %}" method="post" style="display:inline;">
+                                    <form action="{% url 'aprovar_usuario' soc.id %}" method="post" style="display:inline;" data-ajax="true">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-xs btn-success"
-                                                onclick="return confirm('Aprovar acesso de {{ soc.user.username }}?')">
+                                                data-confirm="Aprovar acesso de {{ soc.user.username }}?">
                                             ✅ Aprovar
                                         </button>
                                     </form>
                                     <!-- Botão Negar -->
-                                    <form action="{% url 'negar_usuario' soc.id %}" method="post" style="display:inline; margin-left: 5px;">
+                                    <form action="{% url 'negar_usuario' soc.id %}" method="post" style="display:inline; margin-left: 5px;" data-ajax="true">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-xs btn-danger"
-                                                onclick="return confirm('Negar e REMOVER os dados de {{ soc.user.username }}? Esta ação não pode ser desfeita.')">
+                                                data-confirm="Negar e REMOVER os dados de {{ soc.user.username }}? Esta ação não pode ser desfeita.">
                                             ❌ Negar
                                         </button>
                                     </form>
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr>
+                            <tr id="linha-vazia-solicitacoes">
                                 <td colspan="4" class="text-center text-muted" style="padding: 30px;">
                                     <em>Nenhuma solicitação pendente no momento.</em>
                                 </td>
@@ -139,67 +140,11 @@
                                 <th class="text-center">Ações</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tbody-usuarios">
                             {% for u in usuarios %}
-                            <tr>
-                                <td>
-                                    <strong>{{ u.user.username }}</strong>
-                                    {% if u.user.id == user.id %}<span class="text-muted">(você)</span>{% endif %}
-                                </td>
-                                <td>{{ u.user.email }}</td>
-                                <td>
-                                    {% if u.tipo == 'ADMINISTRADOR' %}
-                                    <span class="label label-warning">Administrador</span>
-                                    {% else %}
-                                    <span class="label label-info">Professor</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-center">
-                                    {% if u.user.is_active %}
-                                    <span class="label label-success">Ativo</span>
-                                    {% else %}
-                                    <span class="label label-default">Inativo</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-center">
-                                    {% if u.user.id == user.id %}
-                                    <span class="text-muted">—</span>
-                                    {% else %}
-                                    <!-- Ativar / Desativar -->
-                                    <form action="{% url 'usuario_toggle_ativo' u.user.id %}" method="post" style="display:inline;">
-                                        {% csrf_token %}
-                                        {% if u.user.is_active %}
-                                        <button type="submit" class="btn btn-xs btn-warning"
-                                                onclick="return confirm('Desativar a conta de {{ u.user.username }}? Ela não poderá mais entrar.')">
-                                            🚫 Desativar
-                                        </button>
-                                        {% else %}
-                                        <button type="submit" class="btn btn-xs btn-success"
-                                                onclick="return confirm('Reativar a conta de {{ u.user.username }}?')">
-                                            ✅ Ativar
-                                        </button>
-                                        {% endif %}
-                                    </form>
-                                    <!-- Promover / Rebaixar -->
-                                    <form action="{% url 'usuario_toggle_tipo' u.user.id %}" method="post" style="display:inline; margin-left:4px;">
-                                        {% csrf_token %}
-                                        {% if u.tipo == 'ADMINISTRADOR' %}
-                                        <button type="submit" class="btn btn-xs btn-default"
-                                                onclick="return confirm('Rebaixar {{ u.user.username }} para professor?')">
-                                            ⬇️ Tornar professor
-                                        </button>
-                                        {% else %}
-                                        <button type="submit" class="btn btn-xs btn-primary"
-                                                onclick="return confirm('Promover {{ u.user.username }} a administrador?')">
-                                            ⬆️ Tornar admin
-                                        </button>
-                                        {% endif %}
-                                    </form>
-                                    {% endif %}
-                                </td>
-                            </tr>
+                            {% include 'app/_usuario_linha.html' %}
                             {% empty %}
-                            <tr>
+                            <tr id="linha-vazia-usuarios">
                                 <td colspan="5" class="text-center text-muted" style="padding: 30px;">
                                     <em>{% if q %}Nenhum usuário encontrado para "{{ q }}".{% else %}Nenhum usuário aprovado ainda.{% endif %}</em>
                                 </td>
@@ -286,4 +231,92 @@
     </div>
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        // Mostra um aviso no topo do painel
+        function flash(msg, tipo) {
+            var cls = tipo === 'success' ? 'success' : (tipo === 'danger' ? 'danger' : 'warning');
+            var div = document.createElement('div');
+            div.className = 'alert alert-' + cls + ' alert-dismissible';
+            div.setAttribute('role', 'alert');
+            div.innerHTML = '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                (msg || '');
+            var area = document.getElementById('painel-flash');
+            area.appendChild(div);
+            // some sozinho depois de alguns segundos
+            setTimeout(function () { $(div).fadeOut(400, function () { div.remove(); }); }, 4000);
+        }
+
+        // Substitui uma <tr> pelo HTML devolvido pelo servidor
+        function trDoHtml(html) {
+            var tmp = document.createElement('tbody');
+            tmp.innerHTML = html.trim();
+            return tmp.firstElementChild;
+        }
+
+        function contarLinhas(tbodyId, seletor) {
+            var tb = document.getElementById(tbodyId);
+            return tb ? tb.querySelectorAll(seletor).length : 0;
+        }
+
+        function ajustarBadge(id, n) {
+            var b = document.getElementById(id);
+            if (!b) return;
+            b.textContent = n;
+            b.style.display = n > 0 ? '' : 'none';
+        }
+
+        // Remove uma linha pendente e cuida do estado vazio + contador
+        function removerPendente(perfilId, pendentes) {
+            var tb = document.getElementById('tbody-solicitacoes');
+            var row = tb.querySelector('tr[data-perfil-id="' + perfilId + '"]');
+            if (row) row.remove();
+            ajustarBadge('badge-solicitacoes', pendentes);
+            if (pendentes === 0 && !document.getElementById('linha-vazia-solicitacoes')) {
+                var vazia = document.createElement('tr');
+                vazia.id = 'linha-vazia-solicitacoes';
+                vazia.innerHTML = '<td colspan="4" class="text-center text-muted" style="padding:30px;">' +
+                    '<em>Nenhuma solicitação pendente no momento.</em></td>';
+                tb.appendChild(vazia);
+            }
+        }
+
+        // Tratador de envio via AJAX chamado pelo modal de confirmação (layout.html)
+        window.LabHubAjaxSubmit = function (form) {
+            var dados = new FormData(form);
+            fetch(form.action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: dados
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    flash(res.message, res.ok ? 'success' : 'warning');
+                    if (!res.ok) return;
+
+                    if (res.acao === 'atualizar_usuario') {
+                        var linha = document.querySelector('#tbody-usuarios tr[data-user-id="' + res.user_id + '"]');
+                        if (linha) linha.parentNode.replaceChild(trDoHtml(res.html), linha);
+
+                    } else if (res.acao === 'aprovar') {
+                        removerPendente(res.perfil_id, res.pendentes);
+                        var tb = document.getElementById('tbody-usuarios');
+                        var vazia = document.getElementById('linha-vazia-usuarios');
+                        if (vazia) vazia.remove();
+                        tb.appendChild(trDoHtml(res.html));
+                        ajustarBadge('badge-usuarios', contarLinhas('tbody-usuarios', 'tr[data-user-id]'));
+
+                    } else if (res.acao === 'negar') {
+                        removerPendente(res.perfil_id, res.pendentes);
+                    }
+                })
+                .catch(function () {
+                    flash('Não foi possível concluir a ação. Recarregue a página e tente de novo.', 'danger');
+                });
+        };
+    })();
+</script>
 {% endblock %}

@@ -98,7 +98,9 @@
                                     <form action="{% url 'turma_excluir' t.id %}" method="post" style="display:inline;">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-xs btn-danger"
-                                                onclick="return confirm('Remover a turma {{ t.nome }} e TODOS os seus alunos?')">🗑️</button>
+                                                data-confirm="Remover a turma {{ t.nome }} e TODOS os seus alunos?">
+                                            🗑️
+                                        </button>
                                     </form>
                                 </td>
                             </tr>

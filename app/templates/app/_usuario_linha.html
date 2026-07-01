@@ -1,0 +1,49 @@
+<tr data-user-id="{{ u.user.id }}" data-perfil-id="{{ u.id }}">
+    <td>
+        <strong>{{ u.user.username }}</strong>
+        {% if u.user.id == user.id %}<span class="text-muted">(você)</span>{% endif %}
+    </td>
+    <td>{{ u.user.email }}</td>
+    <td>
+        {% if u.tipo == 'ADMINISTRADOR' %}
+        <span class="label label-warning">Administrador</span>
+        {% else %}
+        <span class="label label-info">Professor</span>
+        {% endif %}
+    </td>
+    <td class="text-center">
+        {% if u.user.is_active %}
+        <span class="label label-success">Ativo</span>
+        {% else %}
+        <span class="label label-default">Inativo</span>
+        {% endif %}
+    </td>
+    <td class="text-center">
+        {% if u.user.id == user.id %}
+        <span class="text-muted">—</span>
+        {% else %}
+        <!-- Ativar / Desativar -->
+        <form action="{% url 'usuario_toggle_ativo' u.user.id %}" method="post" style="display:inline;" data-ajax="true">
+            {% csrf_token %}
+            {% if u.user.is_active %}
+            <button type="submit" class="btn btn-xs btn-warning"
+                    data-confirm="Desativar a conta de {{ u.user.username }}? Ela não poderá mais entrar.">🚫 Desativar</button>
+            {% else %}
+            <button type="submit" class="btn btn-xs btn-success"
+                    data-confirm="Reativar a conta de {{ u.user.username }}?">✅ Ativar</button>
+            {% endif %}
+        </form>
+        <!-- Promover / Rebaixar -->
+        <form action="{% url 'usuario_toggle_tipo' u.user.id %}" method="post" style="display:inline; margin-left:4px;" data-ajax="true">
+            {% csrf_token %}
+            {% if u.tipo == 'ADMINISTRADOR' %}
+            <button type="submit" class="btn btn-xs btn-default"
+                    data-confirm="Rebaixar {{ u.user.username }} para professor?">⬇️ Tornar professor</button>
+            {% else %}
+            <button type="submit" class="btn btn-xs btn-primary"
+                    data-confirm="Promover {{ u.user.username }} a administrador?">⬆️ Tornar admin</button>
+            {% endif %}
+        </form>
+        {% endif %}
+    </td>
+</tr>

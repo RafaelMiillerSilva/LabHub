@@ -72,6 +72,7 @@
     <Content Include="app\templates\app\salas.html" />
     <Content Include="app\templates\app\turmas.html" />
     <Content Include="app\templates\app\turma_detalhe.html" />
+    <Content Include="app\templates\app\_usuario_linha.html" />
     <Content Include="requirements.txt" />
     <Content Include="app\static\app\content\bootstrap.css" />
     <Content Include="app\static\app\content\bootstrap.min.css" />

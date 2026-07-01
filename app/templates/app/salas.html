@@ -107,7 +107,9 @@
                                     <form action="{% url 'sala_excluir' s.id %}" method="post" style="display:inline;">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-xs btn-danger"
-                                                onclick="return confirm('Remover a sala {{ s.nome }}?')">🗑️ Excluir</button>
+                                                data-confirm="Remover a sala {{ s.nome }}?">
+                                            🗑️ Excluir
+                                        </button>
                                     </form>
                                 </td>
                             </tr>

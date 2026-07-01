@@ -103,7 +103,7 @@
                                     <form action="{% url 'aluno_excluir' aluno.id %}" method="post" style="display:inline;">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-xs btn-danger"
-                                                onclick="return confirm('Remover {{ aluno.nome }}?')">
+                                                data-confirm="Remover {{ aluno.nome }}?">
                                             🗑️ Excluir
                                         </button>
                                     </form>
