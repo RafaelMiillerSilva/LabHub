@@ -22,6 +22,10 @@ class HistoricoAcao(models.Model):
     CHOICES_ACAO = (
         ('APROVADO', 'Aprovado'),
         ('NEGADO', 'Negado'),
+        ('ATIVADO', 'Conta ativada'),
+        ('DESATIVADO', 'Conta desativada'),
+        ('PROMOVIDO', 'Promovido a admin'),
+        ('REBAIXADO', 'Rebaixado a professor'),
     )
 
     admin = models.ForeignKey(
@@ -30,7 +34,7 @@ class HistoricoAcao(models.Model):
         null=True,
         related_name='acoes_admin'
     )
-    acao = models.CharField(max_length=10, choices=CHOICES_ACAO)
+    acao = models.CharField(max_length=20, choices=CHOICES_ACAO)
     # Guarda os dados do usuário mesmo após deletar
     username_solicitante = models.CharField(max_length=150)
     email_solicitante = models.CharField(max_length=254, blank=True)

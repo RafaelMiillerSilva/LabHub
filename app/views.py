@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.db import IntegrityError
 from django.db.models import Sum, Count, Q
 from django.http import HttpResponse, Http404
+from django.utils.dateparse import parse_date
 from .forms import (
     CadastroForm, BootstrapAuthenticationForm, SalaForm, EquipamentoForm,
     TurmaForm, AlunoForm,
@@ -146,13 +147,47 @@ def painel(request):
     if not _is_admin_aprovado(request.user):
         return redirect('home')
 
+    aba = request.GET.get('tab', 'solicitacoes')
+    q = request.GET.get('q', '').strip()      # busca de usuários
+    de = request.GET.get('de', '').strip()    # histórico: data inicial
+    ate = request.GET.get('ate', '').strip()  # histórico: data final
+
     solicitacoes = Perfil.objects.filter(aprovado=False).select_related('user')
-    historico = HistoricoAcao.objects.select_related('admin').all()[:50]
+
+    # Usuários aprovados (com barra de busca por nome/e-mail)
+    usuarios = (Perfil.objects.filter(aprovado=True)
+                .select_related('user')
+                .order_by('tipo', 'user__username'))
+    if q:
+        usuarios = usuarios.filter(
+            Q(user__username__icontains=q) | Q(user__email__icontains=q)
+        )
+
+    # Histórico (com filtro por período)
+    historico = HistoricoAcao.objects.select_related('admin').all()
+    d_de = parse_date(de) if de else None
+    d_ate = parse_date(ate) if ate else None
+    if d_de:
+        historico = historico.filter(data_acao__date__gte=d_de)
+    if d_ate:
+        historico = historico.filter(data_acao__date__lte=d_ate)
+    historico = historico[:100]
+
+    # Se a busca/filtro foi usada, já abre na aba correspondente
+    if q and aba == 'solicitacoes':
+        aba = 'usuarios'
+    if (de or ate) and aba == 'solicitacoes':
+        aba = 'historico'
 
     return render(request, 'app/painel.html', {
         'title': 'Painel Administrativo',
         'solicitacoes': solicitacoes,
         'historico': historico,
+        'usuarios': usuarios,
+        'aba': aba,
+        'q': q,
+        'de': de,
+        'ate': ate,
     })
 
 
@@ -208,6 +243,86 @@ def negar_usuario(request, perfil_id):
             request,
             f'Solicitação de "{username}" negada e dados removidos.'
         )
+
+    return redirect('painel')
+
+
+def _admins_ativos_qs():
+    """Administradores aprovados e com a conta ativa."""
+    return Perfil.objects.filter(
+        tipo='ADMINISTRADOR', aprovado=True, user__is_active=True
+    )
+
+
+@login_required
+def usuario_toggle_ativo(request, user_id):
+    """Ativa ou desativa a conta de um usuário (bloqueia/libera o login)."""
+    if not _is_admin_aprovado(request.user):
+        return redirect('home')
+
+    if request.method == 'POST':
+        alvo = get_object_or_404(User, id=user_id)
+
+        if alvo.id == request.user.id:
+            messages.warning(request, 'Você não pode desativar a sua própria conta.')
+            return redirect('painel')
+
+        eh_admin = hasattr(alvo, 'perfil') and alvo.perfil.tipo == 'ADMINISTRADOR'
+        # Se for desativar um admin, não pode ser o último admin ativo
+        if alvo.is_active and eh_admin and _admins_ativos_qs().count() <= 1:
+            messages.warning(request, 'Não é possível desativar o último administrador ativo.')
+            return redirect('painel')
+
+        alvo.is_active = not alvo.is_active
+        alvo.save(update_fields=['is_active'])
+
+        HistoricoAcao.objects.create(
+            admin=request.user,
+            acao='ATIVADO' if alvo.is_active else 'DESATIVADO',
+            username_solicitante=alvo.username,
+            email_solicitante=alvo.email,
+            tipo_solicitado=alvo.perfil.tipo if hasattr(alvo, 'perfil') else '',
+        )
+
+        estado = 'ativada' if alvo.is_active else 'desativada'
+        messages.success(request, f'Conta de "{alvo.username}" {estado} com sucesso.')
+
+    return redirect('painel')
+
+
+@login_required
+def usuario_toggle_tipo(request, user_id):
+    """Promove um professor a administrador ou rebaixa um admin a professor."""
+    if not _is_admin_aprovado(request.user):
+        return redirect('home')
+
+    if request.method == 'POST':
+        alvo = get_object_or_404(User, id=user_id)
+        perfil = alvo.perfil
+
+        if alvo.id == request.user.id:
+            messages.warning(request, 'Você não pode alterar o seu próprio nível de acesso.')
+            return redirect('painel')
+
+        virando_professor = perfil.tipo == 'ADMINISTRADOR'
+        # Não deixa remover o último administrador ativo
+        if virando_professor and _admins_ativos_qs().count() <= 1:
+            messages.warning(request, 'Não é possível rebaixar o último administrador ativo.')
+            return redirect('painel')
+
+        perfil.tipo = 'PROFESSOR' if virando_professor else 'ADMINISTRADOR'
+        perfil.save(update_fields=['tipo'])
+
+        HistoricoAcao.objects.create(
+            admin=request.user,
+            acao='REBAIXADO' if virando_professor else 'PROMOVIDO',
+            username_solicitante=alvo.username,
+            email_solicitante=alvo.email,
+            tipo_solicitado=perfil.tipo,
+        )
+
+        novo = 'administrador' if perfil.tipo == 'ADMINISTRADOR' else 'professor'
+        messages.success(request, f'"{alvo.username}" agora é {novo}.')
 
     return redirect('painel')
 
