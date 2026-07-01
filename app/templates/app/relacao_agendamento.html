@@ -62,7 +62,7 @@
                     <label>Professor responsável</label>
                     <select name="professor" class="form-control">
                         {% for p in professores %}
-                        <option value="{{ p.id }}" {% if p.id == ag.professor_id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
+                        <option value="{{ p.id }}" {% if p.id= =ag.professor_id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -72,7 +72,7 @@
                     <label>Turma</label>
                     <select name="turma" class="form-control">
                         {% for t in turmas %}
-                        <option value="{{ t.id }}" {% if t.id == ag.turma_id %}selected{% endif %}>{{ t.nome }} ({{ t.get_turno_display }})</option>
+                        <option value="{{ t.id }}" {% if t.id= =ag.turma_id %}selected{% endif %}>{{ t.nome }} ({{ t.get_turno_display }})</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -128,7 +128,7 @@
         <form action="{% url 'cancelar_reserva' ag.id %}" method="post" style="display:inline;">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger"
-                    onclick="return confirm('Cancelar/desmarcar esta reserva? Esta ação não pode ser desfeita.')">
+                    data-confirm="Cancelar/desmarcar esta reserva? Esta ação não pode ser desfeita.">
                 🗑️ Cancelar esta reserva
             </button>
         </form>

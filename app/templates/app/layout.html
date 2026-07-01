@@ -173,8 +173,59 @@
         </div>
     </footer>
 
+    <!-- Modal de confirmação global (substitui o confirm() do navegador) -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color:#fff; border-top-left-radius:6px; border-top-right-radius:6px;">
+                    <h4 class="modal-title" id="confirmModalTitulo">Confirmar</h4>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmModalTexto" style="margin-bottom:0;">Tem certeza?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmModalOk">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="{% static 'app/scripts/jquery-1.10.2.js' %}"></script>
     <script src="{% static 'app/scripts/bootstrap.js' %}"></script>
+    <script>
+        // ---- Confirmação via modal do Bootstrap (no lugar do confirm nativo) ----
+        (function () {
+            var $modal = $('#confirmModal');
+            var formPendente = null;
+
+            // Intercepta qualquer botão/link com data-confirm
+            $(document).on('click', '[data-confirm]', function (e) {
+                e.preventDefault();
+                var el = this;
+                formPendente = el.closest('form');
+                $('#confirmModalTexto').text(el.getAttribute('data-confirm'));
+                $('#confirmModalOk').removeClass('btn-default btn-primary btn-danger')
+                    .addClass(el.getAttribute('data-confirm-classe') || 'btn-primary');
+                $modal.modal('show');
+            });
+
+            // Ao confirmar no modal
+            $('#confirmModalOk').on('click', function () {
+                $modal.modal('hide');
+                if (!formPendente) return;
+                var form = formPendente;
+                formPendente = null;
+
+                // Se a página definiu um tratador AJAX e o form pede AJAX, usa ele
+                if (form.getAttribute('data-ajax') === 'true' && typeof window.LabHubAjaxSubmit === 'function') {
+                    window.LabHubAjaxSubmit(form);
+                } else {
+                    form.submit();
+                }
+            });
+        })();
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

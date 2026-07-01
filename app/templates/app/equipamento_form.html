@@ -112,7 +112,7 @@
                 <form action="{% url 'equipamento_excluir' editando.id %}" method="post">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger"
-                            onclick="return confirm('Remover o equipamento {{ editando.apelido }}?')">
+                            data-confirm="Remover o equipamento {{ editando.apelido }}?">
                         🗑️ Excluir equipamento
                     </button>
                 </form>

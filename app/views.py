@@ -9,7 +9,8 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import IntegrityError
 from django.db.models import Sum, Count, Q
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, JsonResponse
+from django.template.loader import render_to_string
 from django.utils.dateparse import parse_date
 from .forms import (
     CadastroForm, BootstrapAuthenticationForm, SalaForm, EquipamentoForm,
@@ -191,6 +192,19 @@ def painel(request):
     })
 
 
+def _is_ajax(request):
+    return request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+
+def _linha_usuario_html(request, perfil):
+    """Renderiza a <tr> de um usuário (usada para atualizar a tabela via AJAX)."""
+    return render_to_string(
+        'app/_usuario_linha.html',
+        {'u': perfil, 'user': request.user},
+        request=request,
+    )
+
+
 @login_required
 def aprovar_usuario(request, perfil_id):
     if not _is_admin_aprovado(request.user):
@@ -210,10 +224,15 @@ def aprovar_usuario(request, perfil_id):
         perfil.aprovado = True
         perfil.save()
 
-        messages.success(
-            request,
-            f'Usuário "{perfil.user.username}" aprovado com sucesso!'
-        )
+        pendentes = Perfil.objects.filter(aprovado=False).count()
+        msg = f'Usuário "{perfil.user.username}" aprovado com sucesso!'
+        if _is_ajax(request):
+            return JsonResponse({
+                'ok': True, 'acao': 'aprovar', 'message': msg,
+                'perfil_id': perfil.id, 'pendentes': pendentes,
+                'html': _linha_usuario_html(request, perfil),
+            })
+        messages.success(request, msg)
 
     return redirect('painel')
 
@@ -239,10 +258,14 @@ def negar_usuario(request, perfil_id):
         username = user.username
         user.delete()
 
-        messages.warning(
-            request,
-            f'Solicitação de "{username}" negada e dados removidos.'
-        )
+        pendentes = Perfil.objects.filter(aprovado=False).count()
+        msg = f'Solicitação de "{username}" negada e dados removidos.'
+        if _is_ajax(request):
+            return JsonResponse({
+                'ok': True, 'acao': 'negar', 'message': msg,
+                'perfil_id': perfil_id, 'pendentes': pendentes,
+            })
+        messages.warning(request, msg)
 
     return redirect('painel')
 
@@ -264,13 +287,19 @@ def usuario_toggle_ativo(request, user_id):
         alvo = get_object_or_404(User, id=user_id)
 
         if alvo.id == request.user.id:
-            messages.warning(request, 'Você não pode desativar a sua própria conta.')
+            msg = 'Você não pode desativar a sua própria conta.'
+            if _is_ajax(request):
+                return JsonResponse({'ok': False, 'message': msg})
+            messages.warning(request, msg)
             return redirect('painel')
 
         eh_admin = hasattr(alvo, 'perfil') and alvo.perfil.tipo == 'ADMINISTRADOR'
         # Se for desativar um admin, não pode ser o último admin ativo
         if alvo.is_active and eh_admin and _admins_ativos_qs().count() <= 1:
-            messages.warning(request, 'Não é possível desativar o último administrador ativo.')
+            msg = 'Não é possível desativar o último administrador ativo.'
+            if _is_ajax(request):
+                return JsonResponse({'ok': False, 'message': msg})
+            messages.warning(request, msg)
             return redirect('painel')
 
         alvo.is_active = not alvo.is_active
@@ -285,7 +314,13 @@ def usuario_toggle_ativo(request, user_id):
         )
 
         estado = 'ativada' if alvo.is_active else 'desativada'
-        messages.success(request, f'Conta de "{alvo.username}" {estado} com sucesso.')
+        msg = f'Conta de "{alvo.username}" {estado} com sucesso.'
+        if _is_ajax(request):
+            return JsonResponse({
+                'ok': True, 'acao': 'atualizar_usuario', 'message': msg,
+                'user_id': alvo.id, 'html': _linha_usuario_html(request, alvo.perfil),
+            })
+        messages.success(request, msg)
 
     return redirect('painel')
 
@@ -301,13 +336,19 @@ def usuario_toggle_tipo(request, user_id):
         perfil = alvo.perfil
 
         if alvo.id == request.user.id:
-            messages.warning(request, 'Você não pode alterar o seu próprio nível de acesso.')
+            msg = 'Você não pode alterar o seu próprio nível de acesso.'
+            if _is_ajax(request):
+                return JsonResponse({'ok': False, 'message': msg})
+            messages.warning(request, msg)
             return redirect('painel')
 
         virando_professor = perfil.tipo == 'ADMINISTRADOR'
         # Não deixa remover o último administrador ativo
         if virando_professor and _admins_ativos_qs().count() <= 1:
-            messages.warning(request, 'Não é possível rebaixar o último administrador ativo.')
+            msg = 'Não é possível rebaixar o último administrador ativo.'
+            if _is_ajax(request):
+                return JsonResponse({'ok': False, 'message': msg})
+            messages.warning(request, msg)
             return redirect('painel')
 
         perfil.tipo = 'PROFESSOR' if virando_professor else 'ADMINISTRADOR'
@@ -322,7 +363,13 @@ def usuario_toggle_tipo(request, user_id):
         )
 
         novo = 'administrador' if perfil.tipo == 'ADMINISTRADOR' else 'professor'
-        messages.success(request, f'"{alvo.username}" agora é {novo}.')
+        msg = f'"{alvo.username}" agora é {novo}.'
+        if _is_ajax(request):
+            return JsonResponse({
+                'ok': True, 'acao': 'atualizar_usuario', 'message': msg,
+                'user_id': alvo.id, 'html': _linha_usuario_html(request, alvo.perfil),
+            })
+        messages.success(request, msg)
 
     return redirect('painel')
 
