@@ -1,42 +1,159 @@
 {% extends "app/layout.html" %}
 
+{% block styles %}
+<style>
+    .contato-hero {
+        margin-bottom: 24px;
+    }
+
+        .contato-hero h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1A2333;
+            letter-spacing: -0.5px;
+            margin: 0 0 6px 0;
+        }
+
+        .contato-hero .lead {
+            color: #4B5563;
+            font-size: 15px;
+            margin: 0;
+        }
+
+    .contato-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        margin-bottom: 18px;
+    }
+
+    .contato-card {
+        flex: 1 1 320px;
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .contato-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+    .contato-icone {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: rgba(26, 74, 138, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-bottom: 14px;
+    }
+
+    .contato-card h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1A2333;
+        margin: 0 0 14px 0;
+    }
+
+    .contato-linha {
+        display: flex;
+        gap: 8px;
+        font-size: 14px;
+        color: #374151;
+        margin-bottom: 8px;
+        line-height: 1.5;
+    }
+
+        .contato-linha strong {
+            color: #1A2333;
+            min-width: 82px;
+            flex-shrink: 0;
+        }
+
+        .contato-linha a {
+            color: #1A4A8A;
+            font-weight: 500;
+            word-break: break-all;
+        }
+
+    .contato-nota {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px dashed rgba(0, 0, 0, 0.08);
+        color: #6B7280;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .contato-dica {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        background: rgba(26, 74, 138, 0.06);
+        border: 1px solid rgba(26, 74, 138, 0.12);
+        border-radius: 14px;
+        padding: 16px 18px;
+        color: #1A2333;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+        .contato-dica .dica-icone {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+    @media (max-width: 480px) {
+        .contato-hero h2 {
+            font-size: 23px;
+        }
+
+        .contato-card {
+            padding: 18px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<h2>📞 Contato e Suporte</h2>
-<p class="lead">Precisa de ajuda com o LabHub ou com uma reserva? Fale com a coordenação.</p>
+<div class="contato-hero">
+    <h2>📞 Contato e Suporte</h2>
+    <p class="lead">Precisa de ajuda com o LabHub ou com uma reserva? Fale com a coordenação.</p>
+</div>
 
-<div class="row" style="margin-top: 20px;">
-    <div class="col-md-6">
-        <div class="panel panel-default">
-            <div class="panel-heading"><h3 class="panel-title">Coordenação / Secretaria</h3></div>
-            <div class="panel-body">
-                <p><strong>E-mail:</strong> <a href="mailto:coordenacao@suaescola.edu.br">coordenacao@suaescola.edu.br</a></p>
-                <p><strong>Telefone:</strong> (00) 0000-0000</p>
-                <p><strong>Horário:</strong> Segunda a sexta, das 7h às 17h</p>
-                <p class="text-muted" style="margin-bottom:0;">
-                    Para problemas de acesso (cadastro não aprovado, senha), procure a secretaria.
-                </p>
-            </div>
-        </div>
+<div class="contato-grid">
+    <div class="contato-card">
+        <div class="contato-icone">🏫</div>
+        <h3>Coordenação / Secretaria</h3>
+        <div class="contato-linha"><strong>E-mail</strong> <a href="mailto:coordenacao@suaescola.edu.br">coordenacao@suaescola.edu.br</a></div>
+        <div class="contato-linha"><strong>Telefone</strong> <span>(00) 0000-0000</span></div>
+        <div class="contato-linha"><strong>Horário</strong> <span>Segunda a sexta, das 7h às 17h</span></div>
+        <p class="contato-nota">
+            Para problemas de acesso (cadastro não aprovado, senha), procure a secretaria.
+        </p>
     </div>
 
-    <div class="col-md-6">
-        <div class="panel panel-default">
-            <div class="panel-heading"><h3 class="panel-title">Suporte técnico (TI)</h3></div>
-            <div class="panel-body">
-                <p><strong>E-mail:</strong> <a href="mailto:ti@suaescola.edu.br">ti@suaescola.edu.br</a></p>
-                <p><strong>Ramal:</strong> 000</p>
-                <p class="text-muted" style="margin-bottom:0;">
-                    Para falhas no sistema, equipamentos com defeito ou dúvidas sobre o uso do LabHub.
-                </p>
-            </div>
-        </div>
+    <div class="contato-card">
+        <div class="contato-icone">💻</div>
+        <h3>Suporte técnico (TI)</h3>
+        <div class="contato-linha"><strong>E-mail</strong> <a href="mailto:ti@suaescola.edu.br">ti@suaescola.edu.br</a></div>
+        <div class="contato-linha"><strong>Ramal</strong> <span>000</span></div>
+        <p class="contato-nota">
+            Para falhas no sistema, equipamentos com defeito ou dúvidas sobre o uso do LabHub.
+        </p>
     </div>
 </div>
 
-<div class="alert alert-info" style="margin-top: 10px;">
-    💡 Dica: ao reservar equipamentos, confira a disponibilidade da aula antes — o sistema mostra
-    quantos aparelhos ainda estão livres em cada horário.
+<div class="contato-dica">
+    <span class="dica-icone">💡</span>
+    <span>Dica: ao reservar equipamentos, confira a disponibilidade da aula antes — o sistema mostra quantos aparelhos ainda estão livres em cada horário.</span>
 </div>
 
 {% endblock %}

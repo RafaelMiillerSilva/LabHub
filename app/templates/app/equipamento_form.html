@@ -1,16 +1,294 @@
 {% extends "app/layout.html" %}
+
+{% block styles %}
+<style>
+    .eq-topo {
+        margin-bottom: 20px;
+    }
+
+        .eq-topo .eq-voltar {
+            font-size: 14px;
+            color: #1A4A8A;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+            .eq-topo .eq-voltar:hover {
+                text-decoration: underline;
+            }
+
+        .eq-topo h2 {
+            margin: 8px 0 0 0;
+            font-size: 26px;
+            font-weight: 700;
+            color: #1A2333;
+            letter-spacing: -0.5px;
+        }
+
+    .eq-alert {
+        border-radius: 12px;
+        border: 1px solid rgba(185, 74, 72, 0.25);
+        background: rgba(185, 74, 72, 0.06);
+        color: #8a3634;
+        padding: 14px 18px;
+        margin-bottom: 20px;
+    }
+
+        .eq-alert ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+    .eq-layout {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    .eq-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        flex: 2 1 420px;
+    }
+
+    .eq-card-excluir {
+        flex: 1 1 280px;
+    }
+
+    .eq-card-header {
+        padding: 16px 22px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        background: rgba(26, 74, 138, 0.03);
+    }
+
+        .eq-card-header h3 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1A2333;
+        }
+
+    .eq-card-excluir .eq-card-header {
+        background: rgba(185, 74, 72, 0.05);
+    }
+
+    .eq-card-body {
+        padding: 22px;
+    }
+
+    .eq-form-group {
+        margin-bottom: 18px;
+    }
+
+        .eq-form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #4B5563;
+            margin-bottom: 6px;
+        }
+
+        .eq-form-group .help-block {
+            color: #6B7280;
+            margin-top: 6px;
+        }
+
+    /* Restyle native form widgets rendered by Django ({{ form.field }}) */
+    /* !important guards against Bootstrap's .form-control (height:34px, etc.)
+       and any inline width/style Django widgets may carry */
+    .eq-card-body input[type="text"],
+    .eq-card-body input[type="number"],
+    .eq-card-body input[type="file"],
+    .eq-card-body select,
+    .eq-card-body textarea {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 42px;
+        border: 1px solid #D8DCE3 !important;
+        border-radius: 10px !important;
+        padding: 10px 14px !important;
+        font-size: 14px !important;
+        line-height: 1.4 !important;
+        color: #1A2333 !important;
+        background: #fbfbfc !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        box-sizing: border-box !important;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+    }
+
+    .eq-card-body select {
+        min-height: 42px;
+        appearance: auto;
+        -webkit-appearance: menulist;
+    }
+
+    .eq-card-body textarea {
+        min-height: 90px;
+        resize: vertical;
+    }
+
+        .eq-card-body input[type="text"]:focus,
+        .eq-card-body input[type="number"]:focus,
+        .eq-card-body select:focus,
+        .eq-card-body textarea:focus {
+            outline: none;
+            border-color: #1A4A8A;
+            box-shadow: 0 0 0 3px rgba(26, 74, 138, 0.12);
+            background: #ffffff;
+        }
+
+    .eq-foto-atual {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+        .eq-foto-atual img {
+            max-height: 110px;
+            border-radius: 10px;
+            border: 1px solid #e3e6ee;
+        }
+
+    .eq-row-2 {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+        .eq-row-2 .eq-form-group {
+            flex: 1 1 200px;
+        }
+
+    .eq-acoes {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+    }
+
+    .eq-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 22px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    }
+
+        .eq-btn:hover {
+            transform: translateY(-1px);
+        }
+
+    .eq-btn-primario {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(26, 74, 138, 0.25);
+    }
+
+        .eq-btn-primario:hover {
+            color: #fff;
+            box-shadow: 0 6px 18px rgba(26, 74, 138, 0.32);
+        }
+
+    .eq-btn-secundario {
+        background: #ffffff;
+        color: #4B5563;
+        border: 1px solid #D8DCE3;
+    }
+
+        .eq-btn-secundario:hover {
+            background: #f5f6f8;
+            color: #4B5563;
+        }
+
+    .eq-btn-info {
+        background: rgba(26, 74, 138, 0.08);
+        color: #1A4A8A;
+    }
+
+        .eq-btn-info:hover {
+            background: rgba(26, 74, 138, 0.14);
+            color: #1A4A8A;
+        }
+
+    .eq-btn-perigo {
+        background: rgba(185, 74, 72, 0.1);
+        color: #b94a48;
+        width: 100%;
+    }
+
+        .eq-btn-perigo:hover {
+            background: rgba(185, 74, 72, 0.16);
+            color: #b94a48;
+        }
+
+    .eq-divisor {
+        border: none;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+        margin: 20px 0;
+    }
+
+    .eq-card-excluir p {
+        color: #6B7280;
+        font-size: 14px;
+    }
+
+    @media (max-width: 767px) {
+        .eq-layout {
+            flex-direction: column;
+        }
+
+        .eq-card, .eq-card-excluir {
+            flex: 1 1 100%;
+            width: 100%;
+        }
+
+        .eq-acoes {
+            flex-direction: column;
+        }
+
+            .eq-acoes .eq-btn {
+                width: 100%;
+            }
+
+        .eq-row-2 {
+            flex-direction: column;
+            gap: 0;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<div style="margin-bottom: 18px;">
-    <a href="{% url 'equipamentos' %}" style="font-size: 14px;">&larr; Voltar para Equipamentos</a>
-    <h2 style="margin-top:6px;">
+<div class="eq-topo">
+    <a href="{% url 'equipamentos' %}" class="eq-voltar">&larr; Voltar para Equipamentos</a>
+    <h2>
         {% if editando %}✏️ Editar Equipamento{% else %}➕ Cadastrar Equipamento{% endif %}
     </h2>
 </div>
 
 {% if form.errors %}
-<div class="alert alert-danger">
-    <ul style="margin:0; padding-left:18px;">
+<div class="eq-alert">
+    <ul>
         {% for field in form %}{% for error in field.errors %}
         <li>{{ field.label }}: {{ error }}</li>
         {% endfor %}{% endfor %}
@@ -20,103 +298,104 @@
 </div>
 {% endif %}
 
-<div class="row">
-    <div class="col-md-7">
-        <div class="panel panel-primary">
-            <div class="panel-heading"><h3 class="panel-title">Dados do equipamento</h3></div>
-            <div class="panel-body">
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
+<div class="eq-layout">
+    <div class="eq-card">
+        <div class="eq-card-header">
+            <h3>Dados do equipamento</h3>
+        </div>
+        <div class="eq-card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
 
-                    <div class="form-group">
-                        <label>Foto (opcional)</label>
-                        {% if editando.tem_foto %}
-                        <div style="margin-bottom:8px;">
-                            <img src="{% url 'foto_equipamento' editando.id %}" alt="foto atual"
-                                 style="max-height:130px; border-radius:8px; border:1px solid #e3e6ee;">
-                            <label class="checkbox-inline" style="margin-left:12px;">
-                                {{ form.remover_foto }} Remover foto
-                            </label>
-                        </div>
-                        {% endif %}
-                        {{ form.foto }}
-                        <span class="help-block" style="font-size:12px;">
-                            A imagem é reduzida e comprimida automaticamente e guardada no banco de dados.
-                        </span>
+                <div class="eq-form-group">
+                    <label>Foto (opcional)</label>
+                    {% if editando.tem_foto %}
+                    <div class="eq-foto-atual">
+                        <img src="{% url 'foto_equipamento' editando.id %}" alt="foto atual">
+                        <label class="checkbox-inline" style="margin-left:0; font-size:13px; color:#4B5563; font-weight:500; text-transform:none;">
+                            {{ form.remover_foto }} Remover foto
+                        </label>
                     </div>
+                    {% endif %}
+                    {{ form.foto }}
+                    <span class="help-block">
+                        A imagem é reduzida e comprimida automaticamente e guardada no banco de dados.
+                    </span>
+                </div>
 
-                    <div class="form-group">
-                        <label>Categoria</label>
-                        {{ form.categoria }}
+                <div class="eq-form-group">
+                    <label>Categoria</label>
+                    {{ form.categoria }}
+                </div>
+
+                <div class="eq-form-group">
+                    <label>Apelido</label>
+                    {{ form.apelido }}
+                </div>
+
+                <div class="eq-form-group">
+                    <label>Identificação da escola</label>
+                    {{ form.identificacao_escola }}
+                </div>
+
+                <div class="eq-row-2">
+                    <div class="eq-form-group">
+                        <label>Número de patrimônio</label>
+                        {{ form.numero_patrimonio }}
                     </div>
-
-                    <div class="form-group">
-                        <label>Apelido</label>
-                        {{ form.apelido }}
+                    <div class="eq-form-group">
+                        <label>Número de série</label>
+                        {{ form.numero_serie }}
                     </div>
+                </div>
 
-                    <div class="form-group">
-                        <label>Identificação da escola</label>
-                        {{ form.identificacao_escola }}
-                    </div>
+                <div class="eq-form-group" id="grupo-imei">
+                    <label>IMEI <span style="text-transform:none; font-weight:400; color:#9CA3AF;">(apenas tablets e smartphones)</span></label>
+                    {{ form.imei }}
+                </div>
 
-                    <div class="row">
-                        <div class="col-sm-6 form-group">
-                            <label>Número de patrimônio</label>
-                            {{ form.numero_patrimonio }}
-                        </div>
-                        <div class="col-sm-6 form-group">
-                            <label>Número de série</label>
-                            {{ form.numero_serie }}
-                        </div>
-                    </div>
+                <div class="eq-form-group">
+                    <label>Status</label>
+                    {{ form.status }}
+                </div>
 
-                    <div class="form-group" id="grupo-imei">
-                        <label>IMEI <small class="text-muted">(apenas tablets e smartphones)</small></label>
-                        {{ form.imei }}
-                    </div>
+                <div class="eq-form-group">
+                    <label>Observação <span style="text-transform:none; font-weight:400; color:#9CA3AF;">(opcional)</span></label>
+                    {{ form.observacao }}
+                    <span class="help-block">
+                        Anotações sobre o equipamento, histórico de problemas, etc.
+                    </span>
+                </div>
 
-                    <div class="form-group">
-                        <label>Status</label>
-                        {{ form.status }}
-                    </div>
-
-                    <div class="form-group">
-                        <label>Observação <small class="text-muted">(opcional)</small></label>
-                        {{ form.observacao }}
-                        <span class="help-block" style="font-size:12px;">
-                            Anotações sobre o equipamento, histórico de problemas, etc.
-                        </span>
-                    </div>
-
-                    <button type="submit" class="btn btn-success btn-lg">
+                <div class="eq-acoes">
+                    <button type="submit" class="eq-btn eq-btn-primario">
                         {% if editando %}💾 Salvar Alterações{% else %}✅ Cadastrar{% endif %}
                     </button>
-                    <a href="{% url 'equipamentos' %}" class="btn btn-default btn-lg">Cancelar</a>
+                    <a href="{% url 'equipamentos' %}" class="eq-btn eq-btn-secundario">Cancelar</a>
+                </div>
 
-                    {% if editando %}
-                    <hr>
-                    <a href="{% url 'etiqueta_equipamento' editando.id %}" class="btn btn-info">🏷️ Baixar etiqueta</a>
-                    {% endif %}
-                </form>
-            </div>
+                {% if editando %}
+                <hr class="eq-divisor">
+                <a href="{% url 'etiqueta_equipamento' editando.id %}" class="eq-btn eq-btn-info">🏷️ Baixar etiqueta</a>
+                {% endif %}
+            </form>
         </div>
     </div>
 
     {% if editando %}
-    <div class="col-md-5">
-        <div class="panel panel-default">
-            <div class="panel-heading"><h3 class="panel-title">Excluir</h3></div>
-            <div class="panel-body">
-                <p class="text-muted">Remove este equipamento permanentemente.</p>
-                <form action="{% url 'equipamento_excluir' editando.id %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger"
-                            data-confirm="Remover o equipamento {{ editando.apelido }}?">
-                        🗑️ Excluir equipamento
-                    </button>
-                </form>
-            </div>
+    <div class="eq-card eq-card-excluir">
+        <div class="eq-card-header">
+            <h3>Excluir</h3>
+        </div>
+        <div class="eq-card-body">
+            <p>Remove este equipamento permanentemente.</p>
+            <form action="{% url 'equipamento_excluir' editando.id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="eq-btn eq-btn-perigo"
+                        data-confirm="Remover o equipamento {{ editando.apelido }}?">
+                    🗑️ Excluir equipamento
+                </button>
+            </form>
         </div>
     </div>
     {% endif %}
