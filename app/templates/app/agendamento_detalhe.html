@@ -351,19 +351,6 @@
         <p class="lead" style="color: #6B7280; font-size: 16px; margin-bottom:0;">{{ dia_semana }}, {{ dia }} de {{ mes_nome }} de {{ ano }}</p>
     </div>
 
-    {% if messages %}
-    <div style="margin-bottom: 20px;">
-        {% for message in messages %}
-        <div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% elif message.tags == 'info' %}info{% else %}success{% endif %} alert-dismissible alert-modern" role="alert">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
-                <span aria-hidden="true">&times;</span>
-            </button>
-            {{ message }}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
     <!-- Abas Customizadas -->
     <ul class="nav nav-tabs nav-tabs-modern" role="tablist" style="margin-bottom: 24px;">
         <li role="presentation" class="active">

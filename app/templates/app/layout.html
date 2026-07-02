@@ -8,7 +8,6 @@
     <link rel="stylesheet" type="text/css" href="{% static 'app/content/bootstrap.min.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'app/content/site.css' %}" />
     <script src="{% static 'app/scripts/modernizr-2.6.2.js' %}"></script>
-    {% block styles %}{% endblock %}
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -192,15 +191,77 @@
         </div>
     </div>
 
+    <!-- Avisos globais das ações reativas (AJAX) -->
+    <div id="labhub-flash" style="position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:1080; width:90%; max-width:520px;"></div>
+
     <script src="{% static 'app/scripts/jquery-1.10.2.js' %}"></script>
     <script src="{% static 'app/scripts/bootstrap.js' %}"></script>
     <script>
+        // ---- Aviso flutuante global (some sozinho) ----
+        window.LabHubFlash = function (msg, tipo) {
+            if (!msg) return;
+            var cls = 'warning';
+            if (tipo === 'success') cls = 'success';
+            else if (tipo === 'error' || tipo === 'danger') cls = 'danger';
+            else if (tipo === 'info' || tipo === 'debug') cls = 'info';
+            var div = document.createElement('div');
+            div.className = 'alert alert-' + cls + ' alert-dismissible';
+            div.setAttribute('role', 'alert');
+            div.style.boxShadow = '0 4px 18px rgba(0,0,0,.15)';
+            div.innerHTML = '<button type="button" class="close" data-dismiss="alert">&times;</button>' + msg;
+            document.getElementById('labhub-flash').appendChild(div);
+            setTimeout(function () { $(div).fadeOut(400, function () { div.remove(); }); }, 4000);
+        };
+
+        // ---- Transforma uma string HTML na primeira <tr>/elemento ----
+        window.LabHubElemento = function (html) {
+            var tmp = document.createElement('tbody');
+            tmp.innerHTML = (html || '').trim();
+            return tmp.firstElementChild;
+        };
+
+        // ---- Motor genérico de envio via AJAX ----
+        window.LabHubAjaxSubmit = function (form) {
+            var tbody = form.closest('tbody');        // guardado antes de remover a linha
+            fetch(form.action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(form)
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    window.LabHubFlash(res.message, res.ok ? 'success' : 'warning');
+                    if (!res.ok) return;
+
+                    // Gancho: se a página tem um tratador próprio e ele resolveu, para aqui
+                    if (typeof window.LabHubOnAjax === 'function' && window.LabHubOnAjax(form, res)) return;
+
+                    // Comportamento genérico
+                    if (res.acao === 'remover_linha') {
+                        var tr = form.closest('tr');
+                        if (tr) tr.remove();
+                        if (res.contador) {
+                            var c = document.querySelector(res.contador.seletor);
+                            if (c) c.textContent = res.contador.valor;
+                        }
+                        if (res.restantes === 0 && res.vazio_html && tbody) {
+                            tbody.appendChild(window.LabHubElemento(res.vazio_html));
+                        }
+                    } else if (res.acao === 'atualizar_linha') {
+                        var trA = form.closest('tr');
+                        if (trA) trA.parentNode.replaceChild(window.LabHubElemento(res.html), trA);
+                    }
+                })
+                .catch(function () {
+                    window.LabHubFlash('Não foi possível concluir a ação. Recarregue a página e tente de novo.', 'danger');
+                });
+        };
+
         // ---- Confirmação via modal do Bootstrap (no lugar do confirm nativo) ----
         (function () {
             var $modal = $('#confirmModal');
             var formPendente = null;
 
-            // Intercepta qualquer botão/link com data-confirm
             $(document).on('click', '[data-confirm]', function (e) {
                 e.preventDefault();
                 var el = this;
@@ -211,14 +272,12 @@
                 $modal.modal('show');
             });
 
-            // Ao confirmar no modal
             $('#confirmModalOk').on('click', function () {
                 $modal.modal('hide');
                 if (!formPendente) return;
                 var form = formPendente;
                 formPendente = null;
 
-                // Se a página definiu um tratador AJAX e o form pede AJAX, usa ele
                 if (form.getAttribute('data-ajax') === 'true' && typeof window.LabHubAjaxSubmit === 'function') {
                     window.LabHubAjaxSubmit(form);
                 } else {
@@ -227,6 +286,17 @@
             });
         })();
     </script>
+
+    {% if messages %}
+    <script>
+    // Mostra as mensagens do Django (após recarga) como avisos flutuantes
+    document.addEventListener('DOMContentLoaded', function () {
+        {% for message in messages %}
+        window.LabHubFlash('{{ message|escapejs }}', '{{ message.tags|escapejs }}');
+        {% endfor %}
+    });
+    </script>
+    {% endif %}
     {% block scripts %}{% endblock %}
 </body>
 </html>

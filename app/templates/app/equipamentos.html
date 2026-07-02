@@ -2,15 +2,28 @@
 {% block content %}
 
 <style>
+    /* Grade flexível: colunas se ajustam e todas as linhas ficam alinhadas */
+    .equip-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 20px;
+        align-items: stretch;
+    }
+
+        .equip-grid .msg-vazio {
+            grid-column: 1 / -1;
+        }
+
     .equip-card {
         border: 1px solid #e3e6ee;
         border-radius: 12px;
         background: #fff;
         overflow: hidden;
         height: 100%;
+        display: flex;
+        flex-direction: column;
         transition: box-shadow .15s ease, transform .15s ease;
         position: relative;
-        margin-bottom: 22px;
     }
 
         .equip-card:hover {
@@ -36,6 +49,14 @@
 
     .equip-body {
         padding: 12px 14px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .equip-acoes {
+        margin-top: auto;
+        padding-top: 10px;
     }
 
     .equip-apelido {
@@ -71,7 +92,6 @@
         justify-content: center;
         color: #1e3c72;
         text-decoration: none;
-        margin-bottom: 22px;
         transition: background .15s ease;
     }
 
@@ -102,61 +122,53 @@
 <h2>💻 Equipamentos</h2>
 <p class="lead">Cada aparelho é cadastrado individualmente. Use a busca ou cadastre um novo.</p>
 
-{% if messages %}
-<div style="margin-bottom: 15px;">
-    {% for message in messages %}
-    <div class="alert alert-{% if message.tags == 'warning' %}warning{% elif message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible" role="alert">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
-        {{ message }}
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
-
 <div class="barra-topo">
     <form method="get" class="form-inline" style="flex:1; min-width:240px;">
-        <div class="input-group" style="width:100%; max-width:420px;">
-            <input type="text" name="q" value="{{ q }}" class="form-control"
-                   placeholder="Buscar por apelido, patrimônio, série, IMEI...">
-            <span class="input-group-btn">
-                <button class="btn btn-default" type="submit">🔍 Buscar</button>
-            </span>
-        </div>
+        <input type="text" name="q" value="{{ q }}" class="form-control" style="width:260px; max-width:100%;"
+               placeholder="Buscar por apelido (ex: C01, CH03)...">
+        <select name="cat" class="form-control" onchange="this.form.submit()" style="margin-left:8px;">
+            <option value="">Todas as categorias</option>
+            {% for valor, nome in categorias %}
+            <option value="{{ valor }}" {% if valor == cat %}selected{% endif %}>{{ nome }}</option>
+            {% endfor %}
+        </select>
+        <button class="btn btn-default" type="submit" style="margin-left:8px;">🔍 Buscar</button>
+        {% if q or cat %}<a href="{% url 'equipamentos' %}" class="btn btn-link">Limpar</a>{% endif %}
     </form>
-    {% if q %}<a href="{% url 'equipamentos' %}" class="btn btn-link">Limpar</a>{% endif %}
-    <button type="submit" form="form-etiquetas" class="btn btn-info">🏷️ Baixar etiquetas selecionadas</button>
+    <div style="display:flex; gap:8px;">
+        <button type="button" id="btn-selecionar-tudo" class="btn btn-default">☑️ Selecionar tudo</button>
+        <button type="submit" form="form-etiquetas" class="btn btn-info">🏷️ Baixar etiquetas selecionadas</button>
+    </div>
 </div>
 
 <form method="get" action="{% url 'etiquetas_lote' %}" id="form-etiquetas">
-    <div class="row">
+    <div class="equip-grid">
 
         <!-- Card de cadastrar -->
-        <div class="col-md-3 col-sm-4 col-xs-6">
-            <a href="{% url 'equipamento_novo' %}" class="card-novo">
-                <span class="mais">+</span>
-                <span style="font-weight:700; margin-top:8px;">Cadastrar equipamento</span>
-            </a>
-        </div>
+        <a href="{% url 'equipamento_novo' %}" class="card-novo">
+            <span class="mais">+</span>
+            <span style="font-weight:700; margin-top:8px;">Cadastrar equipamento</span>
+        </a>
 
         <!-- Cards dos equipamentos -->
         {% for e in equipamentos %}
-        <div class="col-md-3 col-sm-4 col-xs-6">
-            <div class="equip-card">
-                <input type="checkbox" name="ids" value="{{ e.id }}" class="equip-check"
-                       title="Selecionar para etiqueta">
-                <a href="{% url 'equipamento_editar' e.id %}" style="text-decoration:none; color:inherit;">
-                    <div class="equip-foto">
-                        {% if e.tem_foto %}
-                        <img src="{% url 'foto_equipamento' e.id %}" alt="{{ e.apelido }}">
-                        {% else %}
-                        💻
-                        {% endif %}
-                    </div>
-                </a>
-                <div class="equip-body">
-                    <div class="equip-apelido">{{ e.apelido }}</div>
-                    <div class="equip-cat">{{ e.get_categoria_display }}</div>
+        <div class="equip-card">
+            <input type="checkbox" name="ids" value="{{ e.id }}" class="equip-check"
+                   title="Selecionar para etiqueta">
+            <a href="{% url 'equipamento_editar' e.id %}" style="text-decoration:none; color:inherit;">
+                <div class="equip-foto">
+                    {% if e.tem_foto %}
+                    <img src="{% url 'foto_equipamento' e.id %}" alt="{{ e.apelido }}">
+                    {% else %}
+                    💻
+                    {% endif %}
+                </div>
+            </a>
+            <div class="equip-body">
+                <div class="equip-apelido">{{ e.apelido }}</div>
+                <div class="equip-cat">{{ e.get_categoria_display }}</div>
 
+                <div class="equip-status">
                     {% if e.status == 'ATIVO' %}
                     <span class="label label-success">Ativo</span>
                     {% elif e.status == 'MANUTENCAO' %}
@@ -166,33 +178,48 @@
                     {% else %}
                     <span class="label label-default">Desativado</span>
                     {% endif %}
+                </div>
 
-                    {% if e.numero_patrimonio %}
-                    <div class="text-muted" style="font-size:12px; margin-top:6px;">Pat.: {{ e.numero_patrimonio }}</div>
-                    {% endif %}
+                {% if e.numero_patrimonio %}
+                <div class="text-muted" style="font-size:12px; margin-top:6px;">Pat.: {{ e.numero_patrimonio }}</div>
+                {% endif %}
 
-                    {% if e.observacao %}
-                    <div class="text-muted" style="font-size:12px; margin-top:4px; font-style:italic;">
-                        {{ e.observacao|truncatechars:60 }}
-                    </div>
-                    {% endif %}
+                {% if e.observacao %}
+                <div class="text-muted" style="font-size:12px; margin-top:4px; font-style:italic;">
+                    {{ e.observacao|truncatechars:60 }}
+                </div>
+                {% endif %}
 
-                    <div style="margin-top:10px;">
-                        <a href="{% url 'equipamento_editar' e.id %}" class="btn btn-xs btn-default">✏️ Editar</a>
-                        <a href="{% url 'etiqueta_equipamento' e.id %}" class="btn btn-xs btn-info">🏷️ Etiqueta</a>
-                    </div>
+                <div class="equip-acoes">
+                    <a href="{% url 'equipamento_editar' e.id %}" class="btn btn-xs btn-default">✏️ Editar</a>
+                    <a href="{% url 'etiqueta_equipamento' e.id %}" class="btn btn-xs btn-info">🏷️ Etiqueta</a>
                 </div>
             </div>
         </div>
         {% empty %}
-        <div class="col-xs-12">
-            <p class="text-muted" style="padding: 20px;">
-                <em>{% if q %}Nenhum equipamento encontrado para "{{ q }}".{% else %}Nenhum equipamento cadastrado ainda. Use o card "+ Cadastrar equipamento".{% endif %}</em>
-            </p>
-        </div>
+        <p class="text-muted msg-vazio" style="padding: 20px;">
+            <em>{% if q or cat %}Nenhum equipamento encontrado para o filtro atual.{% else %}Nenhum equipamento cadastrado ainda. Use o card "+ Cadastrar equipamento".{% endif %}</em>
+        </p>
         {% endfor %}
 
     </div>
 </form>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        var botao = document.getElementById('btn-selecionar-tudo');
+        if (!botao) return;
+        botao.addEventListener('click', function () {
+            var checks = document.querySelectorAll('#form-etiquetas input[name="ids"]');
+            if (!checks.length) return;
+            // Se houver algum desmarcado, marca todos; senão, desmarca todos
+            var marcarTodos = Array.prototype.some.call(checks, function (c) { return !c.checked; });
+            Array.prototype.forEach.call(checks, function (c) { c.checked = marcarTodos; });
+            botao.textContent = marcarTodos ? '⬜ Desmarcar tudo' : '☑️ Selecionar tudo';
+        });
+    })();
+</script>
 {% endblock %}

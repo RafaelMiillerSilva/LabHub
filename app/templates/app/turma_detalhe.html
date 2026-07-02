@@ -7,21 +7,8 @@
         👥 {{ turma.nome }}
         <small class="text-muted">{{ turma.get_turno_display }}</small>
     </h2>
-    <p class="lead" style="margin-bottom:0;">{{ alunos|length }} aluno(s) cadastrado(s) nesta turma.</p>
+    <p class="lead" style="margin-bottom:0;"><span id="cont-alunos">{{ alunos|length }}</span> aluno(s) cadastrado(s) nesta turma.</p>
 </div>
-
-{% if messages %}
-<div style="margin-bottom: 15px;">
-    {% for message in messages %}
-    <div class="alert alert-{% if message.tags == 'warning' %}warning{% else %}success{% endif %} alert-dismissible" role="alert">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
-            <span aria-hidden="true">&times;</span>
-        </button>
-        {{ message }}
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
 
 <div class="row">
 
@@ -100,7 +87,7 @@
                                 <td><strong>{{ aluno.nome }}</strong></td>
                                 <td>{{ aluno.ra }}</td>
                                 <td class="text-center">
-                                    <form action="{% url 'aluno_excluir' aluno.id %}" method="post" style="display:inline;">
+                                    <form action="{% url 'aluno_excluir' aluno.id %}" method="post" style="display:inline;" data-ajax="true">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-xs btn-danger"
                                                 data-confirm="Remover {{ aluno.nome }}?">
