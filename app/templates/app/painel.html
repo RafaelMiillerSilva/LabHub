@@ -3,22 +3,6 @@
 <h2>🛠️ Painel Administrativo</h2>
 <p class="lead">Gerencie as solicitações de acesso ao sistema LabHub.</p>
 
-<!-- Avisos das ações reativas (AJAX) -->
-<div id="painel-flash"></div>
-
-{% if messages %}
-<div style="margin-bottom: 15px;">
-    {% for message in messages %}
-    <div class="alert alert-{% if message.tags == 'warning' %}warning{% else %}success{% endif %} alert-dismissible" role="alert">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
-            <span aria-hidden="true">&times;</span>
-        </button>
-        {{ message }}
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
-
 <!-- Abas -->
 <ul class="nav nav-tabs" role="tablist" style="margin-bottom: 20px;">
     <li role="presentation" class="{% if aba == 'solicitacoes' %}active{% endif %}">
@@ -236,26 +220,7 @@
 {% block scripts %}
 <script>
     (function () {
-        // Mostra um aviso no topo do painel
-        function flash(msg, tipo) {
-            var cls = tipo === 'success' ? 'success' : (tipo === 'danger' ? 'danger' : 'warning');
-            var div = document.createElement('div');
-            div.className = 'alert alert-' + cls + ' alert-dismissible';
-            div.setAttribute('role', 'alert');
-            div.innerHTML = '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
-                (msg || '');
-            var area = document.getElementById('painel-flash');
-            area.appendChild(div);
-            // some sozinho depois de alguns segundos
-            setTimeout(function () { $(div).fadeOut(400, function () { div.remove(); }); }, 4000);
-        }
-
-        // Substitui uma <tr> pelo HTML devolvido pelo servidor
-        function trDoHtml(html) {
-            var tmp = document.createElement('tbody');
-            tmp.innerHTML = html.trim();
-            return tmp.firstElementChild;
-        }
+        function trDoHtml(html) { return window.LabHubElemento(html); }
 
         function contarLinhas(tbodyId, seletor) {
             var tb = document.getElementById(tbodyId);
@@ -284,38 +249,28 @@
             }
         }
 
-        // Tratador de envio via AJAX chamado pelo modal de confirmação (layout.html)
-        window.LabHubAjaxSubmit = function (form) {
-            var dados = new FormData(form);
-            fetch(form.action, {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                body: dados
-            })
-                .then(function (r) { return r.json(); })
-                .then(function (res) {
-                    flash(res.message, res.ok ? 'success' : 'warning');
-                    if (!res.ok) return;
-
-                    if (res.acao === 'atualizar_usuario') {
-                        var linha = document.querySelector('#tbody-usuarios tr[data-user-id="' + res.user_id + '"]');
-                        if (linha) linha.parentNode.replaceChild(trDoHtml(res.html), linha);
-
-                    } else if (res.acao === 'aprovar') {
-                        removerPendente(res.perfil_id, res.pendentes);
-                        var tb = document.getElementById('tbody-usuarios');
-                        var vazia = document.getElementById('linha-vazia-usuarios');
-                        if (vazia) vazia.remove();
-                        tb.appendChild(trDoHtml(res.html));
-                        ajustarBadge('badge-usuarios', contarLinhas('tbody-usuarios', 'tr[data-user-id]'));
-
-                    } else if (res.acao === 'negar') {
-                        removerPendente(res.perfil_id, res.pendentes);
-                    }
-                })
-                .catch(function () {
-                    flash('Não foi possível concluir a ação. Recarregue a página e tente de novo.', 'danger');
-                });
+        // Gancho específico do painel, chamado pelo motor de AJAX do layout.
+        // Retorna true quando tratou a resposta.
+        window.LabHubOnAjax = function (form, res) {
+            if (res.acao === 'atualizar_usuario') {
+                var linha = document.querySelector('#tbody-usuarios tr[data-user-id="' + res.user_id + '"]');
+                if (linha) linha.parentNode.replaceChild(trDoHtml(res.html), linha);
+                return true;
+            }
+            if (res.acao === 'aprovar') {
+                removerPendente(res.perfil_id, res.pendentes);
+                var tb = document.getElementById('tbody-usuarios');
+                var vazia = document.getElementById('linha-vazia-usuarios');
+                if (vazia) vazia.remove();
+                tb.appendChild(trDoHtml(res.html));
+                ajustarBadge('badge-usuarios', contarLinhas('tbody-usuarios', 'tr[data-user-id]'));
+                return true;
+            }
+            if (res.acao === 'negar') {
+                removerPendente(res.perfil_id, res.pendentes);
+                return true;
+            }
+            return false;
         };
     })();
 </script>

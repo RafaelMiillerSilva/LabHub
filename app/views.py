@@ -780,7 +780,19 @@ def sala_excluir(request, sala_id):
         sala = get_object_or_404(Sala, id=sala_id)
         nome = sala.nome
         sala.delete()
-        messages.warning(request, f'Sala "{nome}" removida.')
+        msg = f'Sala "{nome}" removida.'
+
+        if _is_ajax(request):
+            restantes = Sala.objects.count()
+            return JsonResponse({
+                'ok': True, 'acao': 'remover_linha', 'message': msg,
+                'restantes': restantes,
+                'contador': {'seletor': '#cont-salas', 'valor': restantes},
+                'vazio_html': '<tr><td colspan="5" class="text-center text-muted" '
+                              'style="padding: 30px;"><em>Nenhuma sala cadastrada ainda. '
+                              'Cadastre a primeira ao lado.</em></td></tr>',
+            })
+        messages.warning(request, msg)
 
     return redirect('salas')
 
@@ -794,20 +806,19 @@ def equipamentos(request):
         return redirect('home')
 
     q = request.GET.get('q', '').strip()
+    cat = request.GET.get('cat', '').strip()
     lista = Equipamento.objects.defer('foto_dados')   # não carrega os bytes da foto na lista
     if q:
-        lista = lista.filter(
-            Q(apelido__icontains=q) |
-            Q(identificacao_escola__icontains=q) |
-            Q(numero_patrimonio__icontains=q) |
-            Q(numero_serie__icontains=q) |
-            Q(imei__icontains=q)
-        )
+        lista = lista.filter(apelido__icontains=q)
+    if cat:
+        lista = lista.filter(categoria=cat)
 
     return render(request, 'app/equipamentos.html', {
         'title': 'Equipamentos',
         'equipamentos': lista,
         'q': q,
+        'cat': cat,
+        'categorias': Equipamento.CATEGORIA_CHOICES,
     })
 
 
@@ -1002,7 +1013,19 @@ def turma_excluir(request, turma_id):
         turma = get_object_or_404(Turma, id=turma_id)
         nome = str(turma)
         turma.delete()  # apaga os alunos em cascata
-        messages.warning(request, f'Turma "{nome}" removida (junto com seus alunos).')
+        msg = f'Turma "{nome}" removida (junto com seus alunos).'
+
+        if _is_ajax(request):
+            restantes = Turma.objects.count()
+            return JsonResponse({
+                'ok': True, 'acao': 'remover_linha', 'message': msg,
+                'restantes': restantes,
+                'contador': {'seletor': '#cont-turmas', 'valor': restantes},
+                'vazio_html': '<tr><td colspan="4" class="text-center text-muted" '
+                              'style="padding: 30px;"><em>Nenhuma turma cadastrada ainda. '
+                              'Cadastre a primeira ao lado.</em></td></tr>',
+            })
+        messages.warning(request, msg)
 
     return redirect('turmas')
 
@@ -1044,7 +1067,19 @@ def aluno_excluir(request, aluno_id):
         turma_id = aluno.turma_id
         nome = aluno.nome
         aluno.delete()
-        messages.warning(request, f'Aluno "{nome}" removido.')
+        msg = f'Aluno "{nome}" removido.'
+
+        if _is_ajax(request):
+            restantes = Aluno.objects.filter(turma_id=turma_id).count()
+            return JsonResponse({
+                'ok': True, 'acao': 'remover_linha', 'message': msg,
+                'restantes': restantes,
+                'contador': {'seletor': '#cont-alunos', 'valor': restantes},
+                'vazio_html': '<tr><td colspan="4" class="text-center text-muted" '
+                              'style="padding: 30px;"><em>Nenhum aluno nesta turma ainda. '
+                              'Adicione o primeiro ao lado.</em></td></tr>',
+            })
+        messages.warning(request, msg)
         return redirect('turma_detalhe', turma_id=turma_id)
 
     return redirect('turmas')
@@ -1217,12 +1252,29 @@ def cancelar_reserva(request, agendamento_id):
 
         # Só o dono da reserva ou um admin pode cancelar
         if ag.professor_id != request.user.id and not is_admin:
-            messages.error(request, 'Você só pode cancelar as suas próprias reservas.')
+            msg = 'Você só pode cancelar as suas próprias reservas.'
+            if _is_ajax(request):
+                return JsonResponse({'ok': False, 'message': msg})
+            messages.error(request, msg)
             return redirect('agendamentos')
 
         # Deletar o agendamento remove os itens de dispositivo em cascata
         ag.delete()
-        messages.warning(request, 'Reserva cancelada com sucesso.')
+        msg = 'Reserva cancelada com sucesso.'
+
+        if _is_ajax(request):
+            restantes = Agendamento.objects.filter(
+                professor=request.user, data__gte=date.today()
+            ).count()
+            return JsonResponse({
+                'ok': True, 'acao': 'remover_linha', 'message': msg,
+                'restantes': restantes,
+                'vazio_html': '<tr><td colspan="6" class="text-center text-muted" '
+                              'style="padding: 32px;"><span>📭</span>'
+                              '<p style="margin-top: 8px; font-style: italic;">Você não tem '
+                              'reservas futuras. Clique em um dia para agendar.</p></td></tr>',
+            })
+        messages.warning(request, msg)
 
     return redirect('agendamentos')
 

@@ -3,19 +3,6 @@
 <h2>👥 Turmas</h2>
 <p class="lead">Cadastre as turmas da escola. Clique em <strong>Gerenciar alunos</strong> para adicionar os alunos de cada turma.</p>
 
-{% if messages %}
-<div style="margin-bottom: 15px;">
-    {% for message in messages %}
-    <div class="alert alert-{% if message.tags == 'warning' %}warning{% else %}success{% endif %} alert-dismissible" role="alert">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
-            <span aria-hidden="true">&times;</span>
-        </button>
-        {{ message }}
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
-
 <div class="row">
 
     <!-- Formulário de cadastro / edição -->
@@ -71,7 +58,7 @@
     <div class="col-md-8">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Turmas Cadastradas ({{ turmas|length }})</h3>
+                <h3 class="panel-title">Turmas Cadastradas (<span id="cont-turmas">{{ turmas|length }}</span>)</h3>
             </div>
             <div class="panel-body">
                 <div class="table-responsive">
@@ -95,7 +82,7 @@
                                 <td class="text-center">
                                     <a href="{% url 'turma_detalhe' t.id %}" class="btn btn-xs btn-primary">👥 Gerenciar alunos</a>
                                     <a href="{% url 'turmas' %}?editar={{ t.id }}" class="btn btn-xs btn-info">✏️</a>
-                                    <form action="{% url 'turma_excluir' t.id %}" method="post" style="display:inline;">
+                                    <form action="{% url 'turma_excluir' t.id %}" method="post" style="display:inline;" data-ajax="true">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-xs btn-danger"
                                                 data-confirm="Remover a turma {{ t.nome }} e TODOS os seus alunos?">
