@@ -1,74 +1,233 @@
 {% extends "app/layout.html" %}
 {% block content %}
-<h2>🛠️ Painel Administrativo</h2>
-<p class="lead">Gerencie as solicitações de acesso ao sistema LabHub.</p>
 
-<!-- Abas -->
-<ul class="nav nav-tabs" role="tablist" style="margin-bottom: 20px;">
+<style>
+    /* Cabeçalho Hero */
+    .painel-hero {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 26px;
+    }
+
+    .painel-hero-icone {
+        width: 58px;
+        height: 58px;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        flex-shrink: 0;
+        box-shadow: 0 6px 16px rgba(26, 74, 138, .25);
+    }
+
+    .painel-hero-texto {
+        flex: 1;
+        min-width: 180px;
+    }
+
+        .painel-hero-texto h2 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+            color: #1A2333;
+            letter-spacing: -0.5px;
+        }
+
+        .painel-hero-texto p {
+            margin: 4px 0 0;
+            color: #4B5563;
+            font-size: 14px;
+        }
+
+    /* Abas Customizadas */
+    .nav-tabs-modern {
+        border-bottom: 2px solid #E5E9F0;
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+    }
+
+        .nav-tabs-modern > li > a {
+            border: none !important;
+            background: transparent !important;
+            color: #6B7280 !important;
+            font-weight: 600;
+            font-size: 15px;
+            padding: 12px 20px;
+            border-radius: 0;
+            border-bottom: 2px solid transparent !important;
+            transition: color 0.2s ease, border-color 0.2s ease;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tabs-modern > li.active > a,
+        .nav-tabs-modern > li.active > a:hover,
+        .nav-tabs-modern > li.active > a:focus {
+            color: #1A4A8A !important;
+            border-bottom: 2px solid #1A4A8A !important;
+        }
+
+        .nav-tabs-modern > li > a:hover {
+            color: #1A1A2E !important;
+            border-bottom: 2px solid #6B7280 !important;
+        }
+
+    /* Badges nas abas */
+    .badge-modern {
+        background-color: #E5E7EB;
+        color: #374151;
+        border-radius: 12px;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .badge-danger-modern {
+        background-color: #FEE2E2 !important;
+        color: #B91C1C !important;
+    }
+
+    /* Cards e Elementos Internos */
+    .lh-card {
+        background: #ffffff;
+        border: 1px solid #E5E7EB !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    .lh-card-header {
+        padding: 20px 20px 15px 20px;
+        background: transparent;
+        border-bottom: 1px solid #F3F4F6;
+    }
+
+    .lh-card-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1A2333;
+        margin: 0;
+    }
+
+    .lh-card-body {
+        padding: 20px;
+    }
+
+    /* Inputs Modernos para Filtros */
+    .form-control-modern {
+        border-radius: 10px !important;
+        border: 1px solid #D1D5DB !important;
+        padding: 8px 14px !important;
+        height: auto !important;
+        font-size: 14px !important;
+        box-shadow: none !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+    }
+
+        .form-control-modern:focus {
+            border-color: #1A4A8A !important;
+            box-shadow: 0 0 0 3px rgba(26, 74, 138, 0.15) !important;
+        }
+
+    /* Botões Padrão para Filtros e Ações */
+    .btn-outline-modern {
+        background: #F3F4F6 !important;
+        color: #4B5563 !important;
+        border: 1px solid #D1D5DB !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        padding: 8px 14px !important;
+        transition: all 0.15s ease;
+    }
+
+        .btn-outline-modern:hover {
+            background: #E5E7EB !important;
+            color: #1A2333 !important;
+        }
+
+    /* Estilização Global para os botões nas tabelas (inclusive os do include) */
+    .table .btn-xs {
+        border-radius: 6px !important;
+        font-weight: 600;
+        padding: 3px 8px;
+    }
+</style>
+
+<div class="painel-hero">
+    <div class="painel-hero-icone">🛠️</div>
+    <div class="painel-hero-texto">
+        <h2>Painel Administrativo</h2>
+        <p>Gerencie as solicitações de acesso, usuários e visualize o histórico do sistema LabHub.</p>
+    </div>
+</div>
+
+<ul class="nav nav-tabs nav-tabs-modern" role="tablist">
     <li role="presentation" class="{% if aba == 'solicitacoes' %}active{% endif %}">
         <a href="#solicitacoes" role="tab" data-toggle="tab">
-            🕐 Solicitações Pendentes
-            <span class="badge" id="badge-solicitacoes" style="background-color: #d9534f; {% if not solicitacoes %}display:none;{% endif %}">{{ solicitacoes|length }}</span>
+            🕐 Solicitações
+            <span class="badge badge-modern badge-danger-modern" id="badge-solicitacoes" style="{% if not solicitacoes %}display:none;{% endif %}">{{ solicitacoes|length }}</span>
         </a>
     </li>
     <li role="presentation" class="{% if aba == 'usuarios' %}active{% endif %}">
         <a href="#usuarios" role="tab" data-toggle="tab">
             👤 Usuários
-            <span class="badge" id="badge-usuarios" {% if not usuarios %}style="display:none;" {% endif %}>{{ usuarios|length }}</span>
+            <span class="badge badge-modern" id="badge-usuarios" {% if not usuarios %}style="display:none;" {% endif %}>{{ usuarios|length }}</span>
         </a>
     </li>
     <li role="presentation" class="{% if aba == 'historico' %}active{% endif %}">
         <a href="#historico" role="tab" data-toggle="tab">
-            📋 Histórico de Ações
+            📋 Histórico
         </a>
     </li>
 </ul>
 
 <div class="tab-content">
 
-    <!-- ABA 1: Solicitações Pendentes -->
     <div role="tabpanel" class="tab-pane {% if aba == 'solicitacoes' %}active{% endif %}" id="solicitacoes">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Solicitações Aguardando Aprovação</h3>
+        <div class="lh-card">
+            <div class="lh-card-header">
+                <h3 class="lh-card-title">Aguardando Aprovação</h3>
             </div>
-            <div class="panel-body">
+            <div class="lh-card-body" style="padding: 0;">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover" style="margin-bottom: 0;">
                         <thead>
                             <tr>
-                                <th>Usuário</th>
-                                <th>E-mail</th>
-                                <th>Tipo Solicitado</th>
-                                <th>Ações</th>
+                                <th style="padding-left: 20px; color: #6B7280; font-weight: 600;">Usuário</th>
+                                <th style="color: #6B7280; font-weight: 600;">E-mail</th>
+                                <th style="color: #6B7280; font-weight: 600;">Tipo Solicitado</th>
+                                <th style="padding-right: 20px; color: #6B7280; font-weight: 600;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-solicitacoes">
                             {% for soc in solicitacoes %}
                             <tr data-perfil-id="{{ soc.id }}">
-                                <td><strong>{{ soc.user.username }}</strong></td>
-                                <td>{{ soc.user.email }}</td>
-                                <td>
+                                <td style="padding-left: 20px; vertical-align: middle;"><strong>{{ soc.user.username }}</strong></td>
+                                <td style="vertical-align: middle; color: #4B5563;">{{ soc.user.email }}</td>
+                                <td style="vertical-align: middle;">
                                     {% if soc.tipo == 'ADMINISTRADOR' %}
-                                    <span class="label label-warning">{{ soc.get_tipo_display }}</span>
+                                    <span class="label label-warning" style="border-radius: 4px;">{{ soc.get_tipo_display }}</span>
                                     {% else %}
-                                    <span class="label label-info">{{ soc.get_tipo_display }}</span>
+                                    <span class="label label-info" style="border-radius: 4px;">{{ soc.get_tipo_display }}</span>
                                     {% endif %}
                                 </td>
-                                <td>
-                                    <!-- Botão Aprovar -->
+                                <td style="padding-right: 20px; vertical-align: middle;">
                                     <form action="{% url 'aprovar_usuario' soc.id %}" method="post" style="display:inline;" data-ajax="true">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-xs btn-success"
-                                                data-confirm="Aprovar acesso de {{ soc.user.username }}?">
+                                        <button type="submit" class="btn btn-xs btn-success" data-confirm="Aprovar acesso de {{ soc.user.username }}?">
                                             ✅ Aprovar
                                         </button>
                                     </form>
-                                    <!-- Botão Negar -->
                                     <form action="{% url 'negar_usuario' soc.id %}" method="post" style="display:inline; margin-left: 5px;" data-ajax="true">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-xs btn-danger"
-                                                data-confirm="Negar e REMOVER os dados de {{ soc.user.username }}? Esta ação não pode ser desfeita.">
+                                        <button type="submit" class="btn btn-xs btn-danger" data-confirm="Negar e REMOVER os dados de {{ soc.user.username }}? Esta ação não pode ser desfeita.">
                                             ❌ Negar
                                         </button>
                                     </form>
@@ -76,7 +235,7 @@
                             </tr>
                             {% empty %}
                             <tr id="linha-vazia-solicitacoes">
-                                <td colspan="4" class="text-center text-muted" style="padding: 30px;">
+                                <td colspan="4" class="text-center text-muted" style="padding: 40px;">
                                     <em>Nenhuma solicitação pendente no momento.</em>
                                 </td>
                             </tr>
@@ -88,40 +247,33 @@
         </div>
     </div>
 
-    <!-- ABA: Gerenciar Usuários -->
     <div role="tabpanel" class="tab-pane {% if aba == 'usuarios' %}active{% endif %}" id="usuarios">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Usuários do Sistema</h3>
+        <div class="lh-card">
+            <div class="lh-card-header">
+                <h3 class="lh-card-title">Usuários do Sistema</h3>
             </div>
-            <div class="panel-body">
-                <p class="text-muted" style="margin-top:0;">
-                    Ative ou desative o acesso de um usuário e defina quem é administrador.
-                    Contas desativadas continuam cadastradas, mas não conseguem entrar no sistema.
+            <div class="lh-card-body" style="padding-top: 15px;">
+                <p class="text-muted" style="margin-top:0; font-size: 13px;">
+                    Ative ou desative o acesso de um usuário e defina quem é administrador. Contas desativadas continuam cadastradas, mas não conseguem entrar no sistema.
                 </p>
 
-                <!-- Barra de busca de usuários -->
-                <form method="get" class="form-inline" style="margin-bottom:15px;">
+                <form method="get" class="form-inline" style="margin-bottom:20px; display: flex; gap: 8px; flex-wrap: wrap;">
                     <input type="hidden" name="tab" value="usuarios">
-                    <div class="input-group" style="max-width:420px; width:100%;">
-                        <input type="text" name="q" value="{{ q }}" class="form-control"
-                               placeholder="Buscar por nome de usuário ou e-mail...">
-                        <span class="input-group-btn">
-                            <button class="btn btn-default" type="submit">🔍 Buscar</button>
-                        </span>
-                    </div>
-                    {% if q %}<a href="{% url 'painel' %}?tab=usuarios" class="btn btn-link">Limpar</a>{% endif %}
+                    <input type="text" name="q" value="{{ q }}" class="form-control form-control-modern" style="min-width: 280px;" placeholder="Buscar por usuário ou e-mail...">
+                    <button class="btn btn-outline-modern" type="submit">🔍 Buscar</button>
+                    {% if q %}<a href="{% url 'painel' %}?tab=usuarios" class="btn btn-link" style="color: #6B7280; font-weight: 500;">Limpar filtro</a>{% endif %}
                 </form>
-
+            </div>
+            <div style="padding: 0;">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover" style="margin-bottom: 0;">
                         <thead>
                             <tr>
-                                <th>Usuário</th>
-                                <th>E-mail</th>
-                                <th>Nível</th>
-                                <th class="text-center">Status</th>
-                                <th class="text-center">Ações</th>
+                                <th style="padding-left: 20px; color: #6B7280; font-weight: 600;">Usuário</th>
+                                <th style="color: #6B7280; font-weight: 600;">E-mail</th>
+                                <th style="color: #6B7280; font-weight: 600;">Nível</th>
+                                <th class="text-center" style="color: #6B7280; font-weight: 600;">Status</th>
+                                <th class="text-center" style="padding-right: 20px; color: #6B7280; font-weight: 600;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-usuarios">
@@ -129,7 +281,7 @@
                             {% include 'app/_usuario_linha.html' %}
                             {% empty %}
                             <tr id="linha-vazia-usuarios">
-                                <td colspan="5" class="text-center text-muted" style="padding: 30px;">
+                                <td colspan="5" class="text-center text-muted" style="padding: 40px;">
                                     <em>{% if q %}Nenhum usuário encontrado para "{{ q }}".{% else %}Nenhum usuário aprovado ainda.{% endif %}</em>
                                 </td>
                             </tr>
@@ -141,68 +293,68 @@
         </div>
     </div>
 
-    <!-- ABA 2: Histórico -->
     <div role="tabpanel" class="tab-pane {% if aba == 'historico' %}active{% endif %}" id="historico">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Histórico de Ações</h3>
+        <div class="lh-card">
+            <div class="lh-card-header">
+                <h3 class="lh-card-title">Histórico de Ações</h3>
             </div>
-            <div class="panel-body">
+            <div class="lh-card-body" style="padding-top: 15px;">
 
-                <!-- Filtro por período -->
-                <form method="get" class="form-inline" style="margin-bottom:15px;">
+                <form method="get" class="form-inline" style="margin-bottom:20px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
                     <input type="hidden" name="tab" value="historico">
-                    <div class="form-group">
-                        <label for="de">De&nbsp;</label>
-                        <input type="date" id="de" name="de" value="{{ de }}" class="form-control">
+                    <div class="form-group" style="margin: 0;">
+                        <label for="de" style="font-size: 12px; color: #6B7280; margin-bottom: 4px; display: block;">Data Inicial</label>
+                        <input type="date" id="de" name="de" value="{{ de }}" class="form-control form-control-modern">
                     </div>
-                    <div class="form-group" style="margin-left:8px;">
-                        <label for="ate">Até&nbsp;</label>
-                        <input type="date" id="ate" name="ate" value="{{ ate }}" class="form-control">
+                    <div class="form-group" style="margin: 0;">
+                        <label for="ate" style="font-size: 12px; color: #6B7280; margin-bottom: 4px; display: block;">Data Final</label>
+                        <input type="date" id="ate" name="ate" value="{{ ate }}" class="form-control form-control-modern">
                     </div>
-                    <button type="submit" class="btn btn-default" style="margin-left:8px;">📅 Filtrar</button>
-                    {% if de or ate %}<a href="{% url 'painel' %}?tab=historico" class="btn btn-link">Limpar</a>{% endif %}
+                    <button type="submit" class="btn btn-outline-modern">📅 Filtrar Período</button>
+                    {% if de or ate %}<a href="{% url 'painel' %}?tab=historico" class="btn btn-link" style="color: #6B7280; font-weight: 500;">Limpar</a>{% endif %}
                 </form>
+            </div>
 
+            <div style="padding: 0;">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover" style="margin-bottom: 0;">
                         <thead>
                             <tr>
-                                <th>Data / Hora</th>
-                                <th>Usuário Solicitante</th>
-                                <th>E-mail</th>
-                                <th>Tipo</th>
-                                <th>Decisão</th>
-                                <th>Admin Responsável</th>
+                                <th style="padding-left: 20px; color: #6B7280; font-weight: 600;">Data / Hora</th>
+                                <th style="color: #6B7280; font-weight: 600;">Usuário Solicitante</th>
+                                <th style="color: #6B7280; font-weight: 600;">E-mail</th>
+                                <th style="color: #6B7280; font-weight: 600;">Tipo</th>
+                                <th style="color: #6B7280; font-weight: 600;">Decisão</th>
+                                <th style="padding-right: 20px; color: #6B7280; font-weight: 600;">Admin Responsável</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for h in historico %}
                             <tr>
-                                <td>{{ h.data_acao|date:"d/m/Y H:i" }}</td>
-                                <td><strong>{{ h.username_solicitante }}</strong></td>
-                                <td>{{ h.email_solicitante }}</td>
-                                <td>
+                                <td style="padding-left: 20px; vertical-align: middle; color: #4B5563;">{{ h.data_acao|date:"d/m/Y H:i" }}</td>
+                                <td style="vertical-align: middle;"><strong>{{ h.username_solicitante }}</strong></td>
+                                <td style="vertical-align: middle; color: #4B5563;">{{ h.email_solicitante }}</td>
+                                <td style="vertical-align: middle;">
                                     {% if h.tipo_solicitado == 'ADMINISTRADOR' %}
-                                    <span class="label label-warning">{{ h.tipo_solicitado }}</span>
+                                    <span class="label label-warning" style="border-radius: 4px;">{{ h.tipo_solicitado }}</span>
                                     {% else %}
-                                    <span class="label label-info">{{ h.tipo_solicitado }}</span>
+                                    <span class="label label-info" style="border-radius: 4px;">{{ h.tipo_solicitado }}</span>
                                     {% endif %}
                                 </td>
-                                <td>
+                                <td style="vertical-align: middle;">
                                     {% if h.acao == 'APROVADO' or h.acao == 'ATIVADO' or h.acao == 'PROMOVIDO' %}
-                                    <span class="label label-success">{{ h.get_acao_display }}</span>
+                                    <span class="label label-success" style="border-radius: 4px;">{{ h.get_acao_display }}</span>
                                     {% elif h.acao == 'NEGADO' or h.acao == 'DESATIVADO' or h.acao == 'REBAIXADO' %}
-                                    <span class="label label-danger">{{ h.get_acao_display }}</span>
+                                    <span class="label label-danger" style="border-radius: 4px;">{{ h.get_acao_display }}</span>
                                     {% else %}
-                                    <span class="label label-default">{{ h.get_acao_display }}</span>
+                                    <span class="label label-default" style="border-radius: 4px;">{{ h.get_acao_display }}</span>
                                     {% endif %}
                                 </td>
-                                <td>{{ h.admin.username|default:"—" }}</td>
+                                <td style="padding-right: 20px; vertical-align: middle; color: #4B5563;">{{ h.admin.username|default:"—" }}</td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center text-muted" style="padding: 30px;">
+                                <td colspan="6" class="text-center text-muted" style="padding: 40px;">
                                     <em>{% if de or ate %}Nenhuma ação no período selecionado.{% else %}Nenhuma ação registrada ainda.{% endif %}</em>
                                 </td>
                             </tr>
@@ -243,14 +395,13 @@
             if (pendentes === 0 && !document.getElementById('linha-vazia-solicitacoes')) {
                 var vazia = document.createElement('tr');
                 vazia.id = 'linha-vazia-solicitacoes';
-                vazia.innerHTML = '<td colspan="4" class="text-center text-muted" style="padding:30px;">' +
+                vazia.innerHTML = '<td colspan="4" class="text-center text-muted" style="padding:40px;">' +
                     '<em>Nenhuma solicitação pendente no momento.</em></td>';
                 tb.appendChild(vazia);
             }
         }
 
         // Gancho específico do painel, chamado pelo motor de AJAX do layout.
-        // Retorna true quando tratou a resposta.
         window.LabHubOnAjax = function (form, res) {
             if (res.acao === 'atualizar_usuario') {
                 var linha = document.querySelector('#tbody-usuarios tr[data-user-id="' + res.user_id + '"]');

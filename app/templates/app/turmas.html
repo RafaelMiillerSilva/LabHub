@@ -1,22 +1,222 @@
 {% extends "app/layout.html" %}
 {% block content %}
-<h2>👥 Turmas</h2>
-<p class="lead">Cadastre as turmas da escola. Clique em <strong>Gerenciar alunos</strong> para adicionar os alunos de cada turma.</p>
+
+<style>
+    /* Cabeçalho Hero */
+    .turmas-hero {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 26px;
+    }
+
+    .turmas-hero-icone {
+        width: 58px;
+        height: 58px;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        flex-shrink: 0;
+        box-shadow: 0 6px 16px rgba(26, 74, 138, .25);
+    }
+
+    .turmas-hero-texto {
+        flex: 1;
+        min-width: 180px;
+    }
+
+        .turmas-hero-texto h2 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+            color: #1A2333;
+            letter-spacing: -0.5px;
+        }
+
+        .turmas-hero-texto p {
+            margin: 4px 0 0;
+            color: #4B5563;
+            font-size: 14px;
+        }
+
+    .turmas-hero-stat {
+        text-align: center;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, .06);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, .05);
+        border-radius: 14px;
+        padding: 10px 22px;
+        flex-shrink: 0;
+    }
+
+        .turmas-hero-stat .num {
+            display: block;
+            font-size: 26px;
+            font-weight: 800;
+            color: #1A4A8A;
+            line-height: 1;
+        }
+
+        .turmas-hero-stat .lbl {
+            font-size: 12px;
+            color: #6B7280;
+        }
+
+    @media (max-width: 600px) {
+        .turmas-hero {
+            flex-wrap: wrap;
+        }
+    }
+
+    /* Cards e Formulários Modernos */
+    .lh-card {
+        background: #ffffff;
+        border: 1px solid #E5E7EB !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    .lh-card-cadastro {
+        border-top: 4px solid #1e3c72 !important;
+    }
+
+    .lh-card-edicao {
+        border-top: 4px solid #D97706 !important;
+    }
+
+    .lh-card-header {
+        padding: 20px 20px 0 20px;
+        background: transparent;
+    }
+
+    .lh-card-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1A2333;
+        margin: 0;
+        letter-spacing: -0.3px;
+    }
+
+    .lh-card-body {
+        padding: 20px;
+    }
+
+        .lh-card-body .form-group {
+            margin-bottom: 18px;
+        }
+
+            .lh-card-body .form-group label {
+                display: block;
+                font-size: 13px;
+                font-weight: 600;
+                color: #4B5563;
+                margin-bottom: 6px;
+            }
+
+        .lh-card-body .form-control {
+            border-radius: 10px !important;
+            border: 1px solid #D1D5DB !important;
+            padding: 10px 14px !important;
+            height: auto !important;
+            font-size: 14px !important;
+            color: #1F2937 !important;
+            box-shadow: none !important;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+        }
+
+            .lh-card-body .form-control:focus {
+                border-color: #1A4A8A !important;
+                box-shadow: 0 0 0 3px rgba(26, 74, 138, 0.15) !important;
+            }
+
+    /* Botões Modernos */
+    .btn-lh-submit {
+        border: none !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        padding: 12px !important;
+        border-radius: 10px !important;
+        color: #fff !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+    }
+
+    .btn-lh-blue {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+        box-shadow: 0 4px 12px rgba(26, 74, 138, 0.2) !important;
+    }
+
+        .btn-lh-blue:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(26, 74, 138, 0.3) !important;
+        }
+
+    .btn-lh-amber {
+        background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%) !important;
+        box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2) !important;
+    }
+
+        .btn-lh-amber:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(217, 119, 6, 0.3) !important;
+        }
+
+    .btn-lh-cancelar {
+        background: #F3F4F6 !important;
+        color: #4B5563 !important;
+        border: 1px solid #E5E7EB !important;
+        margin-top: 8px;
+    }
+
+        .btn-lh-cancelar:hover {
+            background: #E5E7EB !important;
+            color: #1F2937 !important;
+        }
+
+    .btn-outline-primary {
+        background: #EBF2FF !important;
+        color: #1A4A8A !important;
+        border: 1px solid #BFD4F9 !important;
+        font-weight: 600;
+        border-radius: 6px;
+        transition: all 0.15s;
+    }
+
+        .btn-outline-primary:hover {
+            background: #1A4A8A !important;
+            color: #fff !important;
+        }
+</style>
+
+<div class="turmas-hero">
+    <div class="turmas-hero-icone">👥</div>
+    <div class="turmas-hero-texto">
+        <h2>Turmas</h2>
+        <p>Cadastre as turmas da escola. Clique em <strong>Gerenciar alunos</strong> para adicionar os alunos de cada turma.</p>
+    </div>
+    <div class="turmas-hero-stat">
+        <span class="num" id="cont-turmas">{{ turmas|length }}</span>
+        <span class="lbl">cadastrada{{ turmas|length|pluralize:"s" }}</span>
+    </div>
+</div>
 
 <div class="row">
 
-    <!-- Formulário de cadastro / edição -->
     <div class="col-md-4">
-        <div class="panel panel-{% if editando %}warning{% else %}primary{% endif %}">
-            <div class="panel-heading">
-                <h3 class="panel-title">
+        <div class="lh-card {% if editando %}lh-card-edicao{% else %}lh-card-cadastro{% endif %}">
+            <div class="lh-card-header">
+                <h3 class="lh-card-title">
                     {% if editando %}✏️ Editar Turma{% else %}➕ Nova Turma{% endif %}
                 </h3>
             </div>
-            <div class="panel-body">
+            <div class="lh-card-body">
 
                 {% if form.errors %}
-                <div class="alert alert-danger" style="padding: 8px 12px; font-size: 13px;">
+                <div class="alert alert-danger" style="padding: 8px 12px; font-size: 13px; border-radius: 8px; border: none;">
                     <ul style="margin: 0; padding-left: 15px;">
                         {% for field in form %}
                         {% for error in field.errors %}
@@ -43,48 +243,45 @@
                         {{ form.turno }}
                     </div>
 
-                    <button type="submit" class="btn btn-success btn-block">
+                    <button type="submit" class="btn btn-lh-submit {% if editando %}btn-lh-amber{% else %}btn-lh-blue{% endif %} btn-block">
                         {% if editando %}💾 Salvar Alterações{% else %}✅ Cadastrar Turma{% endif %}
                     </button>
                     {% if editando %}
-                    <a href="{% url 'turmas' %}" class="btn btn-default btn-block">Cancelar edição</a>
+                    <a href="{% url 'turmas' %}" class="btn btn-lh-cancelar btn-block btn-lh-submit">Cancelar edição</a>
                     {% endif %}
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Lista de turmas -->
     <div class="col-md-8">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Turmas Cadastradas (<span id="cont-turmas">{{ turmas|length }}</span>)</h3>
+        <div class="lh-card">
+            <div class="lh-card-header" style="padding-bottom: 15px; border-bottom: 1px solid #F3F4F6;">
+                <h3 class="lh-card-title" style="color: #4B5563;">Turmas Cadastradas</h3>
             </div>
-            <div class="panel-body">
+            <div class="lh-card-body" style="padding: 0;">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover" style="margin-bottom: 0;">
                         <thead>
                             <tr>
-                                <th>Turma</th>
-                                <th>Turno</th>
-                                <th class="text-center">Alunos</th>
-                                <th class="text-center">Ações</th>
+                                <th style="padding-left: 20px; color: #6B7280; font-weight: 600;">Nome</th>
+                                <th style="color: #6B7280; font-weight: 600;">Turno</th>
+                                <th class="text-center" style="color: #6B7280; font-weight: 600;">Alunos</th>
+                                <th class="text-center" style="padding-right: 20px; color: #6B7280; font-weight: 600;">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for t in turmas %}
                             <tr>
-                                <td><strong>{{ t.nome }}</strong></td>
-                                <td>{{ t.get_turno_display }}</td>
-                                <td class="text-center">
-                                    <span class="badge">{{ t.total_alunos }}</span>
-                                </td>
-                                <td class="text-center">
-                                    <a href="{% url 'turma_detalhe' t.id %}" class="btn btn-xs btn-primary">👥 Gerenciar alunos</a>
-                                    <a href="{% url 'turmas' %}?editar={{ t.id }}" class="btn btn-xs btn-info">✏️</a>
+                                <td style="padding-left: 20px; vertical-align: middle;"><strong>{{ t.nome }}</strong></td>
+                                <td style="vertical-align: middle; color: #4B5563;">{{ t.get_turno_display }}</td>
+                                <td class="text-center" style="vertical-align: middle; color: #4B5563;">{{ t.total_alunos }}</td>
+                                <td class="text-center" style="padding-right: 20px; vertical-align: middle;">
+                                    <a href="{% url 'turma_detalhe' t.id %}" class="btn btn-xs btn-outline-primary">👥 Gerenciar alunos</a>
+                                    <a href="{% url 'turmas' %}?editar={{ t.id }}" class="btn btn-xs btn-info" style="border-radius: 6px;">✏️</a>
                                     <form action="{% url 'turma_excluir' t.id %}" method="post" style="display:inline;" data-ajax="true">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-xs btn-danger"
+                                        <button type="submit" class="btn btn-xs btn-danger" style="border-radius: 6px;"
                                                 data-confirm="Remover a turma {{ t.nome }} e TODOS os seus alunos?">
                                             🗑️
                                         </button>
@@ -93,7 +290,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted" style="padding: 30px;">
+                                <td colspan="4" class="text-center text-muted" style="padding: 40px;">
                                     <em>Nenhuma turma cadastrada ainda. Cadastre a primeira ao lado.</em>
                                 </td>
                             </tr>

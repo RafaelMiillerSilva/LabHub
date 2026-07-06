@@ -1,27 +1,193 @@
 {% extends "app/layout.html" %}
 {% block content %}
 
-<div style="margin-bottom: 18px;">
-    <a href="{% url 'turmas' %}" style="font-size: 14px;">&larr; Voltar para Turmas</a>
-    <h2 style="margin-top:6px;">
-        👥 {{ turma.nome }}
-        <small class="text-muted">{{ turma.get_turno_display }}</small>
-    </h2>
-    <p class="lead" style="margin-bottom:0;"><span id="cont-alunos">{{ alunos|length }}</span> aluno(s) cadastrado(s) nesta turma.</p>
+<style>
+    /* Link de Voltar */
+    .det-head {
+        margin-bottom: 16px;
+    }
+
+        .det-head .voltar {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1A4A8A;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
+        }
+
+            .det-head .voltar:hover {
+                color: #153d74;
+            }
+
+    /* Cabeçalho Hero */
+    .turmas-hero {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 26px;
+    }
+
+    .turmas-hero-icone {
+        width: 58px;
+        height: 58px;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        flex-shrink: 0;
+        box-shadow: 0 6px 16px rgba(26, 74, 138, .25);
+        color: #fff; /* Garantindo contraste caso use ícone diferente */
+    }
+
+    .turmas-hero-texto {
+        flex: 1;
+        min-width: 180px;
+    }
+
+        .turmas-hero-texto h2 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+            color: #1A2333;
+            letter-spacing: -0.5px;
+        }
+
+        .turmas-hero-texto p {
+            margin: 4px 0 0;
+            color: #4B5563;
+            font-size: 14px;
+        }
+
+    .turmas-hero-stat {
+        text-align: center;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, .06);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, .05);
+        border-radius: 14px;
+        padding: 10px 22px;
+        flex-shrink: 0;
+    }
+
+        .turmas-hero-stat .num {
+            display: block;
+            font-size: 26px;
+            font-weight: 800;
+            color: #1A4A8A;
+            line-height: 1;
+        }
+
+        .turmas-hero-stat .lbl {
+            font-size: 12px;
+            color: #6B7280;
+        }
+
+    /* Cards e Formulários Modernos */
+    .lh-card {
+        background: #ffffff;
+        border: 1px solid #E5E7EB !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    .lh-card-cadastro {
+        border-top: 4px solid #1e3c72 !important;
+    }
+
+    .lh-card-header {
+        padding: 20px 20px 0 20px;
+        background: transparent;
+    }
+
+    .lh-card-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1A2333;
+        margin: 0;
+    }
+
+    .lh-card-body {
+        padding: 20px;
+    }
+
+        .lh-card-body .form-group {
+            margin-bottom: 18px;
+        }
+
+            .lh-card-body .form-group label {
+                display: block;
+                font-size: 13px;
+                font-weight: 600;
+                color: #4B5563;
+                margin-bottom: 6px;
+            }
+
+        .lh-card-body .form-control {
+            border-radius: 10px !important;
+            border: 1px solid #D1D5DB !important;
+            padding: 10px 14px !important;
+            height: auto !important;
+            font-size: 14px !important;
+            box-shadow: none !important;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+        }
+
+            .lh-card-body .form-control:focus {
+                border-color: #1A4A8A !important;
+                box-shadow: 0 0 0 3px rgba(26, 74, 138, 0.15) !important;
+            }
+
+    .btn-lh-submit {
+        border: none !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        padding: 12px !important;
+        border-radius: 10px !important;
+        color: #fff !important;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+        box-shadow: 0 4px 12px rgba(26, 74, 138, 0.2) !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+    }
+
+        .btn-lh-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(26, 74, 138, 0.3) !important;
+        }
+</style>
+
+<div class="det-head">
+    <a href="{% url 'turmas' %}" class="voltar">← Voltar para Turmas</a>
+</div>
+
+<div class="turmas-hero">
+    <div class="turmas-hero-icone">🎓</div>
+    <div class="turmas-hero-texto">
+        <h2>{{ turma.nome }}</h2>
+        <p>Turno: <strong>{{ turma.get_turno_display }}</strong></p>
+    </div>
+    <div class="turmas-hero-stat">
+        <span class="num" id="cont-alunos">{{ alunos|length }}</span>
+        <span class="lbl">aluno{{ alunos|length|pluralize:"s" }}</span>
+    </div>
 </div>
 
 <div class="row">
 
-    <!-- Adicionar aluno manualmente -->
     <div class="col-md-4">
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <h3 class="panel-title">➕ Adicionar Aluno</h3>
+        <div class="lh-card lh-card-cadastro">
+            <div class="lh-card-header">
+                <h3 class="lh-card-title">➕ Adicionar Aluno</h3>
             </div>
-            <div class="panel-body">
+            <div class="lh-card-body">
 
                 {% if form.errors %}
-                <div class="alert alert-danger" style="padding: 8px 12px; font-size: 13px;">
+                <div class="alert alert-danger" style="padding: 8px 12px; font-size: 13px; border-radius: 8px; border: none;">
                     <ul style="margin: 0; padding-left: 15px;">
                         {% for field in form %}
                         {% for error in field.errors %}
@@ -39,57 +205,48 @@
                         {{ form.nome }}
                     </div>
                     <div class="form-group">
-                        <label>RA (registro)</label>
+                        <label>RA (Registro Acadêmico)</label>
                         {{ form.ra }}
                     </div>
-                    <button type="submit" class="btn btn-success btn-block">✅ Adicionar</button>
+                    <button type="submit" class="btn btn-lh-submit btn-block">✅ Adicionar Aluno</button>
                 </form>
 
-                <hr>
-                <p style="font-weight: bold; margin-bottom: 8px;">📄 Importar planilha</p>
-                <form action="{% url 'importar_alunos' turma.id %}" method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <input type="file" name="arquivo" accept=".xlsx,.csv" class="form-control" required>
-                        <span class="help-block" style="font-size: 12px;">
-                            Aceita <strong>.xlsx</strong> ou <strong>.csv</strong> com as colunas
-                            <code>nome</code> e <code>ra</code>.
-                        </span>
-                    </div>
-                    <button type="submit" class="btn btn-info btn-block">⬆️ Importar alunos</button>
-                </form>
-                <a href="{% url 'modelo_planilha_alunos' %}" style="font-size: 13px;">⬇️ Baixar planilha modelo</a>
+                <hr style="margin: 20px 0; border-top: 1px solid #E5E7EB;">
+
+                <p class="text-muted" style="font-size: 13px; font-weight: 500;">Ou adicione vários alunos de uma vez:</p>
+                <a href="{% url 'importar_alunos' turma.id %}" class="btn btn-block" style="background: #F3F4F6; border: 1px solid #D1D5DB; color: #4B5563; font-weight: 600; border-radius: 10px; padding: 10px;">
+                    📂 Importar via CSV
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Lista de alunos -->
     <div class="col-md-8">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Alunos da Turma</h3>
+        <div class="lh-card">
+            <div class="lh-card-header" style="padding-bottom: 15px; border-bottom: 1px solid #F3F4F6;">
+                <h3 class="lh-card-title" style="color: #4B5563;">Alunos Matriculados</h3>
             </div>
-            <div class="panel-body">
+            <div class="lh-card-body" style="padding: 0;">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover" style="margin-bottom: 0;">
                         <thead>
                             <tr>
-                                <th style="width: 50px;">#</th>
-                                <th>Nome</th>
-                                <th>RA</th>
-                                <th class="text-center">Ações</th>
+                                <th style="padding-left: 20px; width: 40px; color: #6B7280; font-weight: 600;">#</th>
+                                <th style="color: #6B7280; font-weight: 600;">Nome do Aluno</th>
+                                <th style="color: #6B7280; font-weight: 600;">RA</th>
+                                <th class="text-center" style="padding-right: 20px; color: #6B7280; font-weight: 600;">Ações</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="lista-alunos">
                             {% for aluno in alunos %}
                             <tr>
-                                <td class="text-muted">{{ forloop.counter }}</td>
-                                <td><strong>{{ aluno.nome }}</strong></td>
-                                <td>{{ aluno.ra }}</td>
-                                <td class="text-center">
+                                <td class="text-muted" style="padding-left: 20px; vertical-align: middle;">{{ forloop.counter }}</td>
+                                <td style="vertical-align: middle;"><strong>{{ aluno.nome }}</strong></td>
+                                <td style="vertical-align: middle; color: #4B5563;">{{ aluno.ra }}</td>
+                                <td class="text-center" style="padding-right: 20px; vertical-align: middle;">
                                     <form action="{% url 'aluno_excluir' aluno.id %}" method="post" style="display:inline;" data-ajax="true">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-xs btn-danger"
+                                        <button type="submit" class="btn btn-xs btn-danger" style="border-radius: 6px;"
                                                 data-confirm="Remover {{ aluno.nome }}?">
                                             🗑️ Excluir
                                         </button>
@@ -98,7 +255,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted" style="padding: 30px;">
+                                <td colspan="4" class="text-center text-muted" style="padding: 40px;">
                                     <em>Nenhum aluno nesta turma ainda. Adicione o primeiro ao lado.</em>
                                 </td>
                             </tr>

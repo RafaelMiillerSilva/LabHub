@@ -1,22 +1,239 @@
 {% extends "app/layout.html" %}
 {% block content %}
-<h2>🏫 Salas de Aula</h2>
-<p class="lead">Cadastre e gerencie as salas e laboratórios disponíveis para agendamento.</p>
+
+<!-- ==================== ESTILOS MODERNOS DE SALAS DE AULA ==================== -->
+<style>
+    /* Cabeçalho estilizado da página (Padrão Hero de equipamentos.html) */
+    .salas-hero {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 26px;
+    }
+
+    .salas-hero-icone {
+        width: 58px;
+        height: 58px;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        flex-shrink: 0;
+        box-shadow: 0 6px 16px rgba(26, 74, 138, .25);
+    }
+
+    .salas-hero-texto {
+        flex: 1;
+        min-width: 180px;
+    }
+
+        .salas-hero-texto h2 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+            color: #1A2333;
+            letter-spacing: -0.5px;
+        }
+
+        .salas-hero-texto p {
+            margin: 4px 0 0;
+            color: #4B5563;
+            font-size: 14px;
+        }
+
+    .salas-hero-stat {
+        text-align: center;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, .06);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, .05);
+        border-radius: 14px;
+        padding: 10px 22px;
+        flex-shrink: 0;
+    }
+
+        .salas-hero-stat .num {
+            display: block;
+            font-size: 26px;
+            font-weight: 800;
+            color: #1A4A8A;
+            line-height: 1;
+        }
+
+        .salas-hero-stat .lbl {
+            font-size: 12px;
+            color: #6B7280;
+        }
+
+    @media (max-width: 600px) {
+        .salas-hero {
+            flex-wrap: wrap;
+        }
+    }
+
+    /* ================= CONTEINERES MODERNOS (CARDS) ================= */
+    .lh-card {
+        background: #ffffff;
+        border: 1px solid #E5E7EB !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    /* Linha superior de contexto baseada no modo (Cadastro vs Edição) */
+    .lh-card-cadastro {
+        border-top: 4px solid #1e3c72 !important;
+    }
+
+    .lh-card-edicao {
+        border-top: 4px solid #D97706 !important;
+    }
+
+    .lh-card-header {
+        padding: 20px 20px 0 20px;
+        background: transparent;
+    }
+
+    .lh-card-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1A2333;
+        margin: 0;
+        letter-spacing: -0.3px;
+    }
+
+    .lh-card-body {
+        padding: 20px;
+    }
+
+        /* Customização dos elementos de formulário internos */
+        .lh-card-body .form-group {
+            margin-bottom: 18px;
+        }
+
+            .lh-card-body .form-group label {
+                display: block;
+                font-size: 13px;
+                font-weight: 600;
+                color: #4B5563;
+                margin-bottom: 6px;
+                letter-spacing: 0.01em;
+            }
+
+        .lh-card-body .form-control {
+            border-radius: 10px !important;
+            border: 1px solid #D1D5DB !important;
+            padding: 10px 14px !important;
+            height: auto !important;
+            font-size: 14px !important;
+            color: #1F2937 !important;
+            box-shadow: none !important;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+        }
+
+            .lh-card-body .form-control:focus {
+                border-color: #1A4A8A !important;
+                box-shadow: 0 0 0 3px rgba(26, 74, 138, 0.15) !important;
+            }
+
+        /* Alinhamento inteligente de Checkbox moderno */
+        .lh-card-body .checkbox {
+            margin-top: 5px;
+            margin-bottom: 20px;
+            padding-left: 0;
+        }
+
+            .lh-card-body .checkbox label {
+                font-size: 14px;
+                font-weight: 500;
+                color: #374151;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+            }
+
+            .lh-card-body .checkbox input[type="checkbox"] {
+                position: relative;
+                margin-left: 0;
+                margin-top: 0;
+                transform: scale(1.2);
+                cursor: pointer;
+            }
+
+    /* Botões Modernizados */
+    .btn-lh-submit {
+        border: none !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        padding: 12px !important;
+        border-radius: 10px !important;
+        color: #fff !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+    }
+
+    .btn-lh-blue {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+        box-shadow: 0 4px 12px rgba(26, 74, 138, 0.2) !important;
+    }
+
+        .btn-lh-blue:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(26, 74, 138, 0.3) !important;
+        }
+
+    .btn-lh-amber {
+        background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%) !important;
+        box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2) !important;
+    }
+
+        .btn-lh-amber:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(217, 119, 6, 0.3) !important;
+        }
+
+    .btn-lh-cancelar {
+        background: #F3F4F6 !important;
+        color: #4B5563 !important;
+        border: 1px solid #E5E7EB !important;
+        margin-top: 8px;
+    }
+
+        .btn-lh-cancelar:hover {
+            background: #E5E7EB !important;
+            color: #1F2937 !important;
+        }
+</style>
+
+<!-- Novo Cabeçalho Alinhado ao Padrão -->
+<div class="salas-hero">
+    <div class="salas-hero-icone">🏫</div>
+    <div class="salas-hero-texto">
+        <h2>Salas de Aula</h2>
+        <p>Cadastre e gerencie as salas e laboratórios disponíveis para agendamento.</p>
+    </div>
+    <div class="salas-hero-stat">
+        <span class="num" id="cont-salas">{{ salas|length }}</span>
+        <span class="lbl">cadastrada{{ salas|length|pluralize:"s" }}</span>
+    </div>
+</div>
 
 <div class="row">
 
-    <!-- Formulário de cadastro / edição -->
+    <!-- Formulário de cadastro / edição Moderno -->
     <div class="col-md-4">
-        <div class="panel panel-{% if editando %}warning{% else %}primary{% endif %}">
-            <div class="panel-heading">
-                <h3 class="panel-title">
+        <div class="lh-card {% if editando %}lh-card-edicao{% else %}lh-card-cadastro{% endif %}">
+            <div class="lh-card-header">
+                <h3 class="lh-card-title">
                     {% if editando %}✏️ Editar Sala{% else %}➕ Nova Sala{% endif %}
                 </h3>
             </div>
-            <div class="panel-body">
+            <div class="lh-card-body">
 
                 {% if form.errors %}
-                <div class="alert alert-danger" style="padding: 8px 12px; font-size: 13px;">
+                <div class="alert alert-danger" style="padding: 8px 12px; font-size: 13px; border-radius: 8px; border: none;">
                     <ul style="margin: 0; padding-left: 15px;">
                         {% for field in form %}
                         {% for error in field.errors %}
@@ -44,56 +261,59 @@
                         {{ form.capacidade }}
                     </div>
                     <div class="checkbox">
-                        <label>{{ form.ativo }} Ativa (disponível para agendamento)</label>
+                        <label>
+                            {{ form.ativo }}
+                            <span>Ativa (disponível para agendamento)</span>
+                        </label>
                     </div>
 
-                    <button type="submit" class="btn btn-success btn-block">
+                    <button type="submit" class="btn btn-lh-submit {% if editando %}btn-lh-amber{% else %}btn-lh-blue{% endif %} btn-block">
                         {% if editando %}💾 Salvar Alterações{% else %}✅ Cadastrar Sala{% endif %}
                     </button>
                     {% if editando %}
-                    <a href="{% url 'salas' %}" class="btn btn-default btn-block">Cancelar edição</a>
+                    <a href="{% url 'salas' %}" class="btn btn-lh-cancelar btn-block btn-lh-submit">Cancelar edição</a>
                     {% endif %}
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Lista de salas cadastradas -->
+    <!-- Lista de salas cadastradas Moderna -->
     <div class="col-md-8">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Salas Cadastradas (<span id="cont-salas">{{ salas|length }}</span>)</h3>
+        <div class="lh-card">
+            <div class="lh-card-header" style="padding-bottom: 15px; border-bottom: 1px solid #F3F4F6;">
+                <h3 class="lh-card-title" style="color: #4B5563;">Salas Cadastradas</h3>
             </div>
-            <div class="panel-body">
+            <div class="lh-card-body" style="padding: 0;">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover" style="margin-bottom: 0;">
                         <thead>
                             <tr>
-                                <th>Nome</th>
-                                <th>Localização</th>
-                                <th class="text-center">Capacidade</th>
-                                <th class="text-center">Status</th>
-                                <th class="text-center">Ações</th>
+                                <th style="padding-left: 20px; color: #6B7280; font-weight: 600;">Nome</th>
+                                <th style="color: #6B7280; font-weight: 600;">Localização</th>
+                                <th class="text-center" style="color: #6B7280; font-weight: 600;">Capacidade</th>
+                                <th class="text-center" style="color: #6B7280; font-weight: 600;">Status</th>
+                                <th class="text-center" style="padding-right: 20px; color: #6B7280; font-weight: 600;">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for s in salas %}
                             <tr>
-                                <td><strong>{{ s.nome }}</strong></td>
-                                <td>{{ s.localizacao|default:"—" }}</td>
-                                <td class="text-center">{{ s.capacidade }}</td>
-                                <td class="text-center">
+                                <td style="padding-left: 20px; vertical-align: middle;"><strong>{{ s.nome }}</strong></td>
+                                <td style="vertical-align: middle; color: #4B5563;">{{ s.localizacao|default:"—" }}</td>
+                                <td class="text-center" style="vertical-align: middle; color: #4B5563;">{{ s.capacidade }}</td>
+                                <td class="text-center" style="vertical-align: middle;">
                                     {% if s.ativo %}
-                                    <span class="label label-success">Ativa</span>
+                                    <span class="label label-success" style="border-radius: 5px; padding: 3px 8px; font-weight: 600;">Ativa</span>
                                     {% else %}
-                                    <span class="label label-default">Inativa</span>
+                                    <span class="label label-default" style="border-radius: 5px; padding: 3px 8px; font-weight: 600;">Inativa</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-center">
-                                    <a href="{% url 'salas' %}?editar={{ s.id }}" class="btn btn-xs btn-info">✏️ Editar</a>
+                                <td class="text-center" style="padding-right: 20px; vertical-align: middle;">
+                                    <a href="{% url 'salas' %}?editar={{ s.id }}" class="btn btn-xs btn-info" style="border-radius: 6px;">✏️ Editar</a>
                                     <form action="{% url 'sala_excluir' s.id %}" method="post" style="display:inline;" data-ajax="true">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-xs btn-danger"
+                                        <button type="submit" class="btn btn-xs btn-danger" style="border-radius: 6px;"
                                                 data-confirm="Remover a sala {{ s.nome }}?">
                                             🗑️ Excluir
                                         </button>
@@ -102,7 +322,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center text-muted" style="padding: 30px;">
+                                <td colspan="5" class="text-center text-muted" style="padding: 40px;">
                                     <em>Nenhuma sala cadastrada ainda. Cadastre a primeira ao lado.</em>
                                 </td>
                             </tr>
