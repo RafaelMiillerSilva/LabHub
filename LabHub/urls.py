@@ -2,10 +2,11 @@
 Definition of urls for LabHub.
 """
 
+from datetime import datetime
 from django.urls import path
 from django.contrib import admin
-from django.contrib.auth.views import LogoutView
-from app import views
+from django.contrib.auth.views import LoginView, LogoutView
+from app import forms, views
 
 
 urlpatterns = [
@@ -22,6 +23,7 @@ urlpatterns = [
     path('painel/negar/<int:perfil_id>/',        views.negar_usuario,       name='negar_usuario'),
     path('painel/usuario/<int:user_id>/ativar/', views.usuario_toggle_ativo, name='usuario_toggle_ativo'),
     path('painel/usuario/<int:user_id>/tipo/',   views.usuario_toggle_tipo,  name='usuario_toggle_tipo'),
+    path('painel/senha/<int:pedido_id>/',        views.redefinir_senha_admin, name='redefinir_senha_admin'),
 
     # Turmas e alunos
     path('turmas/',                          views.turmas,                 name='turmas'),
@@ -50,6 +52,7 @@ urlpatterns = [
     path('agendamentos/<int:agendamento_id>/cancelar/',      views.cancelar_reserva,    name='cancelar_reserva'),
     path('agendamentos/<int:agendamento_id>/relacao/',       views.relacao_agendamento, name='relacao_agendamento'),
 
-    # Autenticação
-    path('logout/', LogoutView.as_view(next_page='home'), name='logout'),
+    # Autenticação e Senha
+    path('esqueci-senha/', views.esqueci_senha, name='esqueci_senha'),
+    path('logout/',        LogoutView.as_view(next_page='home'), name='logout'),
 ]

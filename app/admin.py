@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import (
     Perfil, Sala, Equipamento, Turma, Aluno,
     Agendamento, ItemDispositivo, RelacaoAlunoEquipamento,
+    PedidoRedefinicaoSenha,
 )
 
 @admin.register(Perfil)
@@ -63,3 +64,9 @@ class AgendamentoAdmin(admin.ModelAdmin):
 class RelacaoAlunoEquipamentoAdmin(admin.ModelAdmin):
     list_display = ('agendamento', 'aluno', 'equipamento')
     search_fields = ('aluno__nome', 'equipamento')
+
+@admin.register(PedidoRedefinicaoSenha)
+class PedidoRedefinicaoSenhaAdmin(admin.ModelAdmin):
+    list_display = ('user', 'criado_em', 'atendido', 'atendido_em', 'atendido_por')
+    list_filter = ('atendido',)
+    search_fields = ('user__username', 'user__email')

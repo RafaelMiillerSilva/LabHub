@@ -181,6 +181,12 @@
             <span class="badge badge-modern" id="badge-usuarios" {% if not usuarios %}style="display:none;" {% endif %}>{{ usuarios|length }}</span>
         </a>
     </li>
+    <li role="presentation" class="{% if aba == 'senhas' %}active{% endif %}">
+        <a href="#senhas" role="tab" data-toggle="tab">
+            🔑 Redefinições
+            <span class="badge badge-modern badge-danger-modern" id="badge-senhas" style="{% if not pedidos_senha %}display:none;{% endif %}">{{ pedidos_senha|length }}</span>
+        </a>
+    </li>
     <li role="presentation" class="{% if aba == 'historico' %}active{% endif %}">
         <a href="#historico" role="tab" data-toggle="tab">
             📋 Histórico
@@ -283,6 +289,59 @@
                             <tr id="linha-vazia-usuarios">
                                 <td colspan="5" class="text-center text-muted" style="padding: 40px;">
                                     <em>{% if q %}Nenhum usuário encontrado para "{{ q }}".{% else %}Nenhum usuário aprovado ainda.{% endif %}</em>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABA: Redefinições de senha -->
+    <div role="tabpanel" class="tab-pane {% if aba == 'senhas' %}active{% endif %}" id="senhas">
+        <div class="lh-card">
+            <div class="lh-card-header">
+                <h3 class="lh-card-title">Pedidos de Redefinição de Senha</h3>
+            </div>
+            <div class="lh-card-body" style="padding: 0;">
+                <p class="text-muted" style="padding: 16px 20px 0; margin: 0; font-size: 13px;">
+                    Defina uma nova senha para quem esqueceu e informe-a ao usuário (pessoalmente ou pela coordenação).
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" style="margin-bottom: 0;">
+                        <thead>
+                            <tr>
+                                <th style="padding-left: 20px; color:#6B7280; font-weight:600;">Usuário</th>
+                                <th style="color:#6B7280; font-weight:600;">E-mail</th>
+                                <th style="color:#6B7280; font-weight:600;">Pedido em</th>
+                                <th style="padding-right: 20px; color:#6B7280; font-weight:600;">Definir nova senha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in pedidos_senha %}
+                            <tr>
+                                <td style="padding-left: 20px; vertical-align: middle;"><strong>{{ p.user.username }}</strong></td>
+                                <td style="vertical-align: middle; color:#4B5563;">{{ p.user.email|default:"—" }}</td>
+                                <td style="vertical-align: middle; color:#4B5563;">{{ p.criado_em|date:"d/m/Y H:i" }}</td>
+                                <td style="padding-right: 20px; vertical-align: middle;">
+                                    <form action="{% url 'redefinir_senha_admin' p.id %}" method="post"
+                                          style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                                        {% csrf_token %}
+                                        <input type="text" name="nova_senha" class="form-control input-sm" required
+                                               minlength="6" placeholder="Nova senha (mín. 6)" style="width:180px;">
+                                        <button type="submit" class="btn btn-xs btn-success"
+                                                data-confirm="Definir uma nova senha para {{ p.user.username }}?">
+                                            🔑 Redefinir
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted" style="padding: 40px;">
+                                    <em>Nenhum pedido de redefinição pendente.</em>
                                 </td>
                             </tr>
                             {% endfor %}

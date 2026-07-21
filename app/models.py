@@ -26,6 +26,7 @@ class HistoricoAcao(models.Model):
         ('DESATIVADO', 'Conta desativada'),
         ('PROMOVIDO', 'Promovido a admin'),
         ('REBAIXADO', 'Rebaixado a professor'),
+        ('REDEFINIDO', 'Senha redefinida'),
     )
 
     admin = models.ForeignKey(
@@ -243,6 +244,31 @@ class RelacaoAlunoEquipamento(models.Model):
 
     def __str__(self):
         return f"{self.aluno.nome} -> {self.equipamento or '—'}"
+
+
+# ---------------------------------------------------------------------------
+# Pedido de redefinição de senha (fluxo "esqueci minha senha" mediado por admin)
+# ---------------------------------------------------------------------------
+class PedidoRedefinicaoSenha(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='pedidos_senha'
+    )
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atendido = models.BooleanField(default=False)
+    atendido_em = models.DateTimeField(null=True, blank=True)
+    atendido_por = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='redefinicoes_feitas'
+    )
+
+    class Meta:
+        ordering = ['-criado_em']
+        verbose_name = 'Pedido de redefinição de senha'
+        verbose_name_plural = 'Pedidos de redefinição de senha'
+
+    def __str__(self):
+        estado = 'atendido' if self.atendido else 'pendente'
+        return f"Redefinição de {self.user.username} ({estado})"
 
 
 # Sinais para criar o perfil automaticamente quando um usuário for criado

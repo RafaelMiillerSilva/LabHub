@@ -66,6 +66,7 @@
     <Content Include="app\templates\app\agendamentos.html" />
     <Content Include="app\templates\app\equipamentos.html" />
     <Content Include="app\templates\app\equipamento_form.html" />
+    <Content Include="app\templates\app\esqueci_senha.html" />
     <Content Include="app\templates\app\painel.html" />
     <Content Include="app\templates\app\layout.html" />
     <Content Include="app\templates\app\relacao_agendamento.html" />

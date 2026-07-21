@@ -12,13 +12,14 @@ from django.db.models import Sum, Count, Q
 from django.http import HttpResponse, Http404, JsonResponse
 from django.template.loader import render_to_string
 from django.utils.dateparse import parse_date
+from django.utils import timezone
 from .forms import (
     CadastroForm, BootstrapAuthenticationForm, SalaForm, EquipamentoForm,
     TurmaForm, AlunoForm,
 )
 from .models import (
     Perfil, HistoricoAcao, Sala, Equipamento, Turma, Aluno,
-    Agendamento, ItemDispositivo, RelacaoAlunoEquipamento,
+    Agendamento, ItemDispositivo, RelacaoAlunoEquipamento, PedidoRedefinicaoSenha,
 )
 
 
@@ -155,6 +156,10 @@ def painel(request):
 
     solicitacoes = Perfil.objects.filter(aprovado=False).select_related('user')
 
+    # Pedidos de redefinição de senha pendentes
+    pedidos_senha = (PedidoRedefinicaoSenha.objects.filter(atendido=False)
+                     .select_related('user', 'user__perfil'))
+
     # Usuários aprovados (com barra de busca por nome/e-mail)
     usuarios = (Perfil.objects.filter(aprovado=True)
                 .select_related('user')
@@ -183,6 +188,7 @@ def painel(request):
     return render(request, 'app/painel.html', {
         'title': 'Painel Administrativo',
         'solicitacoes': solicitacoes,
+        'pedidos_senha': pedidos_senha,
         'historico': historico,
         'usuarios': usuarios,
         'aba': aba,
@@ -192,9 +198,71 @@ def painel(request):
     })
 
 
+def esqueci_senha(request):
+    """Fluxo público de 'esqueci minha senha': registra um pedido que o
+    administrador atende definindo uma nova senha (ambiente sem e-mail)."""
+    if request.method == 'POST':
+        identificador = request.POST.get('identificador', '').strip()
+        if identificador:
+            user = User.objects.filter(
+                Q(email__iexact=identificador) | Q(username__iexact=identificador)
+            ).first()
+            if user:
+                # Não acumula vários pedidos pendentes do mesmo usuário
+                PedidoRedefinicaoSenha.objects.get_or_create(user=user, atendido=False)
+
+        # Mensagem genérica: não revela se a conta existe
+        messages.success(
+            request,
+            'Se a conta existir, o administrador foi avisado e vai definir uma nova '
+            'senha para você. Procure a coordenação para retirá-la.'
+        )
+        return redirect('home')
+
+    return render(request, 'app/esqueci_senha.html', {'title': 'Esqueci minha senha'})
+
+
+@login_required
+def redefinir_senha_admin(request, pedido_id):
+    """O administrador define uma nova senha para um pedido pendente."""
+    if not _is_admin_aprovado(request.user):
+        return redirect('home')
+
+    if request.method == 'POST':
+        pedido = get_object_or_404(PedidoRedefinicaoSenha, id=pedido_id, atendido=False)
+        nova = request.POST.get('nova_senha', '')
+
+        if len(nova) < 6:
+            messages.warning(request, 'A nova senha deve ter pelo menos 6 caracteres.')
+            return redirect('painel')
+
+        u = pedido.user
+        u.set_password(nova)
+        u.save()
+
+        pedido.atendido = True
+        pedido.atendido_em = timezone.now()
+        pedido.atendido_por = request.user
+        pedido.save()
+
+        HistoricoAcao.objects.create(
+            admin=request.user,
+            acao='REDEFINIDO',
+            username_solicitante=u.username,
+            email_solicitante=u.email,
+            tipo_solicitado=u.perfil.tipo if hasattr(u, 'perfil') else '',
+        )
+
+        messages.success(
+            request,
+            f'Senha de "{u.username}" redefinida. Informe a nova senha ao usuário.'
+        )
+
+    return redirect('painel')
+
+
 def _is_ajax(request):
     return request.headers.get('x-requested-with') == 'XMLHttpRequest'
-
 
 def _linha_usuario_html(request, perfil):
     """Renderiza a <tr> de um usuário (usada para atualizar a tabela via AJAX)."""
