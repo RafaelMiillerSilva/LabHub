@@ -78,16 +78,12 @@ WSGI_APPLICATION = 'LabHub.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
+# settings.py
+
 DATABASES = {
     'default': {
-        'ENGINE': 'mssql',
-        'NAME': 'labhubdb',  # Substitua pelo nome exato do banco de dados que você criou no SQL Server
-        'HOST': 'localhost\\SQLEXPRESS',  # Duas barras invertidas são necessárias para o Python não confundir com comando de escape
-        'PORT': '',
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',  # Se der erro de driver, tente mudar para 'ODBC Driver 18 for SQL Server'
-            'extra_params': 'Trusted_Connection=yes;Encrypt=no',  # Trusted_Connection=yes ativa a Autenticação do Windows
-        },
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
