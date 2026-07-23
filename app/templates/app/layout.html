@@ -1,599 +1,303 @@
-{% extends "app/layout.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - LabHub</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'app/content/bootstrap.min.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'app/content/site.css' %}" />
+    <script src="{% static 'app/scripts/modernizr-2.6.2.js' %}"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-<!-- ==================== ESTILOS MODERNOS DO DETALHE DO AGENDAMENTO (OTIMIZADOS) ==================== -->
-<style>
-    .lh-det-container {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    .det-head {
-        margin-bottom: 12px;
-    }
-
-        .det-head .voltar {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1A4A8A;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            transition: color 0.2s;
+        /* CSS para forçar o footer a ficar embaixo e aplicar o novo design */
+        html, body {
+            height: 100%;
+            margin: 0;
+            background-color: #D9D9D9;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
-            .det-head .voltar:hover {
-                color: #153d74;
+        /* Envelopa toda a página exceto o footer */
+        .wrapper {
+            min-height: 100%;
+            height: auto !important;
+            height: 100%;
+            margin-bottom: -60px;
+            padding-top: 45px; /* Espaço para a nova navbar flutuante moderna */
+        }
+
+        /* BARRA DE NAVEGAÇÃO MODERNA */
+        .navbar-custom {
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.4) !important;
+            border-radius: 12px;
+            margin: 15px 15px 0 15px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+            /* Alinhamento dos itens e textos */
+            .navbar-custom .navbar-brand {
+                color: #1A4A8A !important;
+                font-weight: 700;
+                font-size: 20px;
+                letter-spacing: -0.5px;
+                padding: 15px 20px;
             }
 
-    .agend-hero {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 24px;
-    }
+            .navbar-custom .navbar-nav > li > a {
+                color: #4B5563 !important;
+                font-weight: 500;
+                font-size: 14px;
+                padding: 15px 16px;
+                transition: color 0.2s ease, background-color 0.2s ease;
+                border-radius: 8px;
+                margin: 0 2px;
+            }
 
-    .agend-hero-icone {
-        width: 58px;
-        height: 58px;
-        border-radius: 15px;
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        flex-shrink: 0;
-        box-shadow: 0 6px 16px rgba(26, 74, 138, .25);
-    }
+                .navbar-custom .navbar-nav > li > a:hover,
+                .navbar-custom .navbar-nav > li > a:focus {
+                    color: #1A4A8A !important;
+                    background-color: rgba(26, 74, 138, 0.08) !important;
+                }
 
-    .agend-hero-texto {
-        flex: 1;
-        min-width: 180px;
-    }
+            /* Botão Sanduíche Responsivo customizado */
+            .navbar-custom .navbar-toggle {
+                border: none;
+                background-color: transparent;
+                margin-top: 10px;
+                margin-bottom: 10px;
+                padding: 10px;
+                border-radius: 8px;
+            }
 
-        .agend-hero-texto h2 {
-            margin: 0;
-            font-size: 26px;
-            font-weight: 700;
-            color: #1A2333;
-            letter-spacing: -0.5px;
+                .navbar-custom .navbar-toggle:hover {
+                    background-color: rgba(0, 0, 0, 0.03) !important;
+                }
+
+                .navbar-custom .navbar-toggle .icon-bar {
+                    background-color: #4B5563 !important;
+                    width: 22px;
+                    height: 2px;
+                    transition: all 0.2s;
+                }
+
+        /* Define uma altura fixa para o footer e o push */
+        .footer, .push {
+            height: 60px;
         }
 
-        .agend-hero-texto p {
-            margin: 4px 0 0;
+        /* RODAPÉ DA MESMA COR DO FUNDO */
+        footer {
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+            background-color: #D9D9D9; /* Mesma cor exata do fundo solicitada */
             color: #4B5563;
-            font-size: 14px;
+            font-size: 13px;
+            font-weight: 500;
         }
 
-    .agend-hero-stat {
-        text-align: center;
-        background: #fff;
-        border: 1px solid rgba(0, 0, 0, .06);
-        box-shadow: 0 4px 18px rgba(0, 0, 0, .05);
-        border-radius: 14px;
-        padding: 10px 22px;
-        flex-shrink: 0;
-    }
+        /* RESPONSIVIDADE E AJUSTES MOBILE */
+        @media (max-width: 767px) {
+            .navbar-custom {
+                margin: 10px 10px 0 10px;
+            }
 
-        .agend-hero-stat .num {
-            display: block;
-            font-size: 26px;
-            font-weight: 800;
-            color: #1A4A8A;
-            line-height: 1;
+            .navbar-collapse {
+                border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
+                box-shadow: none;
+                margin-top: 5px;
+                background-color: transparent;
+                padding-bottom: 10px;
+            }
+
+            .navbar-custom .navbar-nav > li > a {
+                margin: 4px 0;
+                padding: 10px 15px;
+            }
         }
+    </style>
+    {% block styles %}{% endblock %}
+</head>
 
-        .agend-hero-stat .lbl {
-            font-size: 12px;
-            color: #6B7280;
-            text-transform: capitalize;
-        }
-
-    @media (max-width: 600px) {
-        .agend-hero {
-            flex-wrap: wrap;
-        }
-    }
-
-    .nav-tabs-modern {
-        border-bottom: 2px solid #E5E9F0;
-        display: flex;
-        gap: 8px;
-    }
-
-        .nav-tabs-modern > li > a {
-            border: none !important;
-            background: transparent !important;
-            color: #6B7280 !important;
-            font-weight: 600;
-            font-size: 15px;
-            padding: 12px 20px;
-            border-radius: 0;
-            border-bottom: 2px solid transparent !important;
-            transition: color 0.2s ease, border-color 0.2s ease;
-            margin: 0;
-        }
-
-        .nav-tabs-modern > li.active > a,
-        .nav-tabs-modern > li.active > a:hover,
-        .nav-tabs-modern > li.active > a:focus {
-            color: #1A4A8A !important;
-            border-bottom: 2px solid #1A4A8A !important;
-        }
-
-        .nav-tabs-modern > li > a:hover {
-            color: #1A1A2E !important;
-            border-bottom: 2px solid #6B7280 !important;
-        }
-
-    .painel-aula {
-        background: #ffffff !important;
-        border: 1px solid rgba(0, 0, 0, 0.05) !important;
-        border-radius: 12px !important;
-        box-shadow: 0 2px 12px rgba(15, 38, 69, 0.04) !important;
-        margin-bottom: 12px !important;
-        overflow: hidden;
-    }
-
-        .painel-aula .panel-heading {
-            background: #ffffff !important;
-            padding: 0 !important;
-            border: none !important;
-        }
-
-        .painel-aula .panel-title a {
-            display: block;
-            padding: 18px 20px;
-            text-decoration: none !important;
-            color: #1A1A2E !important;
-            font-weight: 700;
-            font-size: 15px;
-            outline: none !important;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-    .resumo-livres {
-        font-size: 12px;
-        font-weight: 700;
-        padding: 4px 12px;
-        border-radius: 20px;
-    }
-
-    .livres-ok {
-        background: #E8F5E9;
-        color: #2E7D32;
-    }
-
-    .livres-zero {
-        background: #FFEBEE;
-        color: #C62828;
-    }
-
-    .painel-aula .panel-body {
-        border-top: 1px solid #F0F4F8 !important;
-        background: #F7F9FC;
-        padding: 16px 20px;
-    }
-
-    .aula-item, .dispo-row {
-        display: block;
-        border: 1px solid #E5E9F0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        margin-bottom: 10px;
-        font-weight: 500;
-        background: #ffffff;
-    }
-
-    .aula-verde {
-        border-left: 4px solid #4CAF50;
-        cursor: pointer;
-    }
-
-        .aula-verde:hover {
-            background: #F3FBF3;
-            border-color: #4CAF50;
-        }
-
-    .aula-vermelho {
-        border-left: 4px solid #E53935;
-        background: #FAFAFA;
-    }
-
-    .nome-sala {
-        font-size: 15px;
-        font-weight: 700;
-        color: #1A1A2E;
-    }
-
-    .info-sala {
-        font-size: 13px;
-        color: #6B7280;
-        font-weight: 400;
-        margin-top: 2px;
-        display: inline-block;
-    }
-
-    .badge-status {
-        float: right;
-        font-size: 11px;
-        font-weight: 700;
-        padding: 3px 10px;
-        border-radius: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-    }
-
-    .bg-verde {
-        background: #4CAF50;
-        color: #fff;
-    }
-
-    .bg-vermelho {
-        background: #E53935;
-        color: #fff;
-    }
-
-    .bg-laranja {
-        background: #EF6C00;
-        color: #fff;
-    }
-
-    .aula-check {
-        margin-right: 10px;
-        transform: scale(1.15);
-        vertical-align: middle;
-    }
-
-    .dispo-verde {
-        border-left: 4px solid #4CAF50;
-    }
-
-    .dispo-laranja {
-        border-left: 4px solid #FF9800;
-    }
-
-    .dispo-vermelho {
-        border-left: 4px solid #E53935;
-        background: #FAFAFA;
-    }
-
-    .dispo-controle {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-top: 12px;
-    }
-
-    .dispo-slider {
-        flex: 1;
-        height: 6px;
-        -webkit-appearance: none;
-        background: #E5E9F0;
-        border-radius: 4px;
-        outline: none;
-        will-change: transform; /* Otimização de GPU para evitar lag */
-    }
-
-        .dispo-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #1A4A8A;
-            cursor: pointer;
-        }
-
-    .dispo-valor {
-        min-width: 44px;
-        text-align: center;
-        font-weight: 700;
-        font-size: 15px;
-        color: #1A4A8A;
-        background: #EBF2FF;
-        border-radius: 6px;
-        padding: 4px 8px;
-    }
-
-    .grupo-tipo {
-        font-weight: 700;
-        color: #1A1A2E;
-        margin: 18px 0 10px;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-    }
-
-    .card-reserva {
-        border-left: 4px solid #1A4A8A;
-        background: #ffffff;
-        padding: 12px 16px;
-        margin-bottom: 10px;
-        border-radius: 8px;
-        border: 1px solid #E5E9F0;
-        border-left-width: 4px;
-    }
-
-    .panel-finalizar {
-        background: #ffffff !important;
-        border: 1px solid rgba(0, 0, 0, 0.05) !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 20px rgba(15, 38, 69, 0.06) !important;
-        margin-top: 24px;
-        overflow: hidden;
-    }
-
-        .panel-finalizar .panel-body {
-            padding: 24px;
-        }
-
-        .panel-finalizar label {
-            font-weight: 600;
-            color: #4B5563;
-            margin-bottom: 6px;
-            font-size: 14px;
-        }
-
-        .panel-finalizar .form-control {
-            border-radius: 8px;
-            border: 1px solid #D1D5DB;
-            padding: 10px 12px;
-            height: auto;
-            font-size: 14px;
-            box-shadow: none !important;
-        }
-
-    .btn-agendar {
-        background: #1A4A8A !important;
-        border: none !important;
-        color: #ffffff !important;
-        font-weight: 600 !important;
-        font-size: 16px !important;
-        padding: 12px 28px !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 12px rgba(26, 74, 138, 0.2) !important;
-    }
-
-        .btn-agendar:hover {
-            background: #153d74 !important;
-        }
-
-    .alert-modern {
-        border-radius: 8px;
-        border: none;
-        font-weight: 500;
-    }
-</style>
-
-<div class="lh-det-container">
-
-    <div class="det-head">
-        <a href="{% url 'agendamentos' %}?ano={{ ano }}&mes={{ mes }}" class="voltar">← Voltar ao calendário</a>
-    </div>
-
-    <div class="agend-hero">
-        <div class="agend-hero-icone">📅</div>
-        <div class="agend-hero-texto">
-            <h2>Agendamento — {{ data|date:"d/m/Y" }}</h2>
-            <p>{{ dia_semana }}, {{ dia }} de {{ mes_nome }} de {{ ano }}</p>
-        </div>
-        <div class="agend-hero-stat">
-            <span class="num">{{ dia }}</span>
-            <span class="lbl">{{ mes_nome|slice:":3" }}.</span>
-        </div>
-    </div>
-
-    <ul class="nav nav-tabs nav-tabs-modern" role="tablist" style="margin-bottom: 24px;">
-        <li role="presentation" class="active">
-            <a href="#tab-sala" role="tab" data-toggle="tab">🏫 Sala de Aula</a>
-        </li>
-        <li role="presentation">
-            <a href="#tab-movel" role="tab" data-toggle="tab">💻 Equipamentos Móveis</a>
-        </li>
-    </ul>
-
-    <div class="tab-content">
-
-        <!-- ===================== ABA 1: SALA DE AULA ===================== -->
-        <div role="tabpanel" class="tab-pane active" id="tab-sala">
-            {% if not tem_salas %}
-            <div class="alert alert-warning alert-modern">Nenhuma sala cadastrada. Cadastre em <a href="{% url 'salas' %}" class="alert-link">Salas</a>.</div>
-            {% elif not turmas %}
-            <div class="alert alert-warning alert-modern">Nenhuma turma cadastrada. Cadastre em <a href="{% url 'turmas' %}" class="alert-link">Turmas</a>.</div>
-            {% else %}
-
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="tipo" value="sala">
-
-                <div class="panel-group" id="acordeao-salas" style="margin-bottom: 0;">
-                    {% for aula in aulas %}
-                    <div class="panel panel-default painel-aula">
-                        <div class="panel-heading">
-                            <h4 class="panel-title">
-                                <a data-toggle="collapse" data-parent="#acordeao-salas" href="#aula{{ aula.numero }}">
-                                    {{ aula.numero }}ª Aula <small class="text-muted" style="font-weight: 400; margin-left: 4px;">({{ aula.horario }})</small>
-                                    <span class="resumo-livres {% if aula.livres %}livres-ok{% else %}livres-zero{% endif %}" style="float:right;">
-                                        {{ aula.livres }} de {{ aula.total }} livres
-                                    </span>
-                                </a>
-                            </h4>
-                        </div>
-                        <div id="aula{{ aula.numero }}" class="panel-collapse collapse">
-                            <div class="panel-body">
-                                {% for s in aula.salas %}
-                                {% if s.ocupado %}
-                                <div class="aula-item aula-vermelho">
-                                    <span class="badge-status bg-vermelho">Ocupada</span>
-                                    <span class="nome-sala">{{ s.sala.nome }}</span><br>
-                                    <span class="info-sala">{{ s.turma }} — {{ s.professor }}</span>
-                                    <div style="margin-top: 6px;">
-                                        <a href="{% url 'relacao_agendamento' s.ag_id %}" class="btn btn-xs btn-default" style="border-radius: 4px; font-weight: 500;">📋 Relação</a>
-                                    </div>
-                                </div>
-                                {% else %}
-                                <label class="aula-item aula-verde">
-                                    <span class="badge-status bg-verde">Livre</span>
-                                    <input type="checkbox" class="aula-check" name="reserva" value="{{ aula.numero }}:{{ s.sala.id }}">
-                                    <span class="nome-sala">{{ s.sala.nome }}</span>
-                                    {% if s.sala.localizacao %}<span class="info-sala"> — {{ s.sala.localizacao }}</span>{% endif %}
-                                </label>
-                                {% endif %}
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
+<body>
+    <div class="wrapper">
+        <div class="navbar navbar-custom navbar-fixed-top">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a href="{% url 'home' %}" class="navbar-brand">LabHub</a>
                 </div>
+                <div class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav">
+                        <li><a href="{% url 'home' %}">Início</a></li>
 
-                <div class="panel panel-default panel-finalizar">
-                    <div class="panel-body">
-                        {% if is_admin %}
-                        <div class="form-group" style="max-width: 360px;">
-                            <label>Agendar em nome de</label>
-                            <select name="professor" class="form-control">
-                                {% for p in professores %}
-                                <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                        {% if user.is_authenticated and user.perfil.aprovado %}
+
+                        {% if user.perfil.tipo == 'ADMINISTRADOR' %}
+                        <li><a href="{% url 'painel' %}"> Painel </a></li>
+                        <li><a href="{% url 'turmas' %}"> Turmas</a></li>
+                        <li><a href="{% url 'salas' %}"> Salas </a></li>
+                        <li><a href="{% url 'equipamentos' %}"> Equipamentos</a></li>
                         {% endif %}
-                        <div class="form-group" style="max-width: 360px;">
-                            <label>Turma do agendamento</label>
-                            <select name="turma" class="form-control" required>
-                                <option value="">— selecione a turma —</option>
-                                {% for t in turmas %}
-                                <option value="{{ t.id }}">{{ t.nome }} ({{ t.get_turno_display }})</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Observação (opcional)</label>
-                            <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: aula de reforço, prova, etc."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-agendar">📌 Agendar Salas</button>
-                    </div>
-                </div>
-            </form>
-            {% endif %}
-        </div>
 
-        <!-- ================== ABA 2: EQUIPAMENTOS MÓVEIS ================== -->
-        <div role="tabpanel" class="tab-pane" id="tab-movel">
-            {% if not tem_equipamentos %}
-            <div class="alert alert-warning alert-modern">Nenhum equipamento cadastrado. Cadastre em <a href="{% url 'equipamentos' %}" class="alert-link">Equipamentos</a>.</div>
-            {% elif not turmas %}
-            <div class="alert alert-warning alert-modern">Nenhuma turma cadastrada.</div>
-            {% else %}
+                        <li><a href="{% url 'agendamentos' %}"> Agendamentos</a></li>
 
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="tipo" value="dispositivo">
-
-                <div class="panel-group" id="acordeao-disp" style="margin-bottom: 0;">
-                    {% for aula in aulas_disp %}
-                    <div class="panel panel-default painel-aula">
-                        <div class="panel-heading">
-                            <h4 class="panel-title">
-                                <a data-toggle="collapse" data-parent="#acordeao-disp" href="#disp{{ aula.numero }}">
-                                    {{ aula.numero }}ª Aula <small class="text-muted" style="font-weight: 400; margin-left: 4px;">({{ aula.horario }})</small>
-                                    {% if aula.cards %}
-                                    <span class="resumo-livres livres-zero" style="float:right;">{{ aula.cards|length }} reserva(s)</span>
-                                    {% endif %}
-                                </a>
-                            </h4>
-                        </div>
-                        <div id="disp{{ aula.numero }}" class="panel-collapse collapse">
-                            <div class="panel-body">
-                                {% for grupo in aula.grupos %}
-                                <div class="dispo-row dispo-{{ grupo.status }}">
-                                    <div>
-                                        <span class="nome-sala">{{ grupo.label }}</span>
-                                        <span class="badge-status bg-{{ grupo.status }}">{{ grupo.restante }} / {{ grupo.total }}</span>
-                                    </div>
-                                    {% if grupo.restante > 0 %}
-                                    <div class="dispo-controle">
-                                        <input type="range" class="dispo-slider"
-                                               name="qtd_{{ aula.numero }}_{{ grupo.categoria }}"
-                                               min="0" max="{{ grupo.restante }}" value="0"
-                                               oninput="this.nextElementSibling.textContent = this.value">
-                                        <span class="dispo-valor">0</span>
-                                    </div>
-                                    {% else %}
-                                    <div style="margin-top: 6px;">
-                                        <em class="text-muted" style="font-size:13px;">Esgotado nesta aula</em>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                {% endfor %}
-
-                                {% if aula.cards %}
-                                <hr style="border-top-color: #E5E9F0;">
-                                <p class="grupo-tipo">Reservas desta aula</p>
-                                {% for ag in aula.cards %}
-                                <div class="card-reserva">
-                                    <strong>{{ ag.turma.nome }}</strong>
-                                    <span class="text-muted">— {{ ag.professor.get_full_name|default:ag.professor.username }}</span>
-                                    <div style="margin-top:6px; display: flex; gap: 4px; flex-wrap: wrap;">
-                                        {% for item in ag.itens.all %}
-                                        <span class="label label-primary" style="background: #1A4A8A; font-weight: 500; font-size: 11px; padding: 3px 8px; border-radius: 4px;">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
-                                        {% endfor %}
-                                    </div>
-                                    <div style="margin-top: 8px;">
-                                        <a href="{% url 'relacao_agendamento' ag.id %}" class="btn btn-xs btn-default" style="border-radius: 4px; font-weight: 500;">📋 Relação</a>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <div class="panel panel-default panel-finalizar">
-                    <div class="panel-body">
-                        {% if is_admin %}
-                        <div class="form-group" style="max-width: 360px;">
-                            <label>Agendar em nome de</label>
-                            <select name="professor" class="form-control">
-                                {% for p in professores %}
-                                <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
                         {% endif %}
-                        <div class="form-group" style="max-width: 360px;">
-                            <label>Turma do agendamento</label>
-                            <select name="turma" class="form-control" required>
-                                <option value="">— selecione a turma —</option>
-                                {% for t in turmas %}
-                                <option value="{{ t.id }}">{{ t.nome }} ({{ t.get_turno_display }})</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Observação (opcional)</label>
-                            <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: projeto de robótica, pesquisa, etc."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-agendar">📌 Agendar Equipamentos</button>
-                    </div>
+
+                        <li><a href="{% url 'about' %}">Sobre</a></li>
+                        <li><a href="{% url 'contact' %}"> Contato </a></li>
+                    </ul>
+                    {% include 'app/loginpartial.html' %}
                 </div>
-            </form>
-            {% endif %}
+            </div>
         </div>
 
-    </div>
-</div>
+        <div class="container body-content">
+            {% block content %}{% endblock %}
+        </div>
 
-<!-- Script otimizador de eventos de input para zerar o lag do navegador -->
-<script>
-    document.addEventListener("input", function (e) {
-        if (e.target && e.target.classList.contains('dispo-slider')) {
-            let valSpan = e.target.nextElementSibling;
-            if (valSpan) valSpan.textContent = e.target.value;
-        }
+        <div class="push"></div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 - LabHub - Gerenciamento de Equipamentos</p>
+        </div>
+    </footer>
+
+    <!-- Modal de confirmação global (substitui o confirm() do navegador) -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color:#fff; border-top-left-radius:6px; border-top-right-radius:6px;">
+                    <h4 class="modal-title" id="confirmModalTitulo">Confirmar</h4>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmModalTexto" style="margin-bottom:0;">Tem certeza?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmModalOk">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Avisos globais das ações reativas (AJAX) -->
+    <div id="labhub-flash" style="position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:1080; width:90%; max-width:520px;"></div>
+
+    <script src="{% static 'app/scripts/jquery-1.10.2.js' %}"></script>
+    <script src="{% static 'app/scripts/bootstrap.js' %}"></script>
+    <script>
+        // ---- Aviso flutuante global (some sozinho) ----
+        window.LabHubFlash = function (msg, tipo) {
+            if (!msg) return;
+            var cls = 'warning';
+            if (tipo === 'success') cls = 'success';
+            else if (tipo === 'error' || tipo === 'danger') cls = 'danger';
+            else if (tipo === 'info' || tipo === 'debug') cls = 'info';
+            var div = document.createElement('div');
+            div.className = 'alert alert-' + cls + ' alert-dismissible';
+            div.setAttribute('role', 'alert');
+            div.style.boxShadow = '0 4px 18px rgba(0,0,0,.15)';
+            div.innerHTML = '<button type="button" class="close" data-dismiss="alert">&times;</button>' + msg;
+            document.getElementById('labhub-flash').appendChild(div);
+            setTimeout(function () { $(div).fadeOut(400, function () { div.remove(); }); }, 4000);
+        };
+
+        // ---- Transforma uma string HTML na primeira <tr>/elemento ----
+        window.LabHubElemento = function (html) {
+            var tmp = document.createElement('tbody');
+            tmp.innerHTML = (html || '').trim();
+            return tmp.firstElementChild;
+        };
+
+        // ---- Motor genérico de envio via AJAX ----
+        window.LabHubAjaxSubmit = function (form) {
+            var tbody = form.closest('tbody');        // guardado antes de remover a linha
+            fetch(form.action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(form)
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    window.LabHubFlash(res.message, res.ok ? 'success' : 'warning');
+                    if (!res.ok) return;
+
+                    // Gancho: se a página tem um tratador próprio e ele resolveu, para aqui
+                    if (typeof window.LabHubOnAjax === 'function' && window.LabHubOnAjax(form, res)) return;
+
+                    // Comportamento genérico
+                    if (res.acao === 'remover_linha') {
+                        var tr = form.closest('tr');
+                        if (tr) tr.remove();
+                        if (res.contador) {
+                            var c = document.querySelector(res.contador.seletor);
+                            if (c) c.textContent = res.contador.valor;
+                        }
+                        if (res.restantes === 0 && res.vazio_html && tbody) {
+                            tbody.appendChild(window.LabHubElemento(res.vazio_html));
+                        }
+                    } else if (res.acao === 'atualizar_linha') {
+                        var trA = form.closest('tr');
+                        if (trA) trA.parentNode.replaceChild(window.LabHubElemento(res.html), trA);
+                    }
+                })
+                .catch(function () {
+                    window.LabHubFlash('Não foi possível concluir a ação. Recarregue a página e tente de novo.', 'danger');
+                });
+        };
+
+        // ---- Confirmação via modal do Bootstrap (no lugar do confirm nativo) ----
+        (function () {
+            var $modal = $('#confirmModal');
+            var formPendente = null;
+
+            $(document).on('click', '[data-confirm]', function (e) {
+                e.preventDefault();
+                var el = this;
+                formPendente = el.closest('form');
+                $('#confirmModalTexto').text(el.getAttribute('data-confirm'));
+                $('#confirmModalOk').removeClass('btn-default btn-primary btn-danger')
+                    .addClass(el.getAttribute('data-confirm-classe') || 'btn-primary');
+                $modal.modal('show');
+            });
+
+            $('#confirmModalOk').on('click', function () {
+                $modal.modal('hide');
+                if (!formPendente) return;
+                var form = formPendente;
+                formPendente = null;
+
+                if (form.getAttribute('data-ajax') === 'true' && typeof window.LabHubAjaxSubmit === 'function') {
+                    window.LabHubAjaxSubmit(form);
+                } else {
+                    form.submit();
+                }
+            });
+        })();
+    </script>
+
+    {% if messages %}
+    <script>
+    // Mostra as mensagens do Django (após recarga) como avisos flutuantes
+    document.addEventListener('DOMContentLoaded', function () {
+        {% for message in messages %}
+        window.LabHubFlash('{{ message|escapejs }}', '{{ message.tags|escapejs }}');
+        {% endfor %}
     });
-</script>
-
-{% endblock %}
+    </script>
+    {% endif %}
+    {% block scripts %}{% endblock %}
+</body>
+</html>
