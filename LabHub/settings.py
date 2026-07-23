@@ -1,23 +1,11 @@
-"""
-Django settings for LabHub project.
-
-Based on 'django-admin startproject' using Django 2.1.2.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/2.1/topics/settings/
-
-For the full list of settings and their values, see
-https://docs.djangoproject.com/en/2.1/ref/settings/
-"""
-
 import os
 import posixpath
+from pathlib import Path  # <--- Adicione esta importação no topo
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve().parent.parent  # <--- Transformado em Path moderno
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
@@ -75,15 +63,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'LabHub.wsgi.application'
+
 # Database
-# https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-
-# settings.py
-
+# https://docs.numpy.org/... ou docs.djangoproject.com
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',  # Agora funciona perfeitamente com o Path
     }
 }
 
@@ -113,17 +99,16 @@ USE_L10N = True
 USE_TZ = True
 
 AUTHENTICATION_BACKENDS = [
-    'app.forms.EmailBackend', # Aponta para a classe que criamos no passo 1
-    'django.contrib.auth.backends.ModelBackend', # Mantém o padrão do Django por segurança
+    'app.forms.EmailBackend', 
+    'django.contrib.auth.backends.ModelBackend', 
 ]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 STATIC_URL = '/static/'
-STATIC_ROOT = posixpath.join(*(BASE_DIR.split(os.path.sep) + ['static']))
+STATIC_ROOT = posixpath.join(*(str(BASE_DIR).split(os.path.sep) + ['static']))
 
 CSRF_TRUSTED_ORIGINS = [
     'https://*.ngrok-free.app',
+    'https://grionsistema.pythonanywhere.com',  # Já aproveite para adicionar o domínio do PythonAnywhere aqui!
 ]
-
-
