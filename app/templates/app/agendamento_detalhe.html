@@ -1,13 +1,12 @@
 {% extends "app/layout.html" %}
 {% block content %}
 
-<!-- ==================== ESTILOS MODERNOS DO DETALHE DO AGENDAMENTO ==================== -->
+<!-- ==================== ESTILOS MODERNOS DO DETALHE DO AGENDAMENTO (OTIMIZADOS) ==================== -->
 <style>
     .lh-det-container {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    /* Cabeçalho e Botão Voltar */
     .det-head {
         margin-bottom: 12px;
     }
@@ -27,7 +26,6 @@
                 color: #153d74;
             }
 
-    /* Novo Cabeçalho Estilizado (Padrão Hero vindo de equipamentos.html) */
     .agend-hero {
         display: flex;
         align-items: center;
@@ -97,7 +95,6 @@
         }
     }
 
-    /* Abas Customizadas */
     .nav-tabs-modern {
         border-bottom: 2px solid #E5E9F0;
         display: flex;
@@ -129,7 +126,6 @@
             border-bottom: 2px solid #6B7280 !important;
         }
 
-    /* Painéis de Aula (Acordeão) */
     .painel-aula {
         background: #ffffff !important;
         border: 1px solid rgba(0, 0, 0, 0.05) !important;
@@ -156,15 +152,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-            .painel-aula .panel-title a:focus,
-            .painel-aula .panel-title a:active,
-            .painel-aula .panel-title a:visited {
-                outline: none !important;
-                border: none !important;
-                box-shadow: none !important;
-                text-decoration: none !important;
-            }
-
     .resumo-livres {
         font-size: 12px;
         font-weight: 700;
@@ -188,7 +175,6 @@
         padding: 16px 20px;
     }
 
-    /* Itens de Sala e Equipamentos */
     .aula-item, .dispo-row {
         display: block;
         border: 1px solid #E5E9F0;
@@ -197,7 +183,6 @@
         margin-bottom: 10px;
         font-weight: 500;
         background: #ffffff;
-        transition: background-color 0.15s ease, border-color 0.15s ease;
     }
 
     .aula-verde {
@@ -213,7 +198,6 @@
     .aula-vermelho {
         border-left: 4px solid #E53935;
         background: #FAFAFA;
-        cursor: not-allowed;
     }
 
     .nome-sala {
@@ -261,7 +245,6 @@
         vertical-align: middle;
     }
 
-    /* Controle de Equipamentos Slider */
     .dispo-verde {
         border-left: 4px solid #4CAF50;
     }
@@ -289,6 +272,7 @@
         background: #E5E9F0;
         border-radius: 4px;
         outline: none;
+        will-change: transform; /* Otimização de GPU para evitar lag */
     }
 
         .dispo-slider::-webkit-slider-thumb {
@@ -298,12 +282,7 @@
             border-radius: 50%;
             background: #1A4A8A;
             cursor: pointer;
-            transition: background 0.15s;
         }
-
-            .dispo-slider::-webkit-slider-thumb:hover {
-                background: #153d74;
-            }
 
     .dispo-valor {
         min-width: 44px;
@@ -335,7 +314,6 @@
         border-left-width: 4px;
     }
 
-    /* Formulário de Finalização de Agendamento */
     .panel-finalizar {
         background: #ffffff !important;
         border: 1px solid rgba(0, 0, 0, 0.05) !important;
@@ -363,12 +341,7 @@
             height: auto;
             font-size: 14px;
             box-shadow: none !important;
-            transition: border-color 0.15s;
         }
-
-            .panel-finalizar .form-control:focus {
-                border-color: #1A4A8A;
-            }
 
     .btn-agendar {
         background: #1A4A8A !important;
@@ -379,13 +352,10 @@
         padding: 12px 28px !important;
         border-radius: 8px !important;
         box-shadow: 0 4px 12px rgba(26, 74, 138, 0.2) !important;
-        transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease !important;
     }
 
         .btn-agendar:hover {
             background: #153d74 !important;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(26, 74, 138, 0.3) !important;
         }
 
     .alert-modern {
@@ -401,7 +371,6 @@
         <a href="{% url 'agendamentos' %}?ano={{ ano }}&mes={{ mes }}" class="voltar">← Voltar ao calendário</a>
     </div>
 
-    <!-- Cabeçalho Hero Adaptado -->
     <div class="agend-hero">
         <div class="agend-hero-icone">📅</div>
         <div class="agend-hero-texto">
@@ -414,7 +383,6 @@
         </div>
     </div>
 
-    <!-- Abas Customizadas -->
     <ul class="nav nav-tabs nav-tabs-modern" role="tablist" style="margin-bottom: 24px;">
         <li role="presentation" class="active">
             <a href="#tab-sala" role="tab" data-toggle="tab">🏫 Sala de Aula</a>
@@ -428,24 +396,11 @@
 
         <!-- ===================== ABA 1: SALA DE AULA ===================== -->
         <div role="tabpanel" class="tab-pane active" id="tab-sala">
-
             {% if not tem_salas %}
-            <div class="alert alert-warning alert-modern">
-                Nenhuma sala cadastrada ainda. Cadastre salas em
-                <a href="{% url 'salas' %}" class="alert-link">🏫 Salas de Aula</a> para poder agendar.
-            </div>
+            <div class="alert alert-warning alert-modern">Nenhuma sala cadastrada. Cadastre em <a href="{% url 'salas' %}" class="alert-link">Salas</a>.</div>
             {% elif not turmas %}
-            <div class="alert alert-warning alert-modern">
-                Nenhuma turma cadastrada. Cadastre turmas em
-                <a href="{% url 'turmas' %}" class="alert-link">👥 Turmas</a> para poder agendar.
-            </div>
+            <div class="alert alert-warning alert-modern">Nenhuma turma cadastrada. Cadastre em <a href="{% url 'turmas' %}" class="alert-link">Turmas</a>.</div>
             {% else %}
-
-            <p class="text-muted" style="margin-bottom: 16px; font-size: 14px;">
-                💡 Clique numa aula para ver as salas. As <strong style="color:#2e7d32;">verdes</strong>
-                estão livres (marque para reservar); as <strong style="color:#c62828;">vermelhas</strong>
-                já estão ocupadas.
-            </p>
 
             <form method="post">
                 {% csrf_token %}
@@ -491,7 +446,6 @@
                     {% endfor %}
                 </div>
 
-                <!-- Painel Finalizar -->
                 <div class="panel panel-default panel-finalizar">
                     <div class="panel-body">
                         {% if is_admin %}
@@ -499,7 +453,7 @@
                             <label>Agendar em nome de</label>
                             <select name="professor" class="form-control">
                                 {% for p in professores %}
-                                <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
+                                <option value="{{ p.id }}" {% if p.id= =user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -515,8 +469,7 @@
                         </div>
                         <div class="form-group">
                             <label>Observação (opcional)</label>
-                            <textarea name="observacao" class="form-control" rows="2"
-                                      placeholder="Ex: aula de reforço, prova, etc."></textarea>
+                            <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: aula de reforço, prova, etc."></textarea>
                         </div>
                         <button type="submit" class="btn btn-agendar">📌 Agendar Salas</button>
                     </div>
@@ -527,25 +480,11 @@
 
         <!-- ================== ABA 2: EQUIPAMENTOS MÓVEIS ================== -->
         <div role="tabpanel" class="tab-pane" id="tab-movel">
-
             {% if not tem_equipamentos %}
-            <div class="alert alert-warning alert-modern">
-                Nenhum equipamento cadastrado ainda. Cadastre em
-                <a href="{% url 'equipamentos' %}" class="alert-link">💻 Equipamentos</a> para poder agendar.
-            </div>
+            <div class="alert alert-warning alert-modern">Nenhum equipamento cadastrado. Cadastre em <a href="{% url 'equipamentos' %}" class="alert-link">Equipamentos</a>.</div>
             {% elif not turmas %}
-            <div class="alert alert-warning alert-modern">
-                Nenhuma turma cadastrada. Cadastre em
-                <a href="{% url 'turmas' %}" class="alert-link">👥 Turmas</a> para poder agendar.
-            </div>
+            <div class="alert alert-warning alert-modern">Nenhuma turma cadastrada.</div>
             {% else %}
-
-            <p class="text-muted" style="margin-bottom: 16px; font-size: 14px;">
-                <span style="color:#4CAF50;">●</span> Bastante disponível &nbsp;&nbsp;
-                <span style="color:#FF9800;">●</span> Cerca de metade &nbsp;&nbsp;
-                <span style="color:#E53935;">●</span> Esgotado &nbsp;—&nbsp;
-                clique na aula e arraste para escolher a quantidade.
-            </p>
 
             <form method="post">
                 {% csrf_token %}
@@ -566,7 +505,6 @@
                         </div>
                         <div id="disp{{ aula.numero }}" class="panel-collapse collapse">
                             <div class="panel-body">
-
                                 {% for grupo in aula.grupos %}
                                 <div class="dispo-row dispo-{{ grupo.status }}">
                                     <div>
@@ -578,7 +516,7 @@
                                         <input type="range" class="dispo-slider"
                                                name="qtd_{{ aula.numero }}_{{ grupo.categoria }}"
                                                min="0" max="{{ grupo.restante }}" value="0"
-                                               oninput="this.parentNode.querySelector('.dispo-valor').textContent = this.value">
+                                               oninput="this.nextElementSibling.textContent = this.value">
                                         <span class="dispo-valor">0</span>
                                     </div>
                                     {% else %}
@@ -607,14 +545,12 @@
                                 </div>
                                 {% endfor %}
                                 {% endif %}
-
                             </div>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
 
-                <!-- Painel Finalizar -->
                 <div class="panel panel-default panel-finalizar">
                     <div class="panel-body">
                         {% if is_admin %}
@@ -622,7 +558,7 @@
                             <label>Agendar em nome de</label>
                             <select name="professor" class="form-control">
                                 {% for p in professores %}
-                                <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
+                                <option value="{{ p.id }}" {% if p.id= =user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -638,8 +574,7 @@
                         </div>
                         <div class="form-group">
                             <label>Observação (opcional)</label>
-                            <textarea name="observacao" class="form-control" rows="2"
-                                      placeholder="Ex: projeto de robótica, pesquisa, etc."></textarea>
+                            <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: projeto de robótica, pesquisa, etc."></textarea>
                         </div>
                         <button type="submit" class="btn btn-agendar">📌 Agendar Equipamentos</button>
                     </div>
@@ -650,5 +585,15 @@
 
     </div>
 </div>
+
+<!-- Script otimizador de eventos de input para zerar o lag do navegador -->
+<script>
+    document.addEventListener("input", function (e) {
+        if (e.target && e.target.classList.contains('dispo-slider')) {
+            let valSpan = e.target.nextElementSibling;
+            if (valSpan) valSpan.textContent = e.target.value;
+        }
+    });
+</script>
 
 {% endblock %}
