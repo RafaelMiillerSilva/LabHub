@@ -952,4 +952,20 @@
     });
 </script>
 {% endif %}
+
+{% if aba_ativa == 'cadastro' or form_cadastro.errors %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Procura o elemento da aba de cadastro e simula o clique/ativação
+        const tabCadastro = document.querySelector('[data-bs-target="#cadastro"], [href="#cadastro"], #cadastro-tab');
+        if (tabCadastro) {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+                new bootstrap.Tab(tabCadastro).show();
+            } else {
+                tabCadastro.click();
+            }
+        }
+    });
+</script>
+{% endif %}
 {% endblock %}

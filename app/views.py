@@ -71,14 +71,17 @@ def home(request):
         return render(request, 'app/index.html', {
             'form_login': BootstrapAuthenticationForm(),
             'form_cadastro': CadastroForm(),
-            'msg_pendente': True
+            'msg_pendente': True,
+            'aba_ativa': 'login'
         })
 
     form_login = BootstrapAuthenticationForm()
     form_cadastro = CadastroForm()
+    aba_ativa = 'login'
 
     if request.method == 'POST':
         if 'btn_login' in request.POST:
+            aba_ativa = 'login'
             form_login = BootstrapAuthenticationForm(data=request.POST)
             if form_login.is_valid():
                 user = form_login.get_user()
@@ -89,10 +92,12 @@ def home(request):
                     return render(request, 'app/index.html', {
                         'form_login': form_login,
                         'form_cadastro': form_cadastro,
-                        'msg_pendente': True
+                        'msg_pendente': True,
+                        'aba_ativa': aba_ativa
                     })
 
         elif 'btn_cadastro' in request.POST:
+            aba_ativa = 'cadastro'
             form_cadastro = CadastroForm(request.POST)
             if form_cadastro.is_valid():
                 user = form_cadastro.save()
@@ -105,20 +110,20 @@ def home(request):
                     user.perfil.aprovado = False
                     user.perfil.save()
 
-                # Adiciona mensagem no sistema de mensagens do Django
                 messages.success(request, 'Solicitação enviada com sucesso! Aguarde a aprovação do administrador.')
 
-                # Retorna com ambas as flags para cobrir qualquer condicional do HTML
                 return render(request, 'app/index.html', {
                     'form_login': BootstrapAuthenticationForm(),
                     'form_cadastro': CadastroForm(),
                     'msg_sucesso_cadastro': True,
-                    'msg_pendente': True
+                    'msg_pendente': True,
+                    'aba_ativa': aba_ativa
                 })
 
     return render(request, 'app/index.html', {
         'form_login': form_login,
         'form_cadastro': form_cadastro,
+        'aba_ativa': aba_ativa,
         'title': 'Bem-vindo ao LabHub'
     })
 
