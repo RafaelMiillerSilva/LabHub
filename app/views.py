@@ -111,7 +111,7 @@ def home(request):
                 user = form_login.get_user()
                 if hasattr(user, 'perfil') and user.perfil.aprovado:
                     login(request, user)
-                    return redirect('home')   # sempre cai no painel do dia
+                    return redirect('home')  
                 else:
                     return render(request, 'app/index.html', {
                         'form_login': form_login,
@@ -122,7 +122,17 @@ def home(request):
         elif 'btn_cadastro' in request.POST:
             form_cadastro = CadastroForm(request.POST)
             if form_cadastro.is_valid():
-                form_cadastro.save()
+                user = form_cadastro.save()
+                
+                # Garante a criação do Perfil para que ele apareça no painel admin
+                if not hasattr(user, 'perfil'):
+                    tipo_conta = form_cadastro.cleaned_data.get('tipo', 'PROFESSOR')
+                    Perfil.objects.create(user=user, tipo=tipo_conta, aprovado=False)
+                else:
+                    # Prevenção: se o form tiver criado o perfil mas omitido o status
+                    user.perfil.aprovado = False
+                    user.perfil.save()
+
                 return render(request, 'app/index.html', {
                     'form_login': form_login,
                     'form_cadastro': CadastroForm(),
