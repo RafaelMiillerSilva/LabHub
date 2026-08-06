@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,52 +11,50 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        /* CSS para forçar o footer a ficar embaixo e aplicar o novo design */
         html, body {
             height: 100%;
             margin: 0;
             background-color: #D9D9D9;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow-x: hidden; /* Evita scroll horizontal indesejado no mobile */
         }
 
-        /* Envelopa toda a página exceto o footer */
         .wrapper {
             min-height: 100%;
             height: auto !important;
             height: 100%;
             margin-bottom: -60px;
-            padding-top: 45px; /* Espaço para a nova navbar flutuante moderna */
+            padding-top: 75px; /* Ajustado para dar folga correta à navbar flutuante */
         }
 
         /* BARRA DE NAVEGAÇÃO MODERNA */
         .navbar-custom {
-            background-color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.4) !important;
             border-radius: 12px;
-            margin: 15px 15px 0 15px;
+            margin: 12px 12px 0 12px;
             box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
 
-            /* Alinhamento dos itens e textos */
             .navbar-custom .navbar-brand {
                 color: #1A4A8A !important;
                 font-weight: 700;
-                font-size: 20px;
+                font-size: 18px;
                 letter-spacing: -0.5px;
-                padding: 15px 20px;
+                padding: 12px 15px;
             }
 
             .navbar-custom .navbar-nav > li > a {
                 color: #4B5563 !important;
                 font-weight: 500;
                 font-size: 14px;
-                padding: 15px 16px;
+                padding: 12px 16px;
                 transition: color 0.2s ease, background-color 0.2s ease;
                 border-radius: 8px;
-                margin: 0 2px;
+                margin: 2px 0;
             }
 
                 .navbar-custom .navbar-nav > li > a:hover,
@@ -65,13 +63,12 @@
                     background-color: rgba(26, 74, 138, 0.08) !important;
                 }
 
-            /* Botão Sanduíche Responsivo customizado */
             .navbar-custom .navbar-toggle {
                 border: none;
                 background-color: transparent;
-                margin-top: 10px;
-                margin-bottom: 10px;
-                padding: 10px;
+                margin-top: 8px;
+                margin-bottom: 8px;
+                padding: 8px 12px;
                 border-radius: 8px;
             }
 
@@ -81,43 +78,48 @@
 
                 .navbar-custom .navbar-toggle .icon-bar {
                     background-color: #4B5563 !important;
-                    width: 22px;
+                    width: 20px;
                     height: 2px;
                     transition: all 0.2s;
                 }
 
-        /* Define uma altura fixa para o footer e o push */
         .footer, .push {
             height: 60px;
         }
 
-        /* RODAPÉ DA MESMA COR DO FUNDO */
         footer {
             padding-top: 20px;
             border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
-            background-color: #D9D9D9; /* Mesma cor exata do fundo solicitada */
+            background-color: #D9D9D9;
             color: #4B5563;
             font-size: 13px;
             font-weight: 500;
+            text-align: center;
         }
 
         /* RESPONSIVIDADE E AJUSTES MOBILE */
         @media (max-width: 767px) {
+            .wrapper {
+                padding-top: 70px;
+            }
+
             .navbar-custom {
-                margin: 10px 10px 0 10px;
+                margin: 8px 8px 0 8px;
             }
 
             .navbar-collapse {
                 border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
                 box-shadow: none;
                 margin-top: 5px;
-                background-color: transparent;
-                padding-bottom: 10px;
+                background-color: #ffffff;
+                border-radius: 0 0 12px 12px;
+                padding: 10px 15px;
+                max-height: calc(100vh - 90px);
+                overflow-y: auto;
             }
 
             .navbar-custom .navbar-nav > li > a {
-                margin: 4px 0;
-                padding: 10px 15px;
+                padding: 10px 12px;
             }
         }
     </style>
@@ -141,20 +143,17 @@
                         <li><a href="{% url 'home' %}">Início</a></li>
 
                         {% if user.is_authenticated and user.perfil.aprovado %}
-
                         {% if user.perfil.tipo == 'ADMINISTRADOR' %}
-                        <li><a href="{% url 'painel' %}"> Painel </a></li>
-                        <li><a href="{% url 'turmas' %}"> Turmas</a></li>
-                        <li><a href="{% url 'salas' %}"> Salas </a></li>
-                        <li><a href="{% url 'equipamentos' %}"> Equipamentos</a></li>
+                        <li><a href="{% url 'painel' %}">Painel</a></li>
+                        <li><a href="{% url 'turmas' %}">Turmas</a></li>
+                        <li><a href="{% url 'salas' %}">Salas</a></li>
+                        <li><a href="{% url 'equipamentos' %}">Equipamentos</a></li>
                         {% endif %}
-
-                        <li><a href="{% url 'agendamentos' %}"> Agendamentos</a></li>
-
+                        <li><a href="{% url 'agendamentos' %}">Agendamentos</a></li>
                         {% endif %}
 
                         <li><a href="{% url 'about' %}">Sobre</a></li>
-                        <li><a href="{% url 'contact' %}"> Contato </a></li>
+                        <li><a href="{% url 'contact' %}">Contato</a></li>
                     </ul>
                     {% include 'app/loginpartial.html' %}
                 </div>
@@ -174,7 +173,7 @@
         </div>
     </footer>
 
-    <!-- Modal de confirmação global (substitui o confirm() do navegador) -->
+    <!-- Modal de confirmação global -->
     <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-sm" role="document">
             <div class="modal-content">
@@ -198,7 +197,6 @@
     <script src="{% static 'app/scripts/jquery-1.10.2.js' %}"></script>
     <script src="{% static 'app/scripts/bootstrap.js' %}"></script>
     <script>
-        // ---- Aviso flutuante global (some sozinho) ----
         window.LabHubFlash = function (msg, tipo) {
             if (!msg) return;
             var cls = 'warning';
@@ -214,16 +212,14 @@
             setTimeout(function () { $(div).fadeOut(400, function () { div.remove(); }); }, 4000);
         };
 
-        // ---- Transforma uma string HTML na primeira <tr>/elemento ----
         window.LabHubElemento = function (html) {
             var tmp = document.createElement('tbody');
             tmp.innerHTML = (html || '').trim();
             return tmp.firstElementChild;
         };
 
-        // ---- Motor genérico de envio via AJAX ----
         window.LabHubAjaxSubmit = function (form) {
-            var tbody = form.closest('tbody');        // guardado antes de remover a linha
+            var tbody = form.closest('tbody');
             fetch(form.action, {
                 method: 'POST',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -234,10 +230,8 @@
                     window.LabHubFlash(res.message, res.ok ? 'success' : 'warning');
                     if (!res.ok) return;
 
-                    // Gancho: se a página tem um tratador próprio e ele resolveu, para aqui
                     if (typeof window.LabHubOnAjax === 'function' && window.LabHubOnAjax(form, res)) return;
 
-                    // Comportamento genérico
                     if (res.acao === 'remover_linha') {
                         var tr = form.closest('tr');
                         if (tr) tr.remove();
@@ -258,7 +252,6 @@
                 });
         };
 
-        // ---- Confirmação via modal do Bootstrap (no lugar do confirm nativo) ----
         (function () {
             var $modal = $('#confirmModal');
             var formPendente = null;
@@ -285,12 +278,18 @@
                     form.submit();
                 }
             });
+
+            // Fecha o menu mobile automaticamente ao clicar em um link da navbar
+            $('.navbar-collapse a:not(.dropdown-toggle)').on('click', function () {
+                if ($('.navbar-toggle').is(':visible') && $('.navbar-collapse').hasClass('in')) {
+                    $('.navbar-toggle').click();
+                }
+            });
         })();
     </script>
 
     {% if messages %}
     <script>
-    // Mostra as mensagens do Django (após recarga) como avisos flutuantes
     document.addEventListener('DOMContentLoaded', function () {
         {% for message in messages %}
         window.LabHubFlash('{{ message|escapejs }}', '{{ message.tags|escapejs }}');
