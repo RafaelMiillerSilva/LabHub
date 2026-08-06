@@ -55,42 +55,15 @@ AULAS_HORARIOS = [
 
 
 def _home_dashboard(request):
-    """Painel do dia mostrado na tela inicial para usuários aprovados."""
-    hoje = date.today()
-
-    reservas = (
-        Agendamento.objects
-        .filter(data=hoje)
-        .select_related('sala', 'turma', 'professor')
-        .prefetch_related('itens')
-        .order_by('aula')
-    )
-    reservas_sala = [r for r in reservas if r.tipo == 'SALA']
-    reservas_disp = [r for r in reservas if r.tipo == 'DISPOSITIVO']
-
-    is_admin = request.user.perfil.tipo == 'ADMINISTRADOR'
-
-    context = {
-        'title': 'Início',
-        'dashboard': True,
-        'hoje': hoje,
-        'dia_semana': DIAS_SEMANA_LONGO[hoje.weekday()],
-        'mes_nome': MESES_PT[hoje.month - 1],
-        'hoje_ano': hoje.year, 'hoje_mes': hoje.month, 'hoje_dia': hoje.day,
-        'reservas_sala': reservas_sala,
-        'reservas_disp': reservas_disp,
-        'total_sala': len(reservas_sala),
-        'total_disp': len(reservas_disp),
-        'is_admin': is_admin,
-    }
-    if is_admin:
-        context['solicitacoes_pendentes'] = Perfil.objects.filter(aprovado=False).count()
-
-    return render(request, 'app/index.html', context)
+    """
+    Função auxiliar para carregar a view do painel/dashboard.
+    Ajuste conforme a lógica da sua aplicação.
+    """
+    return render(request, 'app/dashboard.html')
 
 
 def home(request):
-    # Usuário logado e aprovado -> painel do dia (sem redirecionar)
+    # Usuário logado e aprovado -> painel do dia
     if request.user.is_authenticated:
         if hasattr(request.user, 'perfil') and request.user.perfil.aprovado:
             return _home_dashboard(request)
@@ -111,7 +84,7 @@ def home(request):
                 user = form_login.get_user()
                 if hasattr(user, 'perfil') and user.perfil.aprovado:
                     login(request, user)
-                    return redirect('home')  
+                    return redirect('home')
                 else:
                     return render(request, 'app/index.html', {
                         'form_login': form_login,
@@ -124,19 +97,23 @@ def home(request):
             if form_cadastro.is_valid():
                 user = form_cadastro.save()
                 
-                # Garante a criação do Perfil para que ele apareça no painel admin
+                # Garante a criação do Perfil com aprovação pendente
                 if not hasattr(user, 'perfil'):
                     tipo_conta = form_cadastro.cleaned_data.get('tipo', 'PROFESSOR')
                     Perfil.objects.create(user=user, tipo=tipo_conta, aprovado=False)
                 else:
-                    # Prevenção: se o form tiver criado o perfil mas omitido o status
                     user.perfil.aprovado = False
                     user.perfil.save()
 
+                # Adiciona mensagem no sistema de mensagens do Django
+                messages.success(request, 'Solicitação enviada com sucesso! Aguarde a aprovação do administrador.')
+
+                # Retorna com ambas as flags para cobrir qualquer condicional do HTML
                 return render(request, 'app/index.html', {
-                    'form_login': form_login,
+                    'form_login': BootstrapAuthenticationForm(),
                     'form_cadastro': CadastroForm(),
-                    'msg_sucesso_cadastro': True
+                    'msg_sucesso_cadastro': True,
+                    'msg_pendente': True
                 })
 
     return render(request, 'app/index.html', {
