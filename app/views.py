@@ -56,10 +56,43 @@ AULAS_HORARIOS = [
 
 def _home_dashboard(request):
     """
-    Função auxiliar para carregar a view do painel/dashboard.
-    Ajuste conforme a lógica da sua aplicação.
+    Função auxiliar para carregar a view do painel/dashboard dentro do app/index.html
     """
-    return render(request, 'app/dashboard.html')
+    hoje = date.today()
+    
+    # Mapeamento simples de meses em português
+    meses = [
+        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ]
+    dias_semana = [
+        'Segunda-feira', 'Terça-feira', 'Quarta-feira', 
+        'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'
+    ]
+
+    is_admin = request.user.is_staff or (
+        hasattr(request.user, 'perfil') and request.user.perfil.tipo == 'ADMIN'
+    )
+
+    # TODO: Substitua as listas vazias e zeros pelas queries reais de reserva do seu sistema
+    reservas_sala = []
+    reservas_disp = []
+    
+    context = {
+        'dashboard': True,
+        'hoje_ano': hoje.year,
+        'hoje_mes': hoje.month,
+        'hoje_dia': hoje.day,
+        'mes_nome': meses[hoje.month - 1],
+        'dia_semana': dias_semana[hoje.weekday()],
+        'is_admin': is_admin,
+        'total_sala': len(reservas_sala),
+        'total_disp': len(reservas_disp),
+        'solicitacoes_pendentes': Perfil.objects.filter(aprovado=False).count(),
+        'reservas_sala': reservas_sala,
+        'reservas_disp': reservas_disp,
+    }
+    return render(request, 'app/index.html', context)
 
 
 def home(request):
