@@ -953,17 +953,27 @@
 </script>
 {% endif %}
 
-{% if aba_ativa == 'cadastro' or form_cadastro.errors %}
+{% if form_cadastro.errors or aba_ativa == 'cadastro' %}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Procura o elemento da aba de cadastro e simula o clique/ativação
-        const tabCadastro = document.querySelector('[data-bs-target="#cadastro"], [href="#cadastro"], #cadastro-tab');
-        if (tabCadastro) {
-            if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
-                new bootstrap.Tab(tabCadastro).show();
-            } else {
-                tabCadastro.click();
-            }
+        // 1. Tenta acionar abas do Bootstrap 5 / Bootstrap 4
+        const btnCadastro = document.querySelector('[data-bs-target="#cadastro"]') ||
+            document.querySelector('[href="#cadastro"]') ||
+            document.querySelector('#cadastro-tab');
+
+        if (btnCadastro) {
+            btnCadastro.click();
+        }
+
+        const tabCadastroPane = document.getElementById('cadastro');
+        const tabLoginPane = document.getElementById('login');
+
+        if (tabCadastroPane && tabLoginPane) {
+            tabCadastroPane.classList.add('show', 'active');
+            tabCadastroPane.style.display = 'block';
+
+            tabLoginPane.classList.remove('show', 'active');
+            tabLoginPane.style.display = 'none';
         }
     });
 </script>
