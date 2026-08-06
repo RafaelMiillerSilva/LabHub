@@ -207,14 +207,14 @@
             <div class="lh-modal__body">
                 <!-- Tabs -->
                 <div class="lh-tabs" role="tablist">
-                    <button class="lh-tab lh-tab--active" data-target="#loginTab" role="tab">Entrar</button>
-                    <button class="lh-tab" data-target="#cadastroTab" role="tab">Cadastrar</button>
+                    <button class="lh-tab {% if not form_cadastro.errors and aba_ativa != 'cadastro' and not msg_sucesso_cadastro %}lh-tab--active{% endif %}" data-target="#loginTab" role="tab">Entrar</button>
+                    <button class="lh-tab {% if form_cadastro.errors or aba_ativa == 'cadastro' or msg_sucesso_cadastro %}lh-tab--active{% endif %}" data-target="#cadastroTab" role="tab">Cadastrar</button>
                     <div class="lh-tabs__ink"></div>
                 </div>
 
                 <div class="tab-content" style="padding-top:20px;">
                     <!-- Login -->
-                    <div role="tabpanel" class="tab-pane active" id="loginTab">
+                    <div role="tabpanel" class="tab-pane {% if not form_cadastro.errors and aba_ativa != 'cadastro' and not msg_sucesso_cadastro %}active{% endif %}" id="loginTab">
                         {% if form_login.errors %}
                         <div class="lh-alert lh-alert--danger">
                             E-mail ou senha incorretos. Por favor, tente novamente.
@@ -242,7 +242,7 @@
                     </div>
 
                     <!-- Cadastro -->
-                    <div role="tabpanel" class="tab-pane" id="cadastroTab">
+                    <div role="tabpanel" class="tab-pane {% if form_cadastro.errors or aba_ativa == 'cadastro' or msg_sucesso_cadastro %}active{% endif %}" id="cadastroTab">
                         {% if msg_sucesso_cadastro %}
                         <div class="lh-alert lh-alert--success">
                             ✅ Solicitação enviada! Aguarde a aprovação do administrador.
@@ -298,6 +298,37 @@
 </div>
 {% endif %}
 
+{% endif %}
+
+<!-- Script de controle das abas (colocado diretamente no fluxo para garantia de execução) -->
+{% if not user.is_authenticated %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        /* Abre o modal automaticamente se existir na página */
+        if (typeof $ !== 'undefined' && $('#authModal').length > 0) {
+            $('#authModal').modal('show');
+        }
+
+        /* Lógica de clique manual nas abas */
+        var tabs = document.querySelectorAll('.lh-tab');
+        tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                var targetId = this.getAttribute('data-target');
+
+                // Remove classes ativas de todas as abas
+                tabs.forEach(function (t) { t.classList.remove('lh-tab--active'); });
+                document.querySelectorAll('.tab-pane').forEach(function (pane) { pane.classList.remove('active'); });
+
+                // Ativa a aba e o painel clicados
+                this.classList.add('lh-tab--active');
+                var targetPane = document.querySelector(targetId);
+                if (targetPane) {
+                    targetPane.classList.add('active');
+                }
+            });
+        });
+    });
+</script>
 {% endif %}
 
 <!-- ==================== ESTILOS MODERNOS ==================== -->
@@ -921,61 +952,4 @@
     }
 </style>
 
-{% endblock %}
-
-{% block scripts %}
-{% if not user.is_authenticated %}
-<script>
-    $(document).ready(function () {
-        /* Abre o modal automaticamente */
-        if ($('#authModal').length > 0) {
-            $('#authModal').modal('show');
-        }
-
-        /* Ativa a aba de cadastro se houver erro ou sucesso */
-        {% if form_cadastro.errors or msg_sucesso_cadastro %}
-        activateTab('[data-target="#cadastroTab"]');
-        {% endif %}
-
-        /* Tab switching com lh-tab */
-        $('.lh-tab').on('click', function () {
-            var target = $(this).data('target');
-            $('.lh-tab').removeClass('lh-tab--active');
-            $(this).addClass('lh-tab--active');
-            $('.tab-pane').removeClass('active');
-            $(target).addClass('active');
-        });
-
-        function activateTab(selector) {
-            $(selector).trigger('click');
-        }
-    });
-</script>
-{% endif %}
-
-{% if form_cadastro.errors or aba_ativa == 'cadastro' %}
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // 1. Tenta acionar abas do Bootstrap 5 / Bootstrap 4
-        const btnCadastro = document.querySelector('[data-bs-target="#cadastro"]') ||
-            document.querySelector('[href="#cadastro"]') ||
-            document.querySelector('#cadastro-tab');
-
-        if (btnCadastro) {
-            btnCadastro.click();
-        }
-
-        const tabCadastroPane = document.getElementById('cadastro');
-        const tabLoginPane = document.getElementById('login');
-
-        if (tabCadastroPane && tabLoginPane) {
-            tabCadastroPane.classList.add('show', 'active');
-            tabCadastroPane.style.display = 'block';
-
-            tabLoginPane.classList.remove('show', 'active');
-            tabLoginPane.style.display = 'none';
-        }
-    });
-</script>
-{% endif %}
 {% endblock %}
