@@ -24,7 +24,7 @@ urlpatterns = [
     path('painel/usuario/<int:user_id>/ativar/', views.usuario_toggle_ativo, name='usuario_toggle_ativo'),
     path('painel/usuario/<int:user_id>/tipo/',   views.usuario_toggle_tipo,  name='usuario_toggle_tipo'),
     path('painel/senha/<int:pedido_id>/',        views.redefinir_senha_admin, name='redefinir_senha_admin'),
-
+    path('painel/redefinir-senha/<int:pedido_id>/cancelar/', views.cancelar_redefinicao_senha_admin, name='cancelar_redefinicao_senha_admin'),
     # Turmas e alunos
     path('turmas/',                          views.turmas,                 name='turmas'),
     path('turmas/modelo-planilha/',          views.modelo_planilha_alunos, name='modelo_planilha_alunos'),

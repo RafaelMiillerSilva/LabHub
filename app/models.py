@@ -27,6 +27,10 @@ class HistoricoAcao(models.Model):
         ('PROMOVIDO', 'Promovido a admin'),
         ('REBAIXADO', 'Rebaixado a professor'),
         ('REDEFINIDO', 'Senha redefinida'),
+        ('SENHA_CANCELADA', 'Pedido de senha cancelado'),
+        ('AGENDOU', 'Agendamento realizado'),
+        ('ALTEROU_AGENDAMENTO', 'Agendamento alterado'),
+        ('CANCELOU_AGENDAMENTO', 'Agendamento cancelado'),
     )
 
     admin = models.ForeignKey(
@@ -35,8 +39,7 @@ class HistoricoAcao(models.Model):
         null=True,
         related_name='acoes_admin'
     )
-    acao = models.CharField(max_length=20, choices=CHOICES_ACAO)
-    # Guarda os dados do usuário mesmo após deletar
+    acao = models.CharField(max_length=25, choices=CHOICES_ACAO)
     username_solicitante = models.CharField(max_length=150)
     email_solicitante = models.CharField(max_length=254, blank=True)
     tipo_solicitado = models.CharField(max_length=20)
@@ -47,7 +50,6 @@ class HistoricoAcao(models.Model):
 
     def __str__(self):
         return f"{self.acao} - {self.username_solicitante} por {self.admin} em {self.data_acao:%d/%m/%Y %H:%M}"
-
 
 # ---------------------------------------------------------------------------
 # Salas de aula (cadastradas pelo administrador)
