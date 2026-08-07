@@ -53,30 +53,153 @@
     {% endif %}
 </div>
 
-<!-- Salas reservadas hoje -->
+<!-- Estilos auxiliares para o navegador de datas -->
+<style>
+    .lh-date-navigator {
+        display: inline-flex;
+        align-items: center;
+        background: var(--lh-bg);
+        border: 1px solid var(--lh-border);
+        border-radius: var(--lh-radius);
+        padding: 6px 12px;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .lh-date-group {
+        display: inline-flex;
+        align-items: center;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--lh-blue-deep);
+    }
+
+        .lh-date-group a {
+            text-decoration: none;
+            color: var(--lh-muted);
+            padding: 0 8px;
+            font-size: 14px;
+            transition: color 0.15s;
+        }
+
+            .lh-date-group a:hover {
+                color: var(--lh-blue);
+            }
+
+    .lh-date-label {
+        margin: 0 12px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--lh-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .lh-checkbox-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--lh-blue-light);
+        padding: 8px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+        .lh-checkbox-wrap:hover {
+            background: #d0e4ff;
+        }
+
+        .lh-checkbox-wrap input {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--lh-blue);
+        }
+
+        .lh-checkbox-wrap label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--lh-blue);
+        }
+</style>
+
+<!-- ============================ RESERVAS DO DIA ============================ -->
 <div class="lh-card">
-    <div class="lh-card__header lh-card__header--green">
-        <h2 class="lh-card__title">🏫 Salas reservadas hoje</h2>
+    <div class="lh-card__header lh-card__header--green" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px;">
+
+        <!-- Navegador de Datas: <- dia -> mes <- mes -> ano <- ano -> -->
+        <div class="lh-date-navigator">
+            <div class="lh-date-group">
+                <a href="?dia={{ dia_ant.day }}&mes={{ dia_ant.month }}&ano={{ dia_ant.year }}">◀</a>
+                <span>{{ data_atual|date:"d" }}</span>
+                <a href="?dia={{ dia_prox.day }}&mes={{ dia_prox.month }}&ano={{ dia_prox.year }}">▶</a>
+            </div>
+
+            <span class="lh-date-label">mês</span>
+
+            <div class="lh-date-group">
+                <a href="?dia={{ data_atual.day }}&mes={{ mes_ant }}&ano={{ ano_mes_ant }}">◀</a>
+                <span>{{ data_atual|date:"m" }}</span>
+                <a href="?dia={{ data_atual.day }}&mes={{ mes_prox }}&ano={{ ano_mes_prox }}">▶</a>
+            </div>
+
+            <span class="lh-date-label">ano</span>
+
+            <div class="lh-date-group">
+                <a href="?dia={{ data_atual.day }}&mes={{ data_atual.month }}&ano={{ ano_ant }}">◀</a>
+                <span>{{ data_atual|date:"Y" }}</span>
+                <a href="?dia={{ data_atual.day }}&mes={{ data_atual.month }}&ano={{ ano_prox }}">▶</a>
+            </div>
+        </div>
+
+        <!-- Filtro: Minhas Reservas -->
+        <div class="lh-checkbox-wrap" id="wrapMinhasReservas">
+            <input type="checkbox" id="chkMinhasReservas">
+            <label for="chkMinhasReservas">Minhas reservas</label>
+        </div>
     </div>
+
     <div class="lh-card__body">
         <div class="lh-table-wrap">
-            <table class="lh-table">
+            <table class="lh-table" id="tabelaReservasDia">
                 <thead>
                     <tr>
                         <th class="text-center" style="width:70px">Aula</th>
-                        <th>Sala</th>
+                        <th>Tipo</th>
+                        <th>Reserva (Sala / Equipamentos)</th>
                         <th>Turma</th>
                         <th>Professor</th>
                         <th class="text-center" style="width:100px">Relação</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for r in reservas_sala %}
-                    <tr>
+                    {% for r in reservas_dia %}
+                    <tr class="linha-reserva" data-usuario="{{ r.professor.username }}">
                         <td class="text-center">
                             <span class="lh-badge lh-badge--blue">{{ r.aula }}ª</span>
                         </td>
-                        <td><strong>{{ r.sala.nome }}</strong></td>
+                        <td>
+                            {% if r.tipo == 'SALA' %}
+                            <span class="lh-badge lh-badge--green" style="background:#E8F5E9; color:#2E7D32;">🏫 Sala</span>
+                            {% else %}
+                            <span class="lh-badge lh-badge--orange" style="background:#FFF3E0; color:#E65100;">💻 Equip.</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>
+                                {% if r.tipo == 'SALA' %}
+                                {{ r.sala.nome }}
+                                {% else %}
+                                <div class="lh-tags" style="margin-bottom: 0;">
+                                    {% for item in r.itens.all %}
+                                    <span class="lh-tag">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </strong>
+                        </td>
                         <td>{{ r.turma.nome }}</td>
                         <td>{{ r.professor.get_full_name|default:r.professor.username }}</td>
                         <td class="text-center">
@@ -84,10 +207,10 @@
                         </td>
                     </tr>
                     {% empty %}
-                    <tr>
-                        <td colspan="5" class="lh-table__empty">
+                    <tr id="linhaVazia">
+                        <td colspan="6" class="lh-table__empty">
                             <span>📭</span>
-                            <p>Nenhuma sala reservada para hoje.</p>
+                            <p>Nenhuma reserva registrada neste dia.</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -97,55 +220,59 @@
     </div>
 </div>
 
-<!-- Equipamentos reservados hoje -->
-<div class="lh-card">
-    <div class="lh-card__header lh-card__header--orange">
-        <h2 class="lh-card__title">💻 Equipamentos reservados hoje</h2>
-    </div>
-    <div class="lh-card__body">
-        <div class="lh-table-wrap">
-            <table class="lh-table">
-                <thead>
-                    <tr>
-                        <th class="text-center" style="width:70px">Aula</th>
-                        <th>Equipamentos</th>
-                        <th>Turma</th>
-                        <th>Professor</th>
-                        <th class="text-center" style="width:100px">Relação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for r in reservas_disp %}
-                    <tr>
-                        <td class="text-center">
-                            <span class="lh-badge lh-badge--blue">{{ r.aula }}ª</span>
-                        </td>
-                        <td>
-                            <div class="lh-tags">
-                                {% for item in r.itens.all %}
-                                <span class="lh-tag">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
-                                {% endfor %}
-                            </div>
-                        </td>
-                        <td>{{ r.turma.nome }}</td>
-                        <td>{{ r.professor.get_full_name|default:r.professor.username }}</td>
-                        <td class="text-center">
-                            <a href="{% url 'relacao_agendamento' r.id %}" class="lh-btn lh-btn--xs lh-btn--info">📋 Abrir</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="lh-table__empty">
-                            <span>📭</span>
-                            <p>Nenhum equipamento reservado para hoje.</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+<!-- ============================ SCRIPT DE FILTRAGEM ============================ -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const chk = document.getElementById('chkMinhasReservas');
+    const wrap = document.getElementById('wrapMinhasReservas');
+    const linhas = document.querySelectorAll('.linha-reserva');
+    const currentUser = "{{ user.username }}";
+    const tbody = document.querySelector('#tabelaReservasDia tbody');
+
+    // Permite clicar em toda a área azul para acionar o checkbox
+    if (wrap) {
+        wrap.addEventListener('click', function(e) {
+            if (e.target !== chk) {
+                chk.checked = !chk.checked;
+                chk.dispatchEvent(new Event('change'));
+            }
+        });
+    }
+
+    if (chk) {
+        chk.addEventListener('change', function() {
+            let visiveis = 0;
+            linhas.forEach(linha => {
+                if (this.checked) {
+                    // Esconde se o username da linha for diferente do usuário logado
+                    if (linha.getAttribute('data-usuario') === currentUser) {
+                        linha.style.display = '';
+                        visiveis++;
+                    } else {
+                        linha.style.display = 'none';
+                    }
+                } else {
+                    linha.style.display = '';
+                    visiveis++;
+                }
+            });
+
+            // Gerenciamento de mensagem de "Vazio" após filtro
+            const msgFiltro = document.getElementById('msgFiltroVazio');
+            if (visiveis === 0 && linhas.length > 0) {
+                if (!msgFiltro) {
+                    const tr = document.createElement('tr');
+                    tr.id = 'msgFiltroVazio';
+                    tr.innerHTML = '<td colspan="6" class="lh-table__empty"><span>👀</span><p>Você não possui nenhuma reserva agendada neste dia.</p></td>';
+                    tbody.appendChild(tr);
+                }
+            } else {
+                if (msgFiltro) msgFiltro.remove();
+            }
+        });
+    }
+});
+</script>
 
 
 {% elif msg_pendente %}

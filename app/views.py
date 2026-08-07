@@ -57,10 +57,47 @@ AULAS_HORARIOS = [
 def _home_dashboard(request):
     """
     Função auxiliar para carregar a view do painel/dashboard dentro do app/index.html
+    com navegação de dias e tabela unificada.
     """
+    from datetime import date, timedelta
+    
     hoje = date.today()
     
-    # Mapeamento simples de meses em português
+    # Captura a data via GET ou usa 'hoje' como padrão
+    try:
+        ano = int(request.GET.get('ano', hoje.year))
+        mes = int(request.GET.get('mes', hoje.month))
+        dia = int(request.GET.get('dia', hoje.day))
+        data_atual = date(ano, mes, dia)
+    except ValueError:
+        # Em caso de data inválida (ex: 31 de Fevereiro), vai para o dia 1 do mês, ou hoje.
+        try:
+            data_atual = date(ano, mes, 1)
+        except ValueError:
+            data_atual = hoje
+
+    # Navegação Dia
+    dia_ant = data_atual - timedelta(days=1)
+    dia_prox = data_atual + timedelta(days=1)
+    
+    # Navegação Mês
+    mes_ant = data_atual.month - 1
+    ano_mes_ant = data_atual.year
+    if mes_ant < 1:
+        mes_ant = 12
+        ano_mes_ant -= 1
+        
+    mes_prox = data_atual.month + 1
+    ano_mes_prox = data_atual.year
+    if mes_prox > 12:
+        mes_prox = 1
+        ano_mes_prox += 1
+        
+    # Navegação Ano
+    ano_ant = data_atual.year - 1
+    ano_prox = data_atual.year + 1
+
+    # Mapeamento de meses em português
     meses = [
         'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
         'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
@@ -71,26 +108,37 @@ def _home_dashboard(request):
     ]
 
     is_admin = request.user.is_staff or (
-        hasattr(request.user, 'perfil') and request.user.perfil.tipo == 'ADMIN'
+        hasattr(request.user, 'perfil') and request.user.perfil.tipo == 'ADMINISTRADOR'
     )
 
-    # TODO: Substitua as listas vazias e zeros pelas queries reais de reserva do seu sistema
-    reservas_sala = []
-    reservas_disp = []
+    # Busca TODAS as reservas (SALA e DISPOSITIVO) para o dia, ordenadas pela aula
+    reservas_dia = (
+        Agendamento.objects.filter(data=data_atual)
+        .select_related('sala', 'turma', 'professor')
+        .prefetch_related('itens')
+        .order_by('aula')
+    )
     
     context = {
         'dashboard': True,
+        'data_atual': data_atual,
+        
+        # Variáveis de Navegação
+        'dia_ant': dia_ant, 'dia_prox': dia_prox,
+        'mes_ant': mes_ant, 'ano_mes_ant': ano_mes_ant,
+        'mes_prox': mes_prox, 'ano_mes_prox': ano_mes_prox,
+        'ano_ant': ano_ant, 'ano_prox': ano_prox,
+        
         'hoje_ano': hoje.year,
         'hoje_mes': hoje.month,
         'hoje_dia': hoje.day,
-        'mes_nome': meses[hoje.month - 1],
-        'dia_semana': dias_semana[hoje.weekday()],
+        'mes_nome': meses[data_atual.month - 1],
+        'dia_semana': dias_semana[data_atual.weekday()],
         'is_admin': is_admin,
-        'total_sala': len(reservas_sala),
-        'total_disp': len(reservas_disp),
+        
         'solicitacoes_pendentes': Perfil.objects.filter(aprovado=False).count(),
-        'reservas_sala': reservas_sala,
-        'reservas_disp': reservas_disp,
+        'reservas_dia': reservas_dia,
+        'total_reservas': reservas_dia.count(),
     }
     return render(request, 'app/index.html', context)
 
