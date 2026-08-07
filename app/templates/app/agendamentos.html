@@ -1,9 +1,9 @@
 {% extends "app/layout.html" %}
 {% block content %}
 
-<!-- ==================== ESTILOS MODERNOS DO CALENDÁRIO ==================== -->
+<!-- ==================== ESTILOS MODERNOS DO CALENDÁRIO E DAS RESERVAS ==================== -->
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
     .cal-container-wrap {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -169,7 +169,7 @@
                 border-color: #C62828;
             }
 
-    /* ── Tabela de Minhas Reservas ── */
+    /* ── Card de Reservas Unificado ── */
     .lh-card {
         background: #ffffff;
         border-radius: 12px;
@@ -182,13 +182,6 @@
         padding: 16px 20px;
         border-bottom: 1px solid #E5E9F0;
         background: #F7F9FC;
-    }
-
-    .lh-card-title {
-        font-size: 15px;
-        font-weight: 700;
-        margin: 0;
-        color: #1A1A2E;
     }
 
     .lh-table {
@@ -218,6 +211,35 @@
             background: #EBF2FF;
         }
 
+    /* ── Componentes Internos da Tabela ── */
+    .lh-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .lh-badge--blue {
+        background: #EBF2FF;
+        color: #1A4A8A;
+    }
+
+    .lh-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .lh-tag {
+        background: #EBF2FF;
+        color: #1A4A8A;
+        border-radius: 5px;
+        padding: 3px 9px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
     .lh-btn-xs {
         padding: 5px 12px;
         font-size: 12px;
@@ -228,6 +250,7 @@
         align-items: center;
         gap: 4px;
         transition: background 0.15s;
+        text-decoration: none;
     }
 
     .lh-btn-info {
@@ -237,6 +260,8 @@
 
         .lh-btn-info:hover {
             background: #d0e4ff;
+            color: #1A4A8A;
+            text-decoration: none;
         }
 
     .lh-btn-danger {
@@ -246,6 +271,92 @@
 
         .lh-btn-danger:hover {
             background: #ffcdd2;
+        }
+
+    /* ── Estilos do Navegador de Datas ── */
+    .lh-date-navigator {
+        display: inline-flex;
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #E5E9F0;
+        border-radius: 10px;
+        padding: 6px 12px;
+    }
+
+    .lh-date-group {
+        display: inline-flex;
+        align-items: center;
+        font-size: 15px;
+        font-weight: 700;
+        color: #0F2645;
+    }
+
+        .lh-date-group a {
+            text-decoration: none;
+            color: #6B7280;
+            padding: 0 8px;
+            font-size: 13px;
+            transition: color 0.15s;
+        }
+
+            .lh-date-group a:hover {
+                color: #1A4A8A;
+            }
+
+    .lh-date-label {
+        margin: 0 10px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #6B7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .lh-checkbox-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #EBF2FF;
+        padding: 8px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+        .lh-checkbox-wrap:hover {
+            background: #d0e4ff;
+        }
+
+        .lh-checkbox-wrap input {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: #1A4A8A;
+        }
+
+        .lh-checkbox-wrap label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            color: #1A4A8A;
+        }
+
+    .lh-table__empty {
+        text-align: center;
+        padding: 36px 16px !important;
+        color: #6B7280;
+    }
+
+        .lh-table__empty span {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .lh-table__empty p {
+            margin: 0;
+            font-size: 14px;
         }
 
     /* ── Modais ── */
@@ -266,17 +377,21 @@
         border-top: 1px solid #E5E9F0;
     }
 
-    .alert-modern {
-        border-radius: 8px;
-        border: none;
-        font-weight: 500;
-        font-size: 14px;
+    @media (max-width: 600px) {
+        .lh-date-navigator {
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .lh-date-label {
+            display: none;
+        }
     }
 </style>
 
 <div class="cal-container-wrap">
 
-    <!-- Mensagens do Sistema -->
     <!-- Card Principal do Calendário -->
     <div class="cal-card">
         <div class="cal-header">
@@ -289,7 +404,7 @@
                         </button>
                         <ul class="dropdown-menu">
                             {% for num, nome in lista_meses %}
-                            <li{% if num == mes %} class="active" {% endif %}>
+                            <li{% if num= =mes %} class="active" {% endif %}>
                                 <a href="?ano={{ ano }}&mes={{ num }}">{{ nome }}</a>
                                 </li>
                                 {% endfor %}
@@ -302,7 +417,7 @@
                         </button>
                         <ul class="dropdown-menu">
                             {% for a in lista_anos %}
-                            <li{% if a == ano %} class="active" {% endif %}>
+                            <li{% if a= =ano %} class="active" {% endif %}>
                                 <a href="?ano={{ a }}&mes={{ mes }}">{{ a }}</a>
                                 </li>
                                 {% endfor %}
@@ -347,41 +462,89 @@
         💡 Clique em um dia para ver as 9 aulas e agendar salas ou equipamentos.
     </p>
 
-    <!-- ===================== BLOCO: MINHAS RESERVAS ===================== -->
+    <!-- ===================== BLOCO: RESERVAS DIA (SUBSTITUÍDO) ===================== -->
     <div class="lh-card" style="max-width:760px; margin: 0 auto 40px;">
-        <div class="lh-card-header">
-            <h3 class="lh-card-title">📋 Minhas reservas (de hoje em diante)</h3>
+        <div class="lh-card-header" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px;">
+
+            <!-- Navegador de Datas: <- dia -> mes <- mes -> ano <- ano -> -->
+            <div class="lh-date-navigator">
+                <div class="lh-date-group">
+                    <a href="?dia={{ dia_ant.day }}&mes={{ dia_ant.month }}&ano={{ dia_ant.year }}">◀</a>
+                    <span>{% if data_atual %}{{ data_atual|date:"d" }}{% else %}{{ hoje_dia|stringformat:"02d" }}{% endif %}</span>
+                    <a href="?dia={{ dia_prox.day }}&mes={{ dia_prox.month }}&ano={{ dia_prox.year }}">▶</a>
+                </div>
+
+                <span class="lh-date-label">mês</span>
+
+                <div class="lh-date-group">
+                    <a href="?dia={{ data_atual.day|default:hoje_dia }}&mes={{ mes_ant }}&ano={{ ano_mes_ant|default:ano }}">◀</a>
+                    <span>{% if data_atual %}{{ data_atual|date:"m" }}{% else %}{{ mes|stringformat:"02d" }}{% endif %}</span>
+                    <a href="?dia={{ data_atual.day|default:hoje_dia }}&mes={{ mes_prox }}&ano={{ ano_mes_prox|default:ano }}">▶</a>
+                </div>
+
+                <span class="lh-date-label">ano</span>
+
+                <div class="lh-date-group">
+                    <a href="?dia={{ data_atual.day|default:hoje_dia }}&mes={{ data_atual.month|default:mes }}&ano={{ ano_ant }}">◀</a>
+                    <span>{% if data_atual %}{{ data_atual|date:"Y" }}{% else %}{{ ano }}{% endif %}</span>
+                    <a href="?dia={{ data_atual.day|default:hoje_dia }}&mes={{ data_atual.month|default:mes }}&ano={{ ano_prox }}">▶</a>
+                </div>
+            </div>
+
+            <!-- Filtro: Minhas Reservas -->
+            <div class="lh-checkbox-wrap" id="wrapMinhasReservas">
+                <input type="checkbox" id="chkMinhasReservas">
+                <label for="chkMinhasReservas">Minhas reservas</label>
+            </div>
         </div>
+
         <div class="lh-card-body" style="padding: 0;">
             <div class="table-responsive" style="margin: 0; border: none;">
-                <table class="table lh-table" style="margin-bottom:0;">
+                <table class="table lh-table" id="tabelaReservasDia" style="margin-bottom:0;">
                     <thead>
                         <tr>
-                            <th>Data</th>
-                            <th class="text-center">Aula</th>
-                            <th>Reserva</th>
+                            <th class="text-center" style="width:70px">Aula</th>
+                            <th>Tipo</th>
+                            <th>Reserva (Sala / Equipamentos)</th>
                             <th>Turma</th>
-                            <th class="text-center">Relação</th>
-                            <th class="text-center">Cancelar</th>
+                            <th>Professor</th>
+                            <th class="text-center" style="width:90px">Relação</th>
+                            <th class="text-center" style="width:90px">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for ag in minhas_reservas %}
-                        <tr>
-                            <td><strong>{{ ag.data|date:"d/m/Y" }}</strong></td>
-                            <td class="text-center"><span style="background: #EBF2FF; color: #1A4A8A; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 13px;">{{ ag.aula }}ª</span></td>
+                        <tr class="linha-reserva" data-usuario="{{ ag.professor.username }}">
+                            <td class="text-center">
+                                <span class="lh-badge lh-badge--blue">{{ ag.aula }}ª</span>
+                            </td>
                             <td>
                                 {% if ag.tipo == 'SALA' %}
-                                🏫 {{ ag.sala.nome }}
+                                <span class="lh-badge" style="background:#E8F5E9; color:#2E7D32;">🏫 Sala</span>
                                 {% else %}
-                                💻 {% for item in ag.itens.all %}{{ item.get_categoria_display }} ×{{ item.quantidade }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                <span class="lh-badge" style="background:#FFF3E0; color:#E65100;">💻 Equip.</span>
                                 {% endif %}
                             </td>
+                            <td>
+                                <strong>
+                                    {% if ag.tipo == 'SALA' %}
+                                    {{ ag.sala.nome }}
+                                    {% else %}
+                                    <div class="lh-tags">
+                                        {% for item in ag.itens.all %}
+                                        <span class="lh-tag">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </strong>
+                            </td>
                             <td>{{ ag.turma.nome }}</td>
+                            <td>{{ ag.professor.get_full_name|default:ag.professor.username }}</td>
                             <td class="text-center">
                                 <a href="{% url 'relacao_agendamento' ag.id %}" class="lh-btn-xs lh-btn-info">📋 Abrir</a>
                             </td>
                             <td class="text-center">
+                                {% if ag.professor == user or is_admin %}
                                 <form action="{% url 'cancelar_reserva' ag.id %}" method="post" style="display:inline;" data-ajax="true">
                                     {% csrf_token %}
                                     <button type="submit" class="lh-btn-xs lh-btn-danger"
@@ -389,13 +552,16 @@
                                         🗑️ Cancelar
                                     </button>
                                 </form>
+                                {% else %}
+                                <span class="text-muted" style="font-size:12px;">—</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center text-muted" style="padding: 32px;">
+                        <tr id="linhaVazia">
+                            <td colspan="7" class="lh-table__empty">
                                 <span>📭</span>
-                                <p style="margin-top: 8px; font-style: italic;">Você não tem reservas futuras. Clique em um dia para agendar.</p>
+                                <p>Nenhuma reserva encontrada para a seleção atual.</p>
                             </td>
                         </tr>
                         {% endfor %}
@@ -440,12 +606,58 @@
 {% block scripts %}
 <script>
     $(document).ready(function () {
+        // Modal para aviso de datas passadas
         $('.cal-dia.passado').on('click', function (e) {
             e.preventDefault();
             var url = $(this).attr('href');
             $('#proceedPastLink').attr('href', url);
             $('#modalPassado').modal('show');
         });
+
+        // Lógica de Filtragem "Minhas Reservas"
+        var chk = document.getElementById('chkMinhasReservas');
+        var wrap = document.getElementById('wrapMinhasReservas');
+        var linhas = document.querySelectorAll('.linha-reserva');
+        var currentUser = "{{ user.username }}";
+        var tbody = document.querySelector('#tabelaReservasDia tbody');
+
+        if (wrap && chk) {
+            wrap.addEventListener('click', function(e) {
+                if (e.target !== chk) {
+                    chk.checked = !chk.checked;
+                    chk.dispatchEvent(new Event('change'));
+                }
+            });
+
+            chk.addEventListener('change', function() {
+                var visiveis = 0;
+                linhas.forEach(function(linha) {
+                    if (chk.checked) {
+                        if (linha.getAttribute('data-usuario') === currentUser) {
+                            linha.style.display = '';
+                            visiveis++;
+                        } else {
+                            linha.style.display = 'none';
+                        }
+                    } else {
+                        linha.style.display = '';
+                        visiveis++;
+                    }
+                });
+
+                var msgFiltro = document.getElementById('msgFiltroVazio');
+                if (visiveis === 0 && linhas.length > 0) {
+                    if (!msgFiltro) {
+                        var tr = document.createElement('tr');
+                        tr.id = 'msgFiltroVazio';
+                        tr.innerHTML = '<td colspan="7" class="lh-table__empty"><span>👀</span><p>Você não possui nenhuma reserva agendada nesta seleção.</p></td>';
+                        tbody.appendChild(tr);
+                    }
+                } else {
+                    if (msgFiltro) msgFiltro.remove();
+                }
+            });
+        }
     });
 </script>
 {% endblock %}
