@@ -145,17 +145,16 @@
                         {% if user.is_authenticated and user.perfil.aprovado %}
                         {% if user.perfil.tipo == 'ADMINISTRADOR' %}
                         <li><a href="{% url 'painel' %}">Painel</a></li>
+                        {% endif %}
                         <li><a href="{% url 'turmas' %}">Turmas</a></li>
                         <li><a href="{% url 'salas' %}">Salas</a></li>
                         <li><a href="{% url 'equipamentos' %}">Equipamentos</a></li>
-                        {% endif %}
                         <li><a href="{% url 'agendamentos' %}">Agendamentos</a></li>
                         {% endif %}
 
                         <li><a href="{% url 'about' %}">Sobre</a></li>
                         <li><a href="{% url 'contact' %}">Contato</a></li>
                     </ul>
-                    {% include 'app/loginpartial.html' %}
                 </div>
             </div>
         </div>

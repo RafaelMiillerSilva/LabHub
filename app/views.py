@@ -54,13 +54,25 @@ AULAS_HORARIOS = [
 ]
 
 
+def _is_usuario_aprovado(user):
+    """Verifica se o usuário está autenticado e tem perfil aprovado."""
+    return hasattr(user, 'perfil') and user.perfil.aprovado
+
+
+def _is_admin_aprovado(user):
+    """Verifica se o usuário é administrador e aprovado."""
+    return (
+        hasattr(user, 'perfil')
+        and user.perfil.tipo == 'ADMINISTRADOR'
+        and user.perfil.aprovado
+    )
+
+
 def _home_dashboard(request):
     """
     Função auxiliar para carregar a view do painel/dashboard dentro do app/index.html
     com navegação de dias e tabela unificada.
     """
-    from datetime import date, timedelta
-    
     hoje = date.today()
     
     # Captura a data via GET ou usa 'hoje' como padrão
@@ -70,7 +82,6 @@ def _home_dashboard(request):
         dia = int(request.GET.get('dia', hoje.day))
         data_atual = date(ano, mes, dia)
     except ValueError:
-        # Em caso de data inválida (ex: 31 de Fevereiro), vai para o dia 1 do mês, ou hoje.
         try:
             data_atual = date(ano, mes, 1)
         except ValueError:
@@ -97,7 +108,6 @@ def _home_dashboard(request):
     ano_ant = data_atual.year - 1
     ano_prox = data_atual.year + 1
 
-    # Mapeamento de meses em português
     meses = [
         'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
         'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
@@ -107,9 +117,7 @@ def _home_dashboard(request):
         'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'
     ]
 
-    is_admin = request.user.is_staff or (
-        hasattr(request.user, 'perfil') and request.user.perfil.tipo == 'ADMINISTRADOR'
-    )
+    is_admin = request.user.is_staff or _is_admin_aprovado(request.user)
 
     # Busca TODAS as reservas (SALA e DISPOSITIVO) para o dia, ordenadas pela aula
     reservas_dia = (
@@ -209,14 +217,6 @@ def home(request):
     })
 
 
-def _is_admin_aprovado(user):
-    return (
-        hasattr(user, 'perfil')
-        and user.perfil.tipo == 'ADMINISTRADOR'
-        and user.perfil.aprovado
-    )
-
-
 @login_required
 def painel(request):
     if not _is_admin_aprovado(request.user):
@@ -229,11 +229,9 @@ def painel(request):
 
     solicitacoes = Perfil.objects.filter(aprovado=False).select_related('user')
 
-    # Pedidos de redefinição de senha pendentes
     pedidos_senha = (PedidoRedefinicaoSenha.objects.filter(atendido=False)
                      .select_related('user', 'user__perfil'))
 
-    # Usuários aprovados (com barra de busca por nome/e-mail)
     usuarios = (Perfil.objects.filter(aprovado=True)
                 .select_related('user')
                 .order_by('tipo', 'user__username'))
@@ -242,7 +240,6 @@ def painel(request):
             Q(user__username__icontains=q) | Q(user__email__icontains=q)
         )
 
-    # Histórico (com filtro por período)
     historico = HistoricoAcao.objects.select_related('admin').all()
     d_de = parse_date(de) if de else None
     d_ate = parse_date(ate) if ate else None
@@ -252,7 +249,6 @@ def painel(request):
         historico = historico.filter(data_acao__date__lte=d_ate)
     historico = historico[:100]
 
-    # Se a busca/filtro foi usada, já abre na aba correspondente
     if q and aba == 'solicitacoes':
         aba = 'usuarios'
     if (de or ate) and aba == 'solicitacoes':
@@ -272,8 +268,7 @@ def painel(request):
 
 
 def esqueci_senha(request):
-    """Fluxo público de 'esqueci minha senha': registra um pedido que o
-    administrador atende definindo uma nova senha (ambiente sem e-mail)."""
+    """Fluxo público de 'esqueci minha senha'."""
     if request.method == 'POST':
         identificador = request.POST.get('identificador', '').strip()
         if identificador:
@@ -281,10 +276,8 @@ def esqueci_senha(request):
                 Q(email__iexact=identificador) | Q(username__iexact=identificador)
             ).first()
             if user:
-                # Não acumula vários pedidos pendentes do mesmo usuário
                 PedidoRedefinicaoSenha.objects.get_or_create(user=user, atendido=False)
 
-        # Mensagem genérica: não revela se a conta existe
         messages.success(
             request,
             'Se a conta existir, o administrador foi avisado e vai definir uma nova '
@@ -336,6 +329,7 @@ def redefinir_senha_admin(request, pedido_id):
 
 def _is_ajax(request):
     return request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
 
 def _linha_usuario_html(request, perfil):
     """Renderiza a <tr> de um usuário (usada para atualizar a tabela via AJAX)."""
@@ -395,7 +389,6 @@ def negar_usuario(request, perfil_id):
             tipo_solicitado=perfil.tipo,
         )
 
-        # Deletar o usuário apaga o Perfil em cascata (CASCADE)
         username = user.username
         user.delete()
 
@@ -435,7 +428,6 @@ def usuario_toggle_ativo(request, user_id):
             return redirect('painel')
 
         eh_admin = hasattr(alvo, 'perfil') and alvo.perfil.tipo == 'ADMINISTRADOR'
-        # Se for desativar um admin, não pode ser o último admin ativo
         if alvo.is_active and eh_admin and _admins_ativos_qs().count() <= 1:
             msg = 'Não é possível desativar o último administrador ativo.'
             if _is_ajax(request):
@@ -484,7 +476,6 @@ def usuario_toggle_tipo(request, user_id):
             return redirect('painel')
 
         virando_professor = perfil.tipo == 'ADMINISTRADOR'
-        # Não deixa remover o último administrador ativo
         if virando_professor and _admins_ativos_qs().count() <= 1:
             msg = 'Não é possível rebaixar o último administrador ativo.'
             if _is_ajax(request):
@@ -520,12 +511,11 @@ def usuario_toggle_tipo(request, user_id):
 # ---------------------------------------------------------------------------
 @login_required
 def agendamentos(request):
-    if not hasattr(request.user, 'perfil') or not request.user.perfil.aprovado:
+    if not _is_usuario_aprovado(request.user):
         return redirect('home')
 
     hoje = date.today()
 
-    # Captura ano, mês e dia da URL ou usa a data de hoje como padrão
     try:
         ano = int(request.GET.get('ano', hoje.year))
         mes = int(request.GET.get('mes', hoje.month))
@@ -538,11 +528,9 @@ def agendamentos(request):
     if not (1 <= mes <= 12):
         mes = hoje.month
 
-    # Navegação de Dias
     dia_ant = data_atual - timedelta(days=1)
     dia_prox = data_atual + timedelta(days=1)
 
-    # Navegação de Mês
     mes_ant = data_atual.month - 1
     ano_mes_ant = data_atual.year
     if mes_ant < 1:
@@ -555,11 +543,9 @@ def agendamentos(request):
         mes_prox = 1
         ano_mes_prox += 1
 
-    # Navegação de Ano
     ano_ant = data_atual.year - 1
     ano_prox = data_atual.year + 1
 
-    # Grade do mês com a semana começando no Domingo
     cal = calendar.Calendar(firstweekday=6)
     semanas = []
     for semana in cal.monthdayscalendar(ano, mes):
@@ -576,7 +562,6 @@ def agendamentos(request):
                 })
         semanas.append(linha)
 
-    # Reservas para a data selecionada no quadro inferior
     minhas_reservas = (
         Agendamento.objects
         .filter(data=data_atual)
@@ -595,33 +580,30 @@ def agendamentos(request):
         'dias_semana': DIAS_SEMANA_PT,
         'semanas': semanas,
         
-        # Variáveis do Navegador de Data
         'dia_ant': dia_ant, 'dia_prox': dia_prox,
         'mes_ant': mes_ant, 'ano_mes_ant': ano_mes_ant,
         'mes_prox': mes_prox, 'ano_mes_prox': ano_mes_prox,
         'ano_ant': ano_ant, 'ano_prox': ano_prox,
         
-        # Data de hoje
         'hoje_ano': hoje.year, 
         'hoje_mes': hoje.month, 
         'hoje_dia': hoje.day, 
         
-        # Dropdowns
         'lista_meses': list(enumerate(MESES_PT, start=1)),
         'lista_anos': range(hoje.year - 2, hoje.year + 4),
         
-        'is_admin': request.user.perfil.tipo == 'ADMINISTRADOR',
+        'is_admin': _is_admin_aprovado(request.user),
         'minhas_reservas': minhas_reservas,
     }
     return render(request, 'app/agendamentos.html', context)
 
 
 # ---------------------------------------------------------------------------
-# DETALHE DO DIA: agenda salas (real). Dispositivos entram na Etapa 4.
+# DETALHE DO DIA
 # ---------------------------------------------------------------------------
 def _resolver_professor(request):
     """Admin pode agendar em nome de outro professor; os demais só por si."""
-    is_admin = request.user.perfil.tipo == 'ADMINISTRADOR'
+    is_admin = _is_admin_aprovado(request.user)
     prof_id = request.POST.get('professor')
     if is_admin and prof_id:
         prof = User.objects.filter(id=prof_id).first()
@@ -637,7 +619,7 @@ def _professores_aprovados():
 def _processar_agendamento_sala(request, data, ano, mes, dia):
     """Grava as reservas de sala marcadas no formulário."""
     turma_id = request.POST.get('turma')
-    selecionadas = request.POST.getlist('reserva')   # ex.: ['1:3', '2:5']
+    selecionadas = request.POST.getlist('reserva')
     observacao = request.POST.get('observacao', '').strip()
 
     if not turma_id:
@@ -718,8 +700,7 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
         messages.warning(request, 'Escolha a turma antes de agendar.')
         return redirect('agendamento_detalhe', ano=ano, mes=mes, dia=dia)
 
-    # Lê os sliders: campos qtd_<aula>_<categoria> com valor > 0
-    selecao = defaultdict(dict)   # {aula: {categoria: qtd}}
+    selecao = defaultdict(dict)
     for chave, valor in request.POST.items():
         if not chave.startswith('qtd_'):
             continue
@@ -751,7 +732,7 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
             if disponivel <= 0:
                 ajustes += 1
                 continue
-            usar = min(qtd, disponivel)   # nunca passa do estoque disponível
+            usar = min(qtd, disponivel)
             if usar < qtd:
                 ajustes += 1
             itens_validos.append((categoria, usar))
@@ -788,7 +769,7 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
 
 @login_required
 def agendamento_detalhe(request, ano, mes, dia):
-    if not hasattr(request.user, 'perfil') or not request.user.perfil.aprovado:
+    if not _is_usuario_aprovado(request.user):
         return redirect('home')
 
     try:
@@ -797,8 +778,7 @@ def agendamento_detalhe(request, ano, mes, dia):
         messages.error(request, 'Data inválida.')
         return redirect('agendamentos')
 
-    # Bloqueio de data passada: professor não agenda; admin pode prosseguir
-    is_admin = request.user.perfil.tipo == 'ADMINISTRADOR'
+    is_admin = _is_admin_aprovado(request.user)
     if data < date.today() and not is_admin:
         messages.warning(
             request,
@@ -813,10 +793,8 @@ def agendamento_detalhe(request, ano, mes, dia):
             return _processar_agendamento_dispositivo(request, data, ano, mes, dia)
         return redirect('agendamento_detalhe', ano=ano, mes=mes, dia=dia)
 
-    # ----- Monta a grade de salas por aula -----
     salas_ativas = list(Sala.objects.filter(ativo=True))
 
-    # Reservas de sala já existentes nesse dia, indexadas por (aula, sala_id)
     reservas = (
         Agendamento.objects
         .filter(data=data, tipo='SALA')
@@ -845,11 +823,9 @@ def agendamento_detalhe(request, ano, mes, dia):
             'salas': linha_salas, 'livres': livres, 'total': len(salas_ativas),
         })
 
-    # ----- Monta a grade de dispositivos por aula (por categoria) -----
-    estoque_categoria = _estoque_por_categoria()   # {categoria: nº de unidades ativas}
+    estoque_categoria = _estoque_por_categoria()
     reservado_disp = _disponibilidade_dispositivos(data)
 
-    # Reservas de dispositivos já existentes, agrupadas por aula (para os cards)
     ags_disp = (
         Agendamento.objects
         .filter(data=data, tipo='DISPOSITIVO')
@@ -867,7 +843,7 @@ def agendamento_detalhe(request, ano, mes, dia):
         for cat_valor, cat_label in Equipamento.CATEGORIA_CHOICES:
             total = estoque_categoria.get(cat_valor, 0)
             if total == 0:
-                continue  # não mostra categorias sem nenhum aparelho ativo
+                continue
             restante = max(total - reservado_disp.get((numero, cat_valor), 0), 0)
             ratio = restante / total if total else 0
             if restante == 0:
@@ -904,20 +880,28 @@ def agendamento_detalhe(request, ano, mes, dia):
 
 
 # ---------------------------------------------------------------------------
-# CADASTRO DE SALAS  (somente administradores)
+# CADASTRO E VISUALIZAÇÃO DE SALAS
 # ---------------------------------------------------------------------------
 @login_required
 def salas(request):
-    if not _is_admin_aprovado(request.user):
+    if not _is_usuario_aprovado(request.user):
         return redirect('home')
 
-    # Se veio ?editar=<id>, carrega a sala para edição
+    is_admin = _is_admin_aprovado(request.user)
+
     instancia = None
     editar_id = request.GET.get('editar')
     if editar_id:
+        if not is_admin:
+            messages.error(request, 'Apenas administradores podem editar salas.')
+            return redirect('salas')
         instancia = Sala.objects.filter(id=editar_id).first()
 
     if request.method == 'POST':
+        if not is_admin:
+            messages.error(request, 'Apenas administradores podem cadastrar ou editar salas.')
+            return redirect('salas')
+
         post_id = request.POST.get('sala_id')
         if post_id:
             instancia = get_object_or_404(Sala, id=post_id)
@@ -934,9 +918,10 @@ def salas(request):
 
     return render(request, 'app/salas.html', {
         'title': 'Salas de Aula',
-        'form': form,
+        'form': form if is_admin else None,
         'salas': Sala.objects.all(),
         'editando': instancia,
+        'is_admin': is_admin,
     })
 
 
@@ -967,16 +952,17 @@ def sala_excluir(request, sala_id):
 
 
 # ---------------------------------------------------------------------------
-# EQUIPAMENTOS  (somente administradores) — cadastro individual de cada aparelho
+# EQUIPAMENTOS - Visualização para professores e edição restrita a admins
 # ---------------------------------------------------------------------------
 @login_required
 def equipamentos(request):
-    if not _is_admin_aprovado(request.user):
+    if not _is_usuario_aprovado(request.user):
         return redirect('home')
 
+    is_admin = _is_admin_aprovado(request.user)
     q = request.GET.get('q', '').strip()
     cat = request.GET.get('cat', '').strip()
-    lista = Equipamento.objects.defer('foto_dados')   # não carrega os bytes da foto na lista
+    lista = Equipamento.objects.defer('foto_dados')
     if q:
         lista = lista.filter(apelido__icontains=q)
     if cat:
@@ -988,6 +974,7 @@ def equipamentos(request):
         'q': q,
         'cat': cat,
         'categorias': Equipamento.CATEGORIA_CHOICES,
+        'is_admin': is_admin,
     })
 
 
@@ -1020,8 +1007,8 @@ def equipamento_form(request, equip_id=None):
 
 @login_required
 def foto_equipamento(request, equip_id):
-    """Serve a foto guardada no banco."""
-    if not _is_admin_aprovado(request.user):
+    """Serve a foto guardada no banco para usuários aprovados."""
+    if not _is_usuario_aprovado(request.user):
         return redirect('home')
 
     equip = get_object_or_404(Equipamento, id=equip_id)
@@ -1066,7 +1053,6 @@ def _gerar_etiqueta_png(equip):
                 continue
         return ImageFont.load_default()
 
-    # Moldura + faixa de título
     d.rectangle([4, 4, W - 5, H - 5], outline=AZUL, width=4)
     d.rectangle([4, 4, W - 5, 58], fill=AZUL)
     d.text((20, 16), equip.apelido or '—', fill='white', font=_fonte(30, True))
@@ -1116,7 +1102,6 @@ def etiquetas_lote(request):
         messages.warning(request, 'Selecione pelo menos um equipamento para baixar a etiqueta.')
         return redirect('equipamentos')
 
-    # Um só selecionado -> devolve o PNG direto
     if len(equips) == 1:
         return etiqueta_equipamento(request, equips[0].id)
 
@@ -1137,20 +1122,28 @@ def etiquetas_lote(request):
 
 
 # ---------------------------------------------------------------------------
-# CADASTRO DE TURMAS E ALUNOS  (somente administradores)
+# CADASTRO E VISUALIZAÇÃO DE TURMAS E ALUNOS
 # ---------------------------------------------------------------------------
 @login_required
 def turmas(request):
-    if not _is_admin_aprovado(request.user):
+    if not _is_usuario_aprovado(request.user):
         return redirect('home')
 
-    # ?editar=<id> carrega a turma para edição
+    is_admin = _is_admin_aprovado(request.user)
+
     instancia = None
     editar_id = request.GET.get('editar')
     if editar_id:
+        if not is_admin:
+            messages.error(request, 'Apenas administradores podem editar turmas.')
+            return redirect('turmas')
         instancia = Turma.objects.filter(id=editar_id).first()
 
     if request.method == 'POST':
+        if not is_admin:
+            messages.error(request, 'Apenas administradores podem cadastrar ou editar turmas.')
+            return redirect('turmas')
+
         post_id = request.POST.get('turma_id')
         if post_id:
             instancia = get_object_or_404(Turma, id=post_id)
@@ -1167,9 +1160,10 @@ def turmas(request):
 
     return render(request, 'app/turmas.html', {
         'title': 'Turmas',
-        'form': form,
+        'form': form if is_admin else None,
         'turmas': Turma.objects.all(),
         'editando': instancia,
+        'is_admin': is_admin,
     })
 
 
@@ -1181,7 +1175,7 @@ def turma_excluir(request, turma_id):
     if request.method == 'POST':
         turma = get_object_or_404(Turma, id=turma_id)
         nome = str(turma)
-        turma.delete()  # apaga os alunos em cascata
+        turma.delete()
         msg = f'Turma "{nome}" removida (junto com seus alunos).'
 
         if _is_ajax(request):
@@ -1201,13 +1195,17 @@ def turma_excluir(request, turma_id):
 
 @login_required
 def turma_detalhe(request, turma_id):
-    if not _is_admin_aprovado(request.user):
+    if not _is_usuario_aprovado(request.user):
         return redirect('home')
 
+    is_admin = _is_admin_aprovado(request.user)
     turma = get_object_or_404(Turma, id=turma_id)
 
-    # POST aqui = adicionar um aluno manualmente
     if request.method == 'POST':
+        if not is_admin:
+            messages.error(request, 'Apenas administradores podem adicionar alunos.')
+            return redirect('turma_detalhe', turma_id=turma.id)
+
         form = AlunoForm(request.POST)
         if form.is_valid():
             aluno = form.save(commit=False)
@@ -1221,8 +1219,9 @@ def turma_detalhe(request, turma_id):
     return render(request, 'app/turma_detalhe.html', {
         'title': f'Turma {turma}',
         'turma': turma,
-        'form': form,
+        'form': form if is_admin else None,
         'alunos': turma.alunos.all(),
+        'is_admin': is_admin,
     })
 
 
@@ -1258,7 +1257,6 @@ def aluno_excluir(request, aluno_id):
 # IMPORTAÇÃO DE ALUNOS POR PLANILHA  (.xlsx ou .csv)
 # ---------------------------------------------------------------------------
 
-# Cabeçalhos aceitos para cada coluna (tudo minúsculo, sem espaços nas pontas)
 _ALIAS_NOME = {'nome', 'aluno', 'nome do aluno', 'nome completo', 'nome completo do aluno'}
 _ALIAS_RA = {'ra', 'ra (registro)', 'registro', 'matricula', 'matrícula',
              'numero', 'número', 'nº', 'n', 'registro do aluno'}
@@ -1271,7 +1269,6 @@ def _normalizar_texto(valor):
 
 
 def _normalizar_ra(valor):
-    """RA pode vir como número no Excel (ex: 12345.0). Normaliza para texto limpo."""
     if valor is None:
         return ''
     if isinstance(valor, float) and valor.is_integer():
@@ -1285,10 +1282,6 @@ def _detectar_separador(texto):
 
 
 def _ler_planilha(arquivo):
-    """
-    Lê um arquivo .xlsx ou .csv e devolve (linhas, erro).
-    'linhas' é uma lista de listas (a primeira é o cabeçalho).
-    """
     nome_arquivo = arquivo.name.lower()
 
     if nome_arquivo.endswith('.csv'):
@@ -1320,7 +1313,6 @@ def _ler_planilha(arquivo):
 
 
 def _mapear_colunas(cabecalho):
-    """Descobre em quais posições estão as colunas de nome e RA."""
     nome_idx = ra_idx = None
     for i, valor in enumerate(cabecalho):
         v = str(valor).strip().lower()
@@ -1367,7 +1359,6 @@ def importar_alunos(request, turma_id):
             nome = _normalizar_texto(linha[nome_idx])
             ra = _normalizar_ra(linha[ra_idx])
 
-            # Pula linhas incompletas ou RA já existente (no banco ou já visto no arquivo)
             if not nome or not ra or ra in ras_existentes:
                 ignorados += 1
                 continue
@@ -1399,7 +1390,7 @@ def modelo_planilha_alunos(request):
     import csv
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="modelo_alunos.csv"'
-    response.write('\ufeff')  # BOM para o Excel reconhecer os acentos
+    response.write('\ufeff')
     writer = csv.writer(response, delimiter=';')
     writer.writerow(['nome', 'ra'])
     writer.writerow(['João da Silva', '12345'])
@@ -1408,18 +1399,17 @@ def modelo_planilha_alunos(request):
 
 
 # ---------------------------------------------------------------------------
-# CANCELAR UMA RESERVA (o próprio professor, ou um admin)
+# CANCELAR UMA RESERVA
 # ---------------------------------------------------------------------------
 @login_required
 def cancelar_reserva(request, agendamento_id):
-    if not (hasattr(request.user, 'perfil') and request.user.perfil.aprovado):
+    if not _is_usuario_aprovado(request.user):
         return redirect('home')
 
     if request.method == 'POST':
         ag = get_object_or_404(Agendamento, id=agendamento_id)
-        is_admin = request.user.perfil.tipo == 'ADMINISTRADOR'
+        is_admin = _is_admin_aprovado(request.user)
 
-        # Só o dono da reserva ou um admin pode cancelar
         if ag.professor_id != request.user.id and not is_admin:
             msg = 'Você só pode cancelar as suas próprias reservas.'
             if _is_ajax(request):
@@ -1427,7 +1417,6 @@ def cancelar_reserva(request, agendamento_id):
             messages.error(request, msg)
             return redirect('agendamentos')
 
-        # Deletar o agendamento remove os itens de dispositivo em cascata
         ag.delete()
         msg = 'Reserva cancelada com sucesso.'
 
@@ -1452,8 +1441,6 @@ def cancelar_reserva(request, agendamento_id):
 # RELAÇÃO ALUNO x EQUIPAMENTO de um agendamento
 # ---------------------------------------------------------------------------
 def _salas_para_edicao(ag):
-    """Salas que o admin pode escolher ao editar uma reserva de sala:
-    a sala atual + as que estão livres naquela data/aula."""
     ocupadas = set(
         Agendamento.objects
         .filter(data=ag.data, aula=ag.aula, tipo='SALA')
@@ -1468,8 +1455,6 @@ def _salas_para_edicao(ag):
 
 
 def _categorias_para_edicao(ag):
-    """Quantidades editáveis por categoria numa reserva de equipamento,
-    com o máximo permitido (estoque livre + o que já é desta reserva)."""
     estoque = _estoque_por_categoria()
     reservado_total = _disponibilidade_dispositivos(ag.data)
     atuais = {it.categoria: it.quantidade for it in ag.itens.all()}
@@ -1490,7 +1475,6 @@ def _categorias_para_edicao(ag):
 
 
 def _aplicar_edicao_dispositivo(request, ag):
-    """Aplica as novas quantidades por categoria (campos qtd_cat_<categoria>)."""
     estoque = _estoque_por_categoria()
     reservado_total = _disponibilidade_dispositivos(ag.data)
     atuais = {it.categoria: it for it in ag.itens.all()}
@@ -1524,7 +1508,7 @@ def _aplicar_edicao_dispositivo(request, ag):
 
 @login_required
 def relacao_agendamento(request, agendamento_id):
-    if not (hasattr(request.user, 'perfil') and request.user.perfil.aprovado):
+    if not _is_usuario_aprovado(request.user):
         return redirect('home')
 
     ag = get_object_or_404(
@@ -1534,7 +1518,7 @@ def relacao_agendamento(request, agendamento_id):
         id=agendamento_id
     )
 
-    is_admin = request.user.perfil.tipo == 'ADMINISTRADOR'
+    is_admin = _is_admin_aprovado(request.user)
     pode_editar = is_admin or ag.professor_id == request.user.id
 
     alunos = list(ag.turma.alunos.all())
@@ -1546,23 +1530,19 @@ def relacao_agendamento(request, agendamento_id):
 
         acao = request.POST.get('acao', 'relacao')
 
-        # --- Editar a reserva (professor/turma/observação/sala/quantidades) ---
         if acao == 'editar':
             ag.observacao = request.POST.get('observacao', '').strip()
 
             turma = Turma.objects.filter(id=request.POST.get('turma')).first()
             if turma and turma.id != ag.turma_id:
-                # Mudou a turma: a relação aluno/equipamento antiga não vale mais
                 ag.relacoes.all().delete()
                 ag.turma = turma
 
-            # Só admin pode trocar o professor responsável
             if is_admin:
                 prof = User.objects.filter(id=request.POST.get('professor')).first()
                 if prof:
                     ag.professor = prof
 
-            # Trocar a sala (reservas de sala)
             if ag.tipo == 'SALA':
                 nova = request.POST.get('sala', '')
                 if nova.isdigit() and int(nova) != ag.sala_id:
@@ -1579,7 +1559,6 @@ def relacao_agendamento(request, agendamento_id):
 
             ag.save()
 
-            # Editar as quantidades (reservas de equipamento)
             if ag.tipo == 'DISPOSITIVO':
                 _aplicar_edicao_dispositivo(request, ag)
                 if not ag.itens.exists():
@@ -1590,7 +1569,6 @@ def relacao_agendamento(request, agendamento_id):
             messages.success(request, 'Reserva atualizada com sucesso!')
             return redirect('relacao_agendamento', agendamento_id=ag.id)
 
-        # --- Salvar a relação aluno x equipamento (padrão) ---
         for aluno in alunos:
             valor = request.POST.get(f'equip_{aluno.id}', '').strip()
             RelacaoAlunoEquipamento.objects.update_or_create(
@@ -1600,7 +1578,6 @@ def relacao_agendamento(request, agendamento_id):
         messages.success(request, 'Relação de alunos e equipamentos salva com sucesso!')
         return redirect('relacao_agendamento', agendamento_id=ag.id)
 
-    # Mapa aluno_id -> equipamento já salvo
     salvos = {r.aluno_id: r.equipamento for r in ag.relacoes.all()}
     linhas = [{'aluno': a, 'equipamento': salvos.get(a.id, '')} for a in alunos]
 
