@@ -520,68 +520,96 @@ def usuario_toggle_tipo(request, user_id):
 # ---------------------------------------------------------------------------
 @login_required
 def agendamentos(request):
-    # Mantém a regra de acesso: precisa de perfil aprovado
     if not hasattr(request.user, 'perfil') or not request.user.perfil.aprovado:
         return redirect('home')
 
     hoje = date.today()
 
-    # Ano e mês vêm da URL (?ano=2026&mes=6). Se não vier, usa o mês atual.
+    # Captura ano, mês e dia da URL ou usa a data de hoje como padrão
     try:
         ano = int(request.GET.get('ano', hoje.year))
         mes = int(request.GET.get('mes', hoje.month))
+        dia = int(request.GET.get('dia', hoje.day))
+        data_atual = date(ano, mes, dia)
     except (TypeError, ValueError):
-        ano, mes = hoje.year, hoje.month
+        ano, mes, dia = hoje.year, hoje.month, hoje.day
+        data_atual = hoje
 
     if not (1 <= mes <= 12):
         mes = hoje.month
 
-    # Grade do mês com a semana começando no Domingo.
+    # Navegação de Dias
+    dia_ant = data_atual - timedelta(days=1)
+    dia_prox = data_atual + timedelta(days=1)
+
+    # Navegação de Mês
+    mes_ant = data_atual.month - 1
+    ano_mes_ant = data_atual.year
+    if mes_ant < 1:
+        mes_ant = 12
+        ano_mes_ant -= 1
+
+    mes_prox = data_atual.month + 1
+    ano_mes_prox = data_atual.year
+    if mes_prox > 12:
+        mes_prox = 1
+        ano_mes_prox += 1
+
+    # Navegação de Ano
+    ano_ant = data_atual.year - 1
+    ano_prox = data_atual.year + 1
+
+    # Grade do mês com a semana começando no Domingo
     cal = calendar.Calendar(firstweekday=6)
     semanas = []
     for semana in cal.monthdayscalendar(ano, mes):
         linha = []
-        for dia in semana:
-            if dia == 0:
-                linha.append(None)  # célula vazia (dia de outro mês)
+        for d in semana:
+            if d == 0:
+                linha.append(None)
             else:
-                dia_data = date(ano, mes, dia)
+                dia_data = date(ano, mes, d)
                 linha.append({
-                    'numero': dia,
+                    'numero': d,
                     'hoje': (dia_data == hoje),
                     'passado': (dia_data < hoje),
                 })
         semanas.append(linha)
 
-    # Navegação de mês anterior / próximo
-    primeiro_dia = date(ano, mes, 1)
-    mes_anterior = primeiro_dia - timedelta(days=1)
-    proximo_mes = (primeiro_dia.replace(day=28) + timedelta(days=4)).replace(day=1)
-
-    # Minhas reservas (de hoje em diante), para a seção abaixo do calendário
+    # Reservas para a data selecionada no quadro inferior
     minhas_reservas = (
         Agendamento.objects
-        .filter(professor=request.user, data__gte=hoje)
-        .select_related('sala', 'turma')
+        .filter(data=data_atual)
+        .select_related('sala', 'turma', 'professor')
         .prefetch_related('itens')
-        .order_by('data', 'aula')
+        .order_by('aula')
     )
 
     context = {
         'title': 'Agendamentos',
+        'data_atual': data_atual,
         'ano': ano,
         'mes': mes,
+        'dia': dia,
         'mes_nome': MESES_PT[mes - 1],
         'dias_semana': DIAS_SEMANA_PT,
         'semanas': semanas,
-        # navegação
-        'ano_ant': mes_anterior.year, 'mes_ant': mes_anterior.month,
-        'ano_prox': proximo_mes.year, 'mes_prox': proximo_mes.month,
-        'hoje_ano': hoje.year, 'hoje_mes': hoje.month,
-        # dropdowns
+        
+        # Variáveis do Navegador de Data
+        'dia_ant': dia_ant, 'dia_prox': dia_prox,
+        'mes_ant': mes_ant, 'ano_mes_ant': ano_mes_ant,
+        'mes_prox': mes_prox, 'ano_mes_prox': ano_mes_prox,
+        'ano_ant': ano_ant, 'ano_prox': ano_prox,
+        
+        # Data de hoje
+        'hoje_ano': hoje.year, 
+        'hoje_mes': hoje.month, 
+        'hoje_dia': hoje.day, 
+        
+        # Dropdowns
         'lista_meses': list(enumerate(MESES_PT, start=1)),
         'lista_anos': range(hoje.year - 2, hoje.year + 4),
-        # novos
+        
         'is_admin': request.user.perfil.tipo == 'ADMINISTRADOR',
         'minhas_reservas': minhas_reservas,
     }
