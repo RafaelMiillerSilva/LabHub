@@ -268,7 +268,7 @@
         <select name="cat" class="form-control" onchange="this.form.submit()" style="margin-left:8px;">
             <option value="">Todas as categorias</option>
             {% for valor, nome in categorias %}
-            <option value="{{ valor }}" {% if valor= =cat %}selected{% endif %}>{{ nome }}</option>
+            <option value="{{ valor }}" {% if valor == cat %}selected{% endif %}>{{ nome }}</option>
             {% endfor %}
         </select>
         <button class="btn btn-default" type="submit" style="margin-left:8px;">🔍 Buscar</button>
