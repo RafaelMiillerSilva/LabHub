@@ -181,6 +181,67 @@
             color: #6B7280;
         }
 
+    /* Estilos da Tabela (Modo Lista) */
+    .equip-tabela-container {
+        background: #fff;
+        border: 1px solid #e3e6ee;
+        border-radius: 12px;
+        overflow-x: auto;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+    }
+
+    .equip-tabela {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+        .equip-tabela th {
+            background: #f8fafc;
+            color: #4B5563;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 14px 16px;
+            border-bottom: 1px solid #e3e6ee;
+        }
+
+        .equip-tabela td {
+            padding: 12px 16px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f0f2f5;
+            font-size: 14px;
+            color: #1A2333;
+        }
+
+        .equip-tabela tr:last-child td {
+            border-bottom: none;
+        }
+
+        .equip-tabela tr:hover td {
+            background: #f8fafc;
+        }
+
+    .thumb-mini {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 1px solid #e3e6ee;
+    }
+
+    .thumb-placeholder {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: #eef2fb;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
     @media (max-width: 600px) {
         .equip-hero {
             flex-wrap: wrap;
@@ -207,20 +268,34 @@
         <select name="cat" class="form-control" onchange="this.form.submit()" style="margin-left:8px;">
             <option value="">Todas as categorias</option>
             {% for valor, nome in categorias %}
-            <option value="{{ valor }}" {% if valor == cat %}selected{% endif %}>{{ nome }}</option>
+            <option value="{{ valor }}" {% if valor= =cat %}selected{% endif %}>{{ nome }}</option>
             {% endfor %}
         </select>
         <button class="btn btn-default" type="submit" style="margin-left:8px;">🔍 Buscar</button>
         {% if q or cat %}<a href="{% url 'equipamentos' %}" class="btn btn-link">Limpar</a>{% endif %}
     </form>
-    <div style="display:flex; gap:8px;">
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <!-- Alternador de visualização -->
+        <div class="btn-group" role="group" aria-label="Modo de Visualização">
+            <button type="button" id="btn-view-grid" class="btn btn-default active" title="Visualização em Grade">🔲 Grade</button>
+            <button type="button" id="btn-view-list" class="btn btn-default" title="Visualização em Lista">☰ Lista</button>
+        </div>
+
+        <!-- Botão Baixar Planilha -->
+        <a href="{% url 'exportar_equipamentos' %}{% if q or cat %}?q={{ q }}&cat={{ cat }}{% endif %}" class="btn btn-success">
+            📊 Baixar planilha
+        </a>
+
         <button type="button" id="btn-selecionar-tudo" class="btn btn-default">☑️ Selecionar tudo</button>
         <button type="submit" form="form-etiquetas" class="btn btn-info">🏷️ Baixar etiquetas selecionadas</button>
     </div>
 </div>
 
 <form method="get" action="{% url 'etiquetas_lote' %}" id="form-etiquetas">
-    <div class="equip-grid">
+
+    <!-- VISUALIZAÇÃO EM GRADE (PADRÃO) -->
+    <div class="equip-grid" id="container-grid">
 
         <!-- Card de cadastrar -->
         <a href="{% url 'equipamento_novo' %}" class="card-novo">
@@ -231,7 +306,7 @@
         <!-- Cards dos equipamentos -->
         {% for e in equipamentos %}
         <div class="equip-card">
-            <input type="checkbox" name="ids" value="{{ e.id }}" class="equip-check"
+            <input type="checkbox" name="ids" value="{{ e.id }}" class="equip-check checkbox-item"
                    title="Selecionar para etiqueta">
             <a href="{% url 'equipamento_editar' e.id %}" style="text-decoration:none; color:inherit;">
                 <div class="equip-foto">
@@ -281,6 +356,72 @@
         {% endfor %}
 
     </div>
+
+    <!-- VISUALIZAÇÃO EM LISTA (TABELA) -->
+    <div class="equip-tabela-container" id="container-lista" style="display: none;">
+        <table class="equip-tabela">
+            <thead>
+                <tr>
+                    <th style="width: 40px; text-align: center;">#</th>
+                    <th style="width: 60px;">Foto</th>
+                    <th>Apelido</th>
+                    <th>Categoria</th>
+                    <th>Status</th>
+                    <th>Patrimônio</th>
+                    <th>Observação</th>
+                    <th style="text-align: right;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in equipamentos %}
+                <tr>
+                    <td style="text-align: center;">
+                        <input type="checkbox" name="ids" value="{{ e.id }}" class="checkbox-item" title="Selecionar para etiqueta">
+                    </td>
+                    <td>
+                        {% if e.tem_foto %}
+                        <img src="{% url 'foto_equipamento' e.id %}" alt="{{ e.apelido }}" class="thumb-mini">
+                        {% else %}
+                        <span class="thumb-placeholder">💻</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong style="color: #1e3c72; font-size: 15px;">{{ e.apelido }}</strong>
+                    </td>
+                    <td>{{ e.get_categoria_display }}</td>
+                    <td>
+                        {% if e.status == 'ATIVO' %}
+                        <span class="label label-success">Ativo</span>
+                        {% elif e.status == 'MANUTENCAO' %}
+                        <span class="label label-warning">Em manutenção</span>
+                        {% elif e.status == 'QUEBRADO' %}
+                        <span class="label label-danger">Quebrado</span>
+                        {% else %}
+                        <span class="label label-default">Desativado</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ e.numero_patrimonio|default:"-" }}</td>
+                    <td>
+                        <span class="text-muted" style="font-style: italic;">
+                            {{ e.observacao|default:"-"|truncatechars:40 }}
+                        </span>
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <a href="{% url 'equipamento_editar' e.id %}" class="btn btn-xs btn-default">✏️ Editar</a>
+                        <a href="{% url 'etiqueta_equipamento' e.id %}" class="btn btn-xs btn-info">🏷️ Etiqueta</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-muted text-center" style="padding: 20px;">
+                        <em>{% if q or cat %}Nenhum equipamento encontrado para o filtro atual.{% else %}Nenhum equipamento cadastrado ainda.{% endif %}</em>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
 </form>
 
 {% endblock %}
@@ -288,16 +429,48 @@
 {% block scripts %}
 <script>
     (function () {
+        // Selecionar/Desmarcar todos os checkboxes
         var botao = document.getElementById('btn-selecionar-tudo');
-        if (!botao) return;
-        botao.addEventListener('click', function () {
-            var checks = document.querySelectorAll('#form-etiquetas input[name="ids"]');
-            if (!checks.length) return;
-            // Se houver algum desmarcado, marca todos; senão, desmarca todos
-            var marcarTodos = Array.prototype.some.call(checks, function (c) { return !c.checked; });
-            Array.prototype.forEach.call(checks, function (c) { c.checked = marcarTodos; });
-            botao.textContent = marcarTodos ? '⬜ Desmarcar tudo' : '☑️ Selecionar tudo';
-        });
+        if (botao) {
+            botao.addEventListener('click', function () {
+                var checks = document.querySelectorAll('#form-etiquetas input[name="ids"]');
+                if (!checks.length) return;
+                var marcarTodos = Array.prototype.some.call(checks, function (c) { return !c.checked; });
+                Array.prototype.forEach.call(checks, function (c) { c.checked = marcarTodos; });
+                botao.textContent = marcarTodos ? '⬜ Desmarcar tudo' : '☑️ Selecionar tudo';
+            });
+        }
+
+        // Alternância entre visualização em Grade e Lista
+        var btnGrid = document.getElementById('btn-view-grid');
+        var btnList = document.getElementById('btn-view-list');
+        var gridContainer = document.getElementById('container-grid');
+        var listContainer = document.getElementById('container-lista');
+
+        function setViewMode(mode) {
+            if (mode === 'list') {
+                gridContainer.style.display = 'none';
+                listContainer.style.display = 'block';
+                btnList.classList.add('active');
+                btnGrid.classList.remove('active');
+                localStorage.setItem('equip_view_mode', 'list');
+            } else {
+                gridContainer.style.display = 'grid';
+                listContainer.style.display = 'none';
+                btnGrid.classList.add('active');
+                btnList.classList.remove('active');
+                localStorage.setItem('equip_view_mode', 'grid');
+            }
+        }
+
+        if (btnGrid && btnList) {
+            btnGrid.addEventListener('click', function () { setViewMode('grid'); });
+            btnList.addEventListener('click', function () { setViewMode('list'); });
+
+            // Recupera a preferência salva pelo usuário
+            var savedMode = localStorage.getItem('equip_view_mode') || 'grid';
+            setViewMode(savedMode);
+        }
     })();
 </script>
 {% endblock %}
