@@ -1117,6 +1117,52 @@ def etiquetas_lote(request):
     return response
 
 
+@login_required
+def exportar_equipamentos(request):
+    """Exporta a lista de equipamentos filtrados para um arquivo CSV."""
+    if not _is_usuario_aprovado(request.user):
+        return redirect('home')
+
+    import csv
+
+    q = request.GET.get('q', '').strip()
+    cat = request.GET.get('cat', '').strip()
+
+    lista = Equipamento.objects.defer('foto_dados')
+    if q:
+        lista = lista.filter(apelido__icontains=q)
+    if cat:
+        lista = lista.filter(categoria=cat)
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="equipamentos.csv"'
+    response.write('\ufeff')  # BOM para acentuação correta no Excel
+
+    writer = csv.writer(response, delimiter=';')
+    writer.writerow([
+        'Apelido',
+        'Categoria',
+        'Identificação Escola',
+        'Nº Patrimônio',
+        'Nº de Série',
+        'IMEI',
+        'Status',
+    ])
+
+    for equip in lista:
+        writer.writerow([
+            equip.apelido or '',
+            equip.get_categoria_display() if hasattr(equip, 'get_categoria_display') else equip.categoria,
+            equip.identificacao_escola or '',
+            equip.numero_patrimonio or '',
+            equip.numero_serie or '',
+            equip.imei or '',
+            getattr(equip, 'status', ''),
+        ])
+
+    return response
+
+
 # ---------------------------------------------------------------------------
 # CADASTRO E VISUALIZAÇÃO DE TURMAS E ALUNOS
 # ---------------------------------------------------------------------------
@@ -1591,7 +1637,7 @@ def relacao_agendamento(request, agendamento_id):
         return redirect('relacao_agendamento', agendamento_id=ag.id)
 
     salvos = {r.aluno_id: r.equipamento for r in ag.relacoes.all()}
-    linhas = [{'aluno': a, 'equipamento': salvos.get(a.id, '')} for a in alunos]
+    linhas = [{'aluno': a, 'equipamento': salvos.get(a.id, '')} for a a in alunos]
 
     return render(request, 'app/relacao_agendamento.html', {
         'title': 'Relação Alunos x Equipamentos',
