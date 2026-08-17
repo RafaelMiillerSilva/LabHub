@@ -125,152 +125,208 @@
         }
 </style>
 
-<!-- ============================ RESERVAS DO DIA ============================ -->
-<div class="lh-card">
-    <div class="lh-card__header lh-card__header--green" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px;">
+<!-- ============================ RESERVAS DO DIA (Reativo) ============================ -->
+<div class="lh-reactive-container">
+    <div class="lh-card">
+        <div class="lh-card__header lh-card__header--green" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px;">
 
-        <!-- Navegador de Datas: <- dia -> mes <- mes -> ano <- ano -> -->
-        <div class="lh-date-navigator">
-            <div class="lh-date-group">
-                <a href="?dia={{ dia_ant.day }}&mes={{ dia_ant.month }}&ano={{ dia_ant.year }}">◀</a>
-                <span>{{ data_atual|date:"d" }}</span>
-                <a href="?dia={{ dia_prox.day }}&mes={{ dia_prox.month }}&ano={{ dia_prox.year }}">▶</a>
+            <!-- Navegador de Datas: <- dia -> mes <- mes -> ano <- ano -> -->
+            <div class="lh-date-navigator">
+                <div class="lh-date-group">
+                    <a href="?dia={{ dia_ant.day }}&mes={{ dia_ant.month }}&ano={{ dia_ant.year }}">◀</a>
+                    <span>{{ data_atual|date:"d" }}</span>
+                    <a href="?dia={{ dia_prox.day }}&mes={{ dia_prox.month }}&ano={{ dia_prox.year }}">▶</a>
+                </div>
+
+                <span class="lh-date-label">mês</span>
+
+                <div class="lh-date-group">
+                    <a href="?dia={{ data_atual.day }}&mes={{ mes_ant }}&ano={{ ano_mes_ant }}">◀</a>
+                    <span>{{ data_atual|date:"m" }}</span>
+                    <a href="?dia={{ data_atual.day }}&mes={{ mes_prox }}&ano={{ ano_mes_prox }}">▶</a>
+                </div>
+
+                <span class="lh-date-label">ano</span>
+
+                <div class="lh-date-group">
+                    <a href="?dia={{ data_atual.day }}&mes={{ data_atual.month }}&ano={{ ano_ant }}">◀</a>
+                    <span>{{ data_atual|date:"Y" }}</span>
+                    <a href="?dia={{ data_atual.day }}&mes={{ data_atual.month }}&ano={{ ano_prox }}">▶</a>
+                </div>
             </div>
 
-            <span class="lh-date-label">mês</span>
-
-            <div class="lh-date-group">
-                <a href="?dia={{ data_atual.day }}&mes={{ mes_ant }}&ano={{ ano_mes_ant }}">◀</a>
-                <span>{{ data_atual|date:"m" }}</span>
-                <a href="?dia={{ data_atual.day }}&mes={{ mes_prox }}&ano={{ ano_mes_prox }}">▶</a>
-            </div>
-
-            <span class="lh-date-label">ano</span>
-
-            <div class="lh-date-group">
-                <a href="?dia={{ data_atual.day }}&mes={{ data_atual.month }}&ano={{ ano_ant }}">◀</a>
-                <span>{{ data_atual|date:"Y" }}</span>
-                <a href="?dia={{ data_atual.day }}&mes={{ data_atual.month }}&ano={{ ano_prox }}">▶</a>
+            <!-- Filtro: Minhas Reservas -->
+            <div class="lh-checkbox-wrap" id="wrapMinhasReservas">
+                <input type="checkbox" id="chkMinhasReservas">
+                <label for="chkMinhasReservas">Minhas reservas</label>
             </div>
         </div>
 
-        <!-- Filtro: Minhas Reservas -->
-        <div class="lh-checkbox-wrap" id="wrapMinhasReservas">
-            <input type="checkbox" id="chkMinhasReservas">
-            <label for="chkMinhasReservas">Minhas reservas</label>
-        </div>
-    </div>
-
-    <div class="lh-card__body">
-        <div class="lh-table-wrap">
-            <table class="lh-table" id="tabelaReservasDia">
-                <thead>
-                    <tr>
-                        <th class="text-center" style="width:70px">Aula</th>
-                        <th>Tipo</th>
-                        <th>Reserva (Sala / Equipamentos)</th>
-                        <th>Turma</th>
-                        <th>Professor</th>
-                        <th class="text-center" style="width:100px">Relação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for r in reservas_dia %}
-                    <tr class="linha-reserva" data-usuario="{{ r.professor.username }}">
-                        <td class="text-center">
-                            <span class="lh-badge lh-badge--blue">{{ r.aula }}ª</span>
-                        </td>
-                        <td>
-                            {% if r.tipo == 'SALA' %}
-                            <span class="lh-badge lh-badge--green" style="background:#E8F5E9; color:#2E7D32;">🏫 Sala</span>
-                            {% else %}
-                            <span class="lh-badge lh-badge--orange" style="background:#FFF3E0; color:#E65100;">💻 Equip.</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <strong>
+        <div class="lh-card__body">
+            <div class="lh-table-wrap">
+                <table class="lh-table" id="tabelaReservasDia">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width:70px">Aula</th>
+                            <th>Tipo</th>
+                            <th>Reserva (Sala / Equipamentos)</th>
+                            <th>Turma</th>
+                            <th>Professor</th>
+                            <th class="text-center" style="width:100px">Relação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reservas_dia %}
+                        <tr class="linha-reserva" data-usuario="{{ r.professor.username }}">
+                            <td class="text-center">
+                                <span class="lh-badge lh-badge--blue">{{ r.aula }}ª</span>
+                            </td>
+                            <td>
                                 {% if r.tipo == 'SALA' %}
-                                {{ r.sala.nome }}
+                                <span class="lh-badge lh-badge--green" style="background:#E8F5E9; color:#2E7D32;">🏫 Sala</span>
                                 {% else %}
-                                <div class="lh-tags" style="margin-bottom: 0;">
-                                    {% for item in r.itens.all %}
-                                    <span class="lh-tag">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
-                                    {% endfor %}
-                                </div>
+                                <span class="lh-badge lh-badge--orange" style="background:#FFF3E0; color:#E65100;">💻 Equip.</span>
                                 {% endif %}
-                            </strong>
-                        </td>
-                        <td>{{ r.turma.nome }}</td>
-                        <td>{{ r.professor.get_full_name|default:r.professor.username }}</td>
-                        <td class="text-center">
-                            <a href="{% url 'relacao_agendamento' r.id %}" class="lh-btn lh-btn--xs lh-btn--info">📋 Abrir</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr id="linhaVazia">
-                        <td colspan="6" class="lh-table__empty">
-                            <span>📭</span>
-                            <p>Nenhuma reserva registrada neste dia.</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            </td>
+                            <td>
+                                <strong>
+                                    {% if r.tipo == 'SALA' %}
+                                    {{ r.sala.nome }}
+                                    {% else %}
+                                    <div class="lh-tags" style="margin-bottom: 0;">
+                                        {% for item in r.itens.all %}
+                                        <span class="lh-tag">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </strong>
+                            </td>
+                            <td>{{ r.turma.nome }}</td>
+                            <td>{{ r.professor.get_full_name|default:r.professor.username }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'relacao_agendamento' r.id %}" class="lh-btn lh-btn--xs lh-btn--info">📋 Abrir</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr id="linhaVazia">
+                            <td colspan="6" class="lh-table__empty">
+                                <span>📭</span>
+                                <p>Nenhuma reserva registrada neste dia.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- ============================ SCRIPT DE FILTRAGEM ============================ -->
+<!-- ============================ SCRIPT DE NAVEGAÇÃO REATIVA E FILTRAGEM ============================ -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const chk = document.getElementById('chkMinhasReservas');
-    const wrap = document.getElementById('wrapMinhasReservas');
-    const linhas = document.querySelectorAll('.linha-reserva');
-    const currentUser = "{{ user.username }}";
-    const tbody = document.querySelector('#tabelaReservasDia tbody');
+    const containerSelector = '.lh-reactive-container';
 
-    // Permite clicar em toda a área azul para acionar o checkbox
-    if (wrap) {
-        wrap.addEventListener('click', function(e) {
-            if (e.target !== chk) {
-                chk.checked = !chk.checked;
-                chk.dispatchEvent(new Event('change'));
-            }
-        });
-    }
+    function bindEvents() {
+        const wrap = document.getElementById('wrapMinhasReservas');
+        let chk = document.getElementById('chkMinhasReservas');
+        const linhas = document.querySelectorAll('.linha-reserva');
+        const currentUser = "{{ user.username }}";
+        const tbody = document.querySelector('#tabelaReservasDia tbody');
 
-    if (chk) {
-        chk.addEventListener('change', function() {
-            let visiveis = 0;
-            linhas.forEach(linha => {
-                if (this.checked) {
-                    // Esconde se o username da linha for diferente do usuário logado
-                    if (linha.getAttribute('data-usuario') === currentUser) {
-                        linha.style.display = '';
-                        visiveis++;
-                    } else {
-                        linha.style.display = 'none';
-                    }
-                } else {
-                    linha.style.display = '';
-                    visiveis++;
+        if (wrap && chk) {
+            // Remove listeners antigos substituindo o node (seguro após o fetch)
+            const newWrap = wrap.cloneNode(true);
+            wrap.parentNode.replaceChild(newWrap, wrap);
+            chk = document.getElementById('chkMinhasReservas');
+
+            newWrap.addEventListener('click', function(e) {
+                if (e.target !== chk) {
+                    chk.checked = !chk.checked;
+                    chk.dispatchEvent(new Event('change'));
                 }
             });
 
-            // Gerenciamento de mensagem de "Vazio" após filtro
-            const msgFiltro = document.getElementById('msgFiltroVazio');
-            if (visiveis === 0 && linhas.length > 0) {
-                if (!msgFiltro) {
-                    const tr = document.createElement('tr');
-                    tr.id = 'msgFiltroVazio';
-                    tr.innerHTML = '<td colspan="6" class="lh-table__empty"><span>👀</span><p>Você não possui nenhuma reserva agendada neste dia.</p></td>';
-                    tbody.appendChild(tr);
+            chk.addEventListener('change', function() {
+                let visiveis = 0;
+                linhas.forEach(linha => {
+                    if (this.checked) {
+                        if (linha.getAttribute('data-usuario') === currentUser) {
+                            linha.style.display = '';
+                            visiveis++;
+                        } else {
+                            linha.style.display = 'none';
+                        }
+                    } else {
+                        linha.style.display = '';
+                        visiveis++;
+                    }
+                });
+
+                const msgFiltro = document.getElementById('msgFiltroVazio');
+                if (visiveis === 0 && linhas.length > 0) {
+                    if (!msgFiltro) {
+                        const tr = document.createElement('tr');
+                        tr.id = 'msgFiltroVazio';
+                        tr.innerHTML = '<td colspan="6" class="lh-table__empty"><span>👀</span><p>Você não possui nenhuma reserva agendada neste dia.</p></td>';
+                        tbody.appendChild(tr);
+                    }
+                } else {
+                    if (msgFiltro) msgFiltro.remove();
                 }
-            } else {
-                if (msgFiltro) msgFiltro.remove();
-            }
-        });
+            });
+        }
     }
+
+    // Delegação de eventos globais para buscar as páginas via Fetch
+    document.body.addEventListener('click', function(e) {
+        const link = e.target.closest('.lh-date-navigator a');
+        if (!link) return;
+
+        e.preventDefault();
+        const url = link.href;
+        let container = document.querySelector(containerSelector);
+
+        if (container) {
+            container.style.transition = 'opacity 0.2s ease-in-out';
+            container.style.opacity = '0.5';
+        }
+
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Erro ao buscar a data');
+            return response.text();
+        })
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newContainer = doc.querySelector(containerSelector);
+
+            if (newContainer && container) {
+                // Substitui de forma invisível
+                container.innerHTML = newContainer.innerHTML;
+                window.history.pushState({path: url}, '', url);
+
+                // Reconecta os scripts perdidos no swap do DOM
+                bindEvents();
+            }
+            if (container) container.style.opacity = '1';
+        })
+        .catch(err => {
+            console.error('Erro no fluxo reativo:', err);
+            window.location.href = url; // Fallback
+        });
+    });
+
+    // Garantir que os botões voltar/avançar do navegador recarreguem o DOM local corretamente
+    window.addEventListener('popstate', function() {
+        window.location.reload();
+    });
+
+    // Inicia os eventos na primeira carga
+    bindEvents();
 });
 </script>
 
