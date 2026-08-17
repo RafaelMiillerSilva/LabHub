@@ -404,7 +404,7 @@
                         </button>
                         <ul class="dropdown-menu">
                             {% for num, nome in lista_meses %}
-                            <li{% if num= =mes %} class="active" {% endif %}>
+                            <li{% if num == mes %} class="active" {% endif %}>
                                 <a href="?ano={{ ano }}&mes={{ num }}">{{ nome }}</a>
                                 </li>
                                 {% endfor %}
@@ -417,7 +417,7 @@
                         </button>
                         <ul class="dropdown-menu">
                             {% for a in lista_anos %}
-                            <li{% if a= =ano %} class="active" {% endif %}>
+                            <li{% if a == ano %} class="active" {% endif %}>
                                 <a href="?ano={{ a }}&mes={{ mes }}">{{ a }}</a>
                                 </li>
                                 {% endfor %}
