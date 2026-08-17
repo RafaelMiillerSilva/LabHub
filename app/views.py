@@ -1637,7 +1637,7 @@ def relacao_agendamento(request, agendamento_id):
         return redirect('relacao_agendamento', agendamento_id=ag.id)
 
     salvos = {r.aluno_id: r.equipamento for r in ag.relacoes.all()}
-    linhas = [{'aluno': a, 'equipamento': salvos.get(a.id, '')} for a a in alunos]
+    linhas = [{'aluno': a, 'equipamento': salvos.get(a.id, '')} for a in alunos]
 
     return render(request, 'app/relacao_agendamento.html', {
         'title': 'Relação Alunos x Equipamentos',
