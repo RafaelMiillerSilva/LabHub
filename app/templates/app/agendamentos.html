@@ -404,7 +404,7 @@
                         </button>
                         <ul class="dropdown-menu">
                             {% for num, nome in lista_meses %}
-                            <li{% if num == mes %} class="active" {% endif %}>
+                            <li{% if num= =mes %} class="active" {% endif %}>
                                 <a href="?ano={{ ano }}&mes={{ num }}">{{ nome }}</a>
                                 </li>
                                 {% endfor %}
@@ -417,7 +417,7 @@
                         </button>
                         <ul class="dropdown-menu">
                             {% for a in lista_anos %}
-                            <li{% if a == ano %} class="active" {% endif %}>
+                            <li{% if a= =ano %} class="active" {% endif %}>
                                 <a href="?ano={{ a }}&mes={{ mes }}">{{ a }}</a>
                                 </li>
                                 {% endfor %}
@@ -462,11 +462,11 @@
         💡 Clique em um dia para ver as 9 aulas e agendar salas ou equipamentos.
     </p>
 
-    <!-- ===================== BLOCO: RESERVAS DIA (SUBSTITUÍDO) ===================== -->
+    <!-- ===================== BLOCO: RESERVAS DIA ===================== -->
     <div class="lh-card" style="max-width:760px; margin: 0 auto 40px;">
         <div class="lh-card-header" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px;">
 
-            <!-- Navegador de Datas: <- dia -> mes <- mes -> ano <- ano -> -->
+            <!-- Navegador de Datas -->
             <div class="lh-date-navigator">
                 <div class="lh-date-group">
                     <a href="?dia={{ dia_ant.day }}&mes={{ dia_ant.month }}&ano={{ dia_ant.year }}">◀</a>
@@ -605,59 +605,139 @@
 
 {% block scripts %}
 <script>
-    $(document).ready(function () {
-        // Modal para aviso de datas passadas
-        $('.cal-dia.passado').on('click', function (e) {
-            e.preventDefault();
-            var url = $(this).attr('href');
-            $('#proceedPastLink').attr('href', url);
-            $('#modalPassado').modal('show');
-        });
+    document.addEventListener('DOMContentLoaded', function () {
+        const containerSelector = '.cal-container-wrap';
+        let container = document.querySelector(containerSelector);
 
-        // Lógica de Filtragem "Minhas Reservas"
-        var chk = document.getElementById('chkMinhasReservas');
-        var wrap = document.getElementById('wrapMinhasReservas');
-        var linhas = document.querySelectorAll('.linha-reserva');
-        var currentUser = "{{ user.username }}";
-        var tbody = document.querySelector('#tabelaReservasDia tbody');
-
-        if (wrap && chk) {
-            wrap.addEventListener('click', function(e) {
-                if (e.target !== chk) {
-                    chk.checked = !chk.checked;
-                    chk.dispatchEvent(new Event('change'));
-                }
+        // Lida com a vinculação de eventos que precisam ser reiniciados após alterar o DOM
+        function bindEvents() {
+            // Modal para aviso de datas passadas
+            $('.cal-dia.passado').off('click').on('click', function (e) {
+                e.preventDefault();
+                var url = $(this).attr('href');
+                $('#proceedPastLink').attr('href', url);
+                $('#modalPassado').modal('show');
             });
 
-            chk.addEventListener('change', function() {
-                var visiveis = 0;
-                linhas.forEach(function(linha) {
-                    if (chk.checked) {
-                        if (linha.getAttribute('data-usuario') === currentUser) {
-                            linha.style.display = '';
-                            visiveis++;
-                        } else {
-                            linha.style.display = 'none';
-                        }
-                    } else {
-                        linha.style.display = '';
-                        visiveis++;
+            // Lógica de Filtragem "Minhas Reservas"
+            var chk = document.getElementById('chkMinhasReservas');
+            var wrap = document.getElementById('wrapMinhasReservas');
+            var linhas = document.querySelectorAll('.linha-reserva');
+            var currentUser = "{{ user.username }}";
+            var tbody = document.querySelector('#tabelaReservasDia tbody');
+
+            if (wrap && chk) {
+                // Remove listeners antigos substituindo o node (seguro após fetch)
+                var newWrap = wrap.cloneNode(true);
+                wrap.parentNode.replaceChild(newWrap, wrap);
+                chk = document.getElementById('chkMinhasReservas');
+                wrap = newWrap;
+
+                wrap.addEventListener('click', function(e) {
+                    if (e.target !== chk) {
+                        chk.checked = !chk.checked;
+                        chk.dispatchEvent(new Event('change'));
                     }
                 });
 
-                var msgFiltro = document.getElementById('msgFiltroVazio');
-                if (visiveis === 0 && linhas.length > 0) {
-                    if (!msgFiltro) {
-                        var tr = document.createElement('tr');
-                        tr.id = 'msgFiltroVazio';
-                        tr.innerHTML = '<td colspan="7" class="lh-table__empty"><span>👀</span><p>Você não possui nenhuma reserva agendada nesta seleção.</p></td>';
-                        tbody.appendChild(tr);
+                chk.addEventListener('change', function() {
+                    var visiveis = 0;
+                    linhas.forEach(function(linha) {
+                        if (chk.checked) {
+                            if (linha.getAttribute('data-usuario') === currentUser) {
+                                linha.style.display = '';
+                                visiveis++;
+                            } else {
+                                linha.style.display = 'none';
+                            }
+                        } else {
+                            linha.style.display = '';
+                            visiveis++;
+                        }
+                    });
+
+                    var msgFiltro = document.getElementById('msgFiltroVazio');
+                    if (visiveis === 0 && linhas.length > 0) {
+                        if (!msgFiltro) {
+                            var tr = document.createElement('tr');
+                            tr.id = 'msgFiltroVazio';
+                            tr.innerHTML = '<td colspan="7" class="lh-table__empty"><span>👀</span><p>Você não possui nenhuma reserva agendada nesta seleção.</p></td>';
+                            tbody.appendChild(tr);
+                        }
+                    } else {
+                        if (msgFiltro) msgFiltro.remove();
                     }
-                } else {
-                    if (msgFiltro) msgFiltro.remove();
-                }
-            });
+                });
+            }
         }
+
+        // Função utilitária para verificar se o link é reativo/navegável
+        function isNavLink(link) {
+            if (link.matches('.cal-dropdowns-group a')) return true;
+            if (link.matches('.cal-nav a')) return true;
+            if (link.matches('.lh-date-navigator a')) return true;
+            if (link.matches('.cal-dia:not(.passado)')) return true;
+            if (link.id === 'proceedPastLink') return true;
+            return false;
+        }
+
+        // Delegação de eventos globais para buscar as páginas via Fetch
+        document.body.addEventListener('click', function(e) {
+            const link = e.target.closest('a');
+            if (!link) return;
+
+            if (isNavLink(link)) {
+                e.preventDefault();
+                const url = link.href;
+
+                // Esconder o modal se clicar em 'Prosseguir' antes de buscar
+                if (link.id === 'proceedPastLink') {
+                    $('#modalPassado').modal('hide');
+                }
+
+                // Opacidade para mostrar carregamento rápido
+                container = document.querySelector(containerSelector);
+                if (container) {
+                    container.style.transition = 'opacity 0.2s ease-in-out';
+                    container.style.opacity = '0.5';
+                }
+
+                fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Erro ao buscar a data');
+                    return response.text();
+                })
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContainer = doc.querySelector(containerSelector);
+
+                    if (newContainer && container) {
+                        // Substitui de forma invisível
+                        container.innerHTML = newContainer.innerHTML;
+                        window.history.pushState({path: url}, '', url);
+
+                        // Reconecta os scripts perdidos no swap do DOM
+                        bindEvents();
+                    }
+                    if (container) container.style.opacity = '1';
+                })
+                .catch(err => {
+                    console.error('Erro no fluxo reativo:', err);
+                    window.location.href = url; // Fallback se algo der erro
+                });
+            }
+        });
+
+        // Garantir que os botões voltar/avançar do navegador recarreguem o DOM local corretamente
+        window.addEventListener('popstate', function() {
+            window.location.reload();
+        });
+
+        // Chama na primeira inicialização da página
+        bindEvents();
     });
 </script>
 {% endblock %}
