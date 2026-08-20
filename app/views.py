@@ -1,26 +1,40 @@
 import calendar
 from collections import defaultdict
 from datetime import date, timedelta
+from urllib.parse import urlencode
 
-from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib import messages
 from django.db import IntegrityError
-from django.db.models import Sum, Count, Q
-from django.http import HttpResponse, Http404, JsonResponse
+from django.db.models import Count, Q, Sum
+from django.http import Http404, HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
-from django.utils.dateparse import parse_date
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 
 from .forms import (
-    CadastroForm, BootstrapAuthenticationForm, SalaForm, EquipamentoForm,
-    TurmaForm, AlunoForm,
+    AlunoForm,
+    BootstrapAuthenticationForm,
+    CadastroForm,
+    EquipamentoForm,
+    SalaForm,
+    TurmaForm,
 )
 from .models import (
-    Perfil, HistoricoAcao, Sala, Equipamento, Turma, Aluno,
-    Agendamento, ItemDispositivo, RelacaoAlunoEquipamento, PedidoRedefinicaoSenha,
+    Agendamento,
+    Aluno,
+    Equipamento,
+    HistoricoAcao,
+    ItemDispositivo,
+    PedidoRedefinicaoSenha,
+    Perfil,
+    RelacaoAlunoEquipamento,
+    Sala,
+    Turma,
 )
 
 
@@ -1003,6 +1017,57 @@ def equipamento_form(request, equip_id=None):
         'editando': instancia,
         'categorias_com_chip': list(Equipamento.CATEGORIAS_COM_CHIP),
     })
+
+
+@login_required
+def equipamento_editar(request, pk=None):
+    if not _is_admin_aprovado(request.user):
+        return redirect('home')
+
+    if pk:
+        equipamento = get_object_or_404(Equipamento, pk=pk)
+    else:
+        equipamento = None
+
+    # Captura os filtros atuais da URL
+    q = request.GET.get('q', '').strip()
+    cat = request.GET.get('cat', '').strip()
+
+    if request.method == 'POST':
+        form = EquipamentoForm(request.POST, request.FILES, instance=equipamento)
+        if form.is_valid():
+            equip = form.save()
+            if equipamento:
+                messages.success(request, f'Equipamento "{equip.apelido}" atualizado com sucesso!')
+            else:
+                messages.success(request, f'Equipamento "{equip.apelido}" cadastrado com sucesso!')
+
+            # Redireciona mantendo os parâmetros de busca
+            base_url = reverse('equipamentos')
+            query_params = {}
+            if q:
+                query_params['q'] = q
+            if cat:
+                query_params['cat'] = cat
+
+            if query_params:
+                redirect_url = f'{base_url}?{urlencode(query_params)}'
+            else:
+                redirect_url = base_url
+
+            return redirect(redirect_url)
+    else:
+        form = EquipamentoForm(instance=equipamento)
+
+    context = {
+        'title': 'Editar Equipamento' if equipamento else 'Cadastrar Equipamento',
+        'form': form,
+        'editando': equipamento,
+        'q': q,
+        'cat': cat,
+        'categorias_com_chip': list(Equipamento.CATEGORIAS_COM_CHIP),
+    }
+    return render(request, 'app/equipamento_form.html', context)
 
 
 @login_required

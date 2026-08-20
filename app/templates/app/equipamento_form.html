@@ -100,8 +100,6 @@
         }
 
     /* Restyle native form widgets rendered by Django ({{ form.field }}) */
-    /* !important guards against Bootstrap's .form-control (height:34px, etc.)
-       and any inline width/style Django widgets may carry */
     .eq-card-body input[type="text"],
     .eq-card-body input[type="number"],
     .eq-card-body input[type="file"],
@@ -280,7 +278,7 @@
 {% block content %}
 
 <div class="eq-topo">
-    <a href="{% url 'equipamentos' %}" class="eq-voltar">&larr; Voltar para Equipamentos</a>
+    <a href="{% url 'equipamentos' %}{% if q or cat %}?q={{ q }}&cat={{ cat }}{% endif %}" class="eq-voltar">&larr; Voltar para Equipamentos</a>
     <h2>
         {% if editando %}✏️ Editar Equipamento{% else %}➕ Cadastrar Equipamento{% endif %}
     </h2>
@@ -371,7 +369,7 @@
                     <button type="submit" class="eq-btn eq-btn-primario">
                         {% if editando %}💾 Salvar Alterações{% else %}✅ Cadastrar{% endif %}
                     </button>
-                    <a href="{% url 'equipamentos' %}" class="eq-btn eq-btn-secundario">Cancelar</a>
+                    <a href="{% url 'equipamentos' %}{% if q or cat %}?q={{ q }}&cat={{ cat }}{% endif %}" class="eq-btn eq-btn-secundario">Cancelar</a>
                 </div>
 
                 {% if editando %}
