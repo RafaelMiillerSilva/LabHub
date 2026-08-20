@@ -1029,7 +1029,7 @@ def equipamento_editar(request, pk=None):
     else:
         equipamento = None
 
-    # Captura os filtros atuais da URL
+    # Captura os filtros atuais da URL (seja via GET ao abrir ou QueryString ao enviar)
     q = request.GET.get('q', '').strip()
     cat = request.GET.get('cat', '').strip()
 
@@ -1088,11 +1088,25 @@ def equipamento_excluir(request, equip_id):
     if not _is_admin_aprovado(request.user):
         return redirect('home')
 
+    # Captura os parâmetros para manter o filtro após excluir
+    q = request.GET.get('q', '').strip()
+    cat = request.GET.get('cat', '').strip()
+
     if request.method == 'POST':
         equip = get_object_or_404(Equipamento, id=equip_id)
         apelido = equip.apelido
         equip.delete()
         messages.warning(request, f'Equipamento "{apelido}" removido.')
+
+    base_url = reverse('equipamentos')
+    query_params = {}
+    if q:
+        query_params['q'] = q
+    if cat:
+        query_params['cat'] = cat
+
+    if query_params:
+        return redirect(f'{base_url}?{urlencode(query_params)}')
 
     return redirect('equipamentos')
 

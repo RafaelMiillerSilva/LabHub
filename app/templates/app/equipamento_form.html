@@ -302,7 +302,8 @@
             <h3>Dados do equipamento</h3>
         </div>
         <div class="eq-card-body">
-            <form method="post" enctype="multipart/form-data">
+            <!-- ALTERADO: Preserva os parâmetros no action do formulário -->
+            <form method="post" enctype="multipart/form-data" action="{% if editando %}{% url 'equipamento_editar' editando.id %}{% else %}{% url 'equipamento_novo' %}{% endif %}{% if q or cat %}?q={{ q }}&cat={{ cat }}{% endif %}">
                 {% csrf_token %}
 
                 <div class="eq-form-group">
@@ -387,7 +388,8 @@
         </div>
         <div class="eq-card-body">
             <p>Remove este equipamento permanentemente.</p>
-            <form action="{% url 'equipamento_excluir' editando.id %}" method="post">
+            <!-- ALTERADO: Repassa os parâmetros da busca na rota de exclusão -->
+            <form action="{% url 'equipamento_excluir' editando.id %}{% if q or cat %}?q={{ q }}&cat={{ cat }}{% endif %}" method="post">
                 {% csrf_token %}
                 <button type="submit" class="eq-btn eq-btn-perigo"
                         data-confirm="Remover o equipamento {{ editando.apelido }}?">
