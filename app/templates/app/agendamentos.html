@@ -671,13 +671,11 @@
             }
         }
 
-        // Função utilitária para verificar se o link é reativo/navegável
+        // Função utilitária para verificar se o link é reativo/navegável (apenas para filtros do próprio calendário)
         function isNavLink(link) {
             if (link.matches('.cal-dropdowns-group a')) return true;
             if (link.matches('.cal-nav a')) return true;
             if (link.matches('.lh-date-navigator a')) return true;
-            if (link.matches('.cal-dia:not(.passado)')) return true;
-            if (link.id === 'proceedPastLink') return true;
             return false;
         }
 
@@ -689,11 +687,6 @@
             if (isNavLink(link)) {
                 e.preventDefault();
                 const url = link.href;
-
-                // Esconder o modal se clicar em 'Prosseguir' antes de buscar
-                if (link.id === 'proceedPastLink') {
-                    $('#modalPassado').modal('hide');
-                }
 
                 // Opacidade para mostrar carregamento rápido
                 container = document.querySelector(containerSelector);
