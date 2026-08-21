@@ -133,3 +133,38 @@ class EquipamentoFixoTest(TestCase):
         self.assertIn('Sala', conteudo_csv)
         self.assertIn('Sim', conteudo_csv)
         self.assertIn('Laboratório 1', conteudo_csv)
+
+    def test_equipamento_fixo_nao_entra_no_contador_agendamento(self):
+        """Garante que equipamentos fixos não são contabilizados no estoque de agendamento móvel."""
+        from app.views import _estoque_por_categoria
+        from datetime import date
+
+        # 1 equipamento Desktop FIXO
+        Equipamento.objects.create(
+            apelido='PC-FIXO',
+            categoria='DESKTOP',
+            fixo=True,
+            sala=self.sala,
+            status='ATIVO'
+        )
+        # 1 equipamento Notebook MÓVEL (não fixo)
+        Equipamento.objects.create(
+            apelido='NOTE-MOVEL',
+            categoria='NOTEBOOK',
+            fixo=False,
+            sala=None,
+            status='ATIVO'
+        )
+
+        estoque = _estoque_por_categoria()
+        self.assertEqual(estoque.get('NOTEBOOK', 0), 1)
+        self.assertEqual(estoque.get('DESKTOP', 0), 0)
+
+        # Testa a tela agendamento_detalhe
+        self.client.force_login(self.admin)
+        hoje = date.today()
+        response = self.client.get(reverse('agendamento_detalhe', kwargs={'ano': hoje.year, 'mes': hoje.month, 'dia': hoje.day}))
+        self.assertEqual(response.status_code, 200)
+        # Deve exibir Notebook mas NÃO Desktop
+        self.assertContains(response, 'Notebook')
+        self.assertNotContains(response, 'Desktop')

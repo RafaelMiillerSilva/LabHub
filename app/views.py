@@ -692,7 +692,7 @@ def _disponibilidade_dispositivos(data):
 def _estoque_por_categoria():
     linhas = (
         Equipamento.objects
-        .filter(status='ATIVO')
+        .filter(status='ATIVO', fixo=False)
         .values('categoria')
         .annotate(n=Count('id'))
     )

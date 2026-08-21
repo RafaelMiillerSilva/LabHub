@@ -123,7 +123,7 @@ class Equipamento(models.Model):
 
     @property
     def disponivel_para_agendamento(self):
-        return self.status == 'ATIVO'
+        return self.status == 'ATIVO' and not self.fixo
 
     def __str__(self):
         return f"{self.apelido} ({self.get_categoria_display()})"
