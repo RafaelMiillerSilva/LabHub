@@ -976,7 +976,7 @@ def equipamentos(request):
     is_admin = _is_admin_aprovado(request.user)
     q = request.GET.get('q', '').strip()
     cat = request.GET.get('cat', '').strip()
-    lista = Equipamento.objects.defer('foto_dados')
+    lista = Equipamento.objects.defer('foto_dados').select_related('sala')
     if q:
         lista = lista.filter(apelido__icontains=q)
     if cat:
@@ -985,6 +985,7 @@ def equipamentos(request):
     return render(request, 'app/equipamentos.html', {
         'title': 'Equipamentos',
         'equipamentos': lista,
+        'total': lista.count(),
         'q': q,
         'cat': cat,
         'categorias': Equipamento.CATEGORIA_CHOICES,
@@ -1139,6 +1140,8 @@ def _gerar_etiqueta_png(equip):
         f"Patrimônio: {equip.numero_patrimonio or '—'}",
         f"Nº de série: {equip.numero_serie or '—'}",
     ]
+    if equip.fixo and equip.sala:
+        linhas.append(f"Sala: {equip.sala.nome}")
     if equip.imei:
         linhas.append(f"IMEI: {equip.imei}")
 
@@ -1207,7 +1210,7 @@ def exportar_equipamentos(request):
     q = request.GET.get('q', '').strip()
     cat = request.GET.get('cat', '').strip()
 
-    lista = Equipamento.objects.defer('foto_dados')
+    lista = Equipamento.objects.defer('foto_dados').select_related('sala')
     if q:
         lista = lista.filter(apelido__icontains=q)
     if cat:
@@ -1221,6 +1224,8 @@ def exportar_equipamentos(request):
     writer.writerow([
         'Apelido',
         'Categoria',
+        'Fixo',
+        'Sala',
         'Identificação Escola',
         'Nº Patrimônio',
         'Nº de Série',
@@ -1232,6 +1237,8 @@ def exportar_equipamentos(request):
         writer.writerow([
             equip.apelido or '',
             equip.get_categoria_display() if hasattr(equip, 'get_categoria_display') else equip.categoria,
+            'Sim' if equip.fixo else 'Não',
+            equip.sala.nome if equip.fixo and equip.sala else '',
             equip.identificacao_escola or '',
             equip.numero_patrimonio or '',
             equip.numero_serie or '',

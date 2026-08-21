@@ -156,7 +156,9 @@ class EquipamentoForm(forms.ModelForm):
     class Meta:
         model = Equipamento
         fields = ['categoria', 'apelido', 'identificacao_escola',
-                  'numero_patrimonio', 'numero_serie', 'imei', 'status', 'observacao']
+                  'numero_patrimonio', 'numero_serie', 'imei',
+                  'fixo', 'sala',
+                  'status', 'observacao']
         widgets = {
             'categoria': forms.Select(attrs={'class': 'form-control', 'id': 'id_categoria'}),
             'apelido': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: C01, CH03'}),
@@ -164,9 +166,16 @@ class EquipamentoForm(forms.ModelForm):
             'numero_patrimonio': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nº de patrimônio'}),
             'numero_serie': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nº de série'}),
             'imei': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apenas tablets/smartphones', 'id': 'id_imei'}),
+            'fixo': forms.CheckboxInput(attrs={'id': 'id_fixo'}),
+            'sala': forms.Select(attrs={'class': 'form-control', 'id': 'id_sala'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'observacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Anotações sobre o equipamento, histórico de problemas, etc.'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['sala'].required = False
+        self.fields['sala'].empty_label = 'Selecione a sala onde o equipamento está fixado...'
 
     def clean(self):
         cleaned = super().clean()
@@ -174,6 +183,14 @@ class EquipamentoForm(forms.ModelForm):
         # IMEI só faz sentido para aparelhos com chip; nos demais, ignora
         if categoria not in Equipamento.CATEGORIAS_COM_CHIP:
             cleaned['imei'] = ''
+
+        fixo = cleaned.get('fixo')
+        sala = cleaned.get('sala')
+        if not fixo:
+            cleaned['sala'] = None
+        elif fixo and not sala:
+            self.add_error('sala', 'Por favor, selecione a sala onde o equipamento está fixado.')
+
         return cleaned
 
     def save(self, commit=True):

@@ -21,9 +21,9 @@ class SalaAdmin(admin.ModelAdmin):
 
 @admin.register(Equipamento)
 class EquipamentoAdmin(admin.ModelAdmin):
-    list_display = ('apelido', 'categoria', 'numero_patrimonio', 'status')
-    list_filter = ('categoria', 'status')
-    search_fields = ('apelido', 'numero_patrimonio', 'numero_serie', 'imei', 'identificacao_escola')
+    list_display = ('apelido', 'categoria', 'fixo', 'sala', 'numero_patrimonio', 'status')
+    list_filter = ('categoria', 'status', 'fixo', 'sala')
+    search_fields = ('apelido', 'numero_patrimonio', 'numero_serie', 'imei', 'identificacao_escola', 'sala__nome')
 
 
 class AlunoInline(admin.TabularInline):

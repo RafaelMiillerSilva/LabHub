@@ -102,6 +102,16 @@ class Equipamento(models.Model):
     numero_serie = models.CharField('Número de série', max_length=80, blank=True, default='')
     imei = models.CharField('IMEI', max_length=20, blank=True, null=True)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='ATIVO')
+    fixo = models.BooleanField('Fixo', default=False, help_text='Indica se o equipamento é fixo em uma sala')
+    sala = models.ForeignKey(
+        Sala,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='equipamentos_fixos',
+        verbose_name='Sala onde é fixo',
+        help_text='Selecione a sala caso o equipamento seja fixo'
+    )
     observacao = models.TextField('Observação', blank=True, default='',
                                   help_text='Anotações sobre o equipamento, histórico de problemas, etc.')
     criado_em = models.DateTimeField(auto_now_add=True)

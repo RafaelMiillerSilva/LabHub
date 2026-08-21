@@ -358,6 +358,24 @@
                     {{ form.status }}
                 </div>
 
+                <div class="eq-form-group" style="background: #f8fafc; border: 1px solid #e3e8ee; border-radius: 10px; padding: 14px 16px;">
+                    <label style="margin: 0; font-size: 14px; font-weight: 600; color: #1A2333; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; text-transform: none;">
+                        <input type="checkbox" name="fixo" id="id_fixo" {% if form.fixo.value %}checked{% endif %} style="transform: scale(1.3); cursor: pointer; margin: 0;">
+                        <span>Equipamento Fixo (permanece instalado em uma sala)</span>
+                    </label>
+                    <span class="help-block" style="margin: 6px 0 0 26px; font-size: 12px; display: block;">
+                        Marque se este equipamento não é móvel e fica instalado permanentemente em uma sala ou laboratório.
+                    </span>
+                </div>
+
+                <div class="eq-form-group" id="grupo-sala" style="display: none;">
+                    <label>Sala onde o equipamento é fixo</label>
+                    {{ form.sala }}
+                    <span class="help-block">
+                        Selecione a sala de aula ou laboratório onde este equipamento está alocado.
+                    </span>
+                </div>
+
                 <div class="eq-form-group">
                     <label>Observação <span style="text-transform:none; font-weight:400; color:#9CA3AF;">(opcional)</span></label>
                     {{ form.observacao }}
@@ -407,13 +425,25 @@
 <script>
     (function () {
         var comChip = {{ categorias_com_chip|safe }};
-        var sel = document.getElementById('id_categoria');
-        var grupo = document.getElementById('grupo-imei');
-        function toggle() {
-            var mostra = comChip.indexOf(sel.value) !== -1;
-            grupo.style.display = mostra ? '' : 'none';
+        var selCat = document.getElementById('id_categoria');
+        var grupoImei = document.getElementById('grupo-imei');
+        function toggleImei() {
+            var mostra = comChip.indexOf(selCat.value) !== -1;
+            grupoImei.style.display = mostra ? '' : 'none';
         }
-        if (sel && grupo) { toggle(); sel.addEventListener('change', toggle); }
+        if (selCat && grupoImei) { toggleImei(); selCat.addEventListener('change', toggleImei); }
+
+        var checkFixo = document.getElementById('id_fixo');
+        var grupoSala = document.getElementById('grupo-sala');
+        function toggleFixo() {
+            if (checkFixo && grupoSala) {
+                grupoSala.style.display = checkFixo.checked ? '' : 'none';
+            }
+        }
+        if (checkFixo && grupoSala) {
+            toggleFixo();
+            checkFixo.addEventListener('change', toggleFixo);
+        }
     })();
 </script>
 {% endblock %}

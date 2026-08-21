@@ -321,7 +321,7 @@
                 <div class="equip-apelido">{{ e.apelido }}</div>
                 <div class="equip-cat">{{ e.get_categoria_display }}</div>
 
-                <div class="equip-status">
+                <div class="equip-status" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
                     {% if e.status == 'ATIVO' %}
                     <span class="label label-success">Ativo</span>
                     {% elif e.status == 'MANUTENCAO' %}
@@ -330,6 +330,12 @@
                     <span class="label label-danger">Quebrado</span>
                     {% else %}
                     <span class="label label-default">Desativado</span>
+                    {% endif %}
+
+                    {% if e.fixo and e.sala %}
+                    <span class="label label-info" title="Equipamento fixo na sala {{ e.sala.nome }}" style="background-color: #1e3c72; font-weight: 600;">
+                        📌 {{ e.sala.nome }}
+                    </span>
                     {% endif %}
                 </div>
 
@@ -366,6 +372,7 @@
                     <th style="width: 60px;">Foto</th>
                     <th>Apelido</th>
                     <th>Categoria</th>
+                    <th>Tipo / Sala</th>
                     <th>Status</th>
                     <th>Patrimônio</th>
                     <th>Observação</th>
@@ -390,6 +397,15 @@
                     </td>
                     <td>{{ e.get_categoria_display }}</td>
                     <td>
+                        {% if e.fixo and e.sala %}
+                        <span class="label label-info" style="background-color: #1e3c72; font-size: 11px; font-weight: 600;">
+                            📌 Fixo ({{ e.sala.nome }})
+                        </span>
+                        {% else %}
+                        <span class="text-muted" style="font-size: 13px;">Móvel</span>
+                        {% endif %}
+                    </td>
+                    <td>
                         {% if e.status == 'ATIVO' %}
                         <span class="label label-success">Ativo</span>
                         {% elif e.status == 'MANUTENCAO' %}
@@ -413,7 +429,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8" class="text-muted text-center" style="padding: 20px;">
+                    <td colspan="9" class="text-muted text-center" style="padding: 20px;">
                         <em>{% if q or cat %}Nenhum equipamento encontrado para o filtro atual.{% else %}Nenhum equipamento cadastrado ainda.{% endif %}</em>
                     </td>
                 </tr>
