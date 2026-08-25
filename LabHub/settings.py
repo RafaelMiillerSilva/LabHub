@@ -1,27 +1,33 @@
 import os
-import posixpath
-from pathlib import Path  # <--- Adicione esta importação no topo
+from pathlib import Path
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = Path(__file__).resolve().parent.parent  # <--- Transformado em Path moderno
+# BASE_DIR
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Carregar arquivo .env manualmente para não exigir dependência externa obrigatória
+env_file = BASE_DIR / '.env'
+if env_file.exists():
+    with open(env_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, val = line.split('=', 1)
+                os.environ.setdefault(key.strip(), val.strip())
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '5b956442-e92b-452c-a9aa-dc46e0e29526'
+SECRET_KEY = os.environ.get('SECRET_KEY', '5b956442-e92b-452c-a9aa-dc46e0e29526')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = ['*']
+allowed_hosts_str = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,*')
+ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_str.split(',') if h.strip()]
 
 # Application references
-# https://docs.djangoproject.com/en/2.1/ref/settings/#std:setting-INSTALLED_APPS
 INSTALLED_APPS = [
-    'app',
-    # Add your apps here to enable them
+    'app.apps.AppConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -31,7 +37,6 @@ INSTALLED_APPS = [
 ]
 
 # Middleware framework
-# https://docs.djangoproject.com/en/2.1/topics/http/middleware/
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -45,11 +50,10 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'LabHub.urls'
 
 # Template configuration
-# https://docs.djangoproject.com/en/2.1/topics/templates/
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # Deixe vazio assim!
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -65,16 +69,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'LabHub.wsgi.application'
 
 # Database
-# https://docs.numpy.org/... ou docs.djangoproject.com
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',  # Agora funciona perfeitamente com o Path
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
 # Password validation
-# https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -91,24 +93,26 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-# https://docs.djangoproject.com/en/2.1/topics/i18n/
 LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 
 AUTHENTICATION_BACKENDS = [
-    'app.forms.EmailBackend', 
-    'django.contrib.auth.backends.ModelBackend', 
+    'app.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.1/howto/static-files/
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'static'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://*.ngrok-free.app',
-    'https://grionsistema.pythonanywhere.com',  # Já aproveite para adicionar o domínio do PythonAnywhere aqui!
-]
+# Media files (Uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+csrf_origins_str = os.environ.get(
+    'CSRF_TRUSTED_ORIGINS',
+    'https://*.ngrok-free.app,https://grionsistema.pythonanywhere.com'
+)
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in csrf_origins_str.split(',') if o.strip()]

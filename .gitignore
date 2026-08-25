@@ -4,8 +4,14 @@ venv/
 ENV/
 .venv/
 
-# Django temporários e banco de dados local
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# Django temporários, mídia e banco de dados local
 db.sqlite3
+media/
 *.log
 local_settings.py
 .idea/
@@ -15,4 +21,4 @@ __pycache__/
 
 # Configurações de usuário do Visual Studio
 *.pyproj.user
-.vs/
+.vs/

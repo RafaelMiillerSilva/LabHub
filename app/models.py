@@ -1,7 +1,9 @@
+from typing import TYPE_CHECKING
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+
+if TYPE_CHECKING:
+    from django.db.models.manager import RelatedManager
 
 
 class Perfil(models.Model):
@@ -13,6 +15,13 @@ class Perfil(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
     tipo = models.CharField(max_length=20, choices=CHOICES_TIPO, default='PROFESSOR')
     aprovado = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = 'Perfil'
+        verbose_name_plural = 'Perfis'
+        indexes = [
+            models.Index(fields=['aprovado', 'tipo']),
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.tipo} ({'Aprovado' if self.aprovado else 'Pendente'})"
@@ -47,9 +56,16 @@ class HistoricoAcao(models.Model):
 
     class Meta:
         ordering = ['-data_acao']
+        verbose_name = 'Histórico de Ação'
+        verbose_name_plural = 'Histórico de Ações'
+        indexes = [
+            models.Index(fields=['-data_acao']),
+            models.Index(fields=['acao']),
+        ]
 
     def __str__(self):
         return f"{self.acao} - {self.username_solicitante} por {self.admin} em {self.data_acao:%d/%m/%Y %H:%M}"
+
 
 # ---------------------------------------------------------------------------
 # Salas de aula (cadastradas pelo administrador)
@@ -65,6 +81,9 @@ class Sala(models.Model):
         ordering = ['nome']
         verbose_name = 'Sala'
         verbose_name_plural = 'Salas'
+        indexes = [
+            models.Index(fields=['ativo', 'nome']),
+        ]
 
     def __str__(self):
         return self.nome
@@ -120,6 +139,10 @@ class Equipamento(models.Model):
         ordering = ['categoria', 'apelido']
         verbose_name = 'Equipamento'
         verbose_name_plural = 'Equipamentos'
+        indexes = [
+            models.Index(fields=['status', 'fixo', 'categoria']),
+            models.Index(fields=['apelido']),
+        ]
 
     @property
     def disponivel_para_agendamento(self):
@@ -133,6 +156,9 @@ class Equipamento(models.Model):
 # Turmas (cadastradas pelo administrador)
 # ---------------------------------------------------------------------------
 class Turma(models.Model):
+    if TYPE_CHECKING:
+        alunos: RelatedManager
+
     TURNO_CHOICES = (
         ('MANHA', 'Manhã'),
         ('TARDE', 'Tarde'),
@@ -146,7 +172,6 @@ class Turma(models.Model):
 
     class Meta:
         ordering = ['nome', 'turno']
-        # Permite "6º B - Manhã" e "6º B - Tarde", mas não duas iguais
         unique_together = ('nome', 'turno')
         verbose_name = 'Turma'
         verbose_name_plural = 'Turmas'
@@ -172,6 +197,10 @@ class Aluno(models.Model):
         ordering = ['nome']
         verbose_name = 'Aluno'
         verbose_name_plural = 'Alunos'
+        indexes = [
+            models.Index(fields=['turma', 'nome']),
+            models.Index(fields=['ra']),
+        ]
 
     def __str__(self):
         return f"{self.nome} - RA {self.ra}"
@@ -179,8 +208,7 @@ class Aluno(models.Model):
 
 # ---------------------------------------------------------------------------
 # Agendamento: uma reserva de UMA aula, em um dia, por um professor,
-# para uma turma. Pode ser de Sala (aponta para uma Sala) ou de
-# Dispositivos (ganha vários ItemDispositivo — isso entra na Etapa 4).
+# para uma turma. Pode ser de Sala ou de Dispositivos.
 # ---------------------------------------------------------------------------
 class Agendamento(models.Model):
     TIPO_CHOICES = (
@@ -210,6 +238,17 @@ class Agendamento(models.Model):
         ordering = ['data', 'aula']
         verbose_name = 'Agendamento'
         verbose_name_plural = 'Agendamentos'
+        indexes = [
+            models.Index(fields=['data', 'aula', 'tipo']),
+            models.Index(fields=['professor', 'data']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['data', 'aula', 'sala'],
+                condition=models.Q(tipo='SALA'),
+                name='unique_reserva_sala_aula_data'
+            )
+        ]
 
     def __str__(self):
         return f"{self.data:%d/%m/%Y} - {self.aula}ª aula - {self.get_tipo_display()}"
@@ -217,17 +256,22 @@ class Agendamento(models.Model):
 
 # ---------------------------------------------------------------------------
 # Item de um agendamento de dispositivos: qual equipamento e quantos.
-# Um Agendamento de dispositivos pode ter vários destes (um por tipo/aparelho).
 # ---------------------------------------------------------------------------
 class ItemDispositivo(models.Model):
     agendamento = models.ForeignKey(
         Agendamento, on_delete=models.CASCADE, related_name='itens'
     )
-    # Reserva é por categoria (conta unidades disponíveis daquele tipo)
     categoria = models.CharField(
         max_length=15, choices=Equipamento.CATEGORIA_CHOICES, default='NOTEBOOK'
     )
     quantidade = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        verbose_name = 'Item de Dispositivo'
+        verbose_name_plural = 'Itens de Dispositivos'
+        indexes = [
+            models.Index(fields=['agendamento', 'categoria']),
+        ]
 
     def __str__(self):
         return f"{self.get_categoria_display()} x{self.quantidade}"
@@ -235,7 +279,6 @@ class ItemDispositivo(models.Model):
 
 # ---------------------------------------------------------------------------
 # Relação aluno x equipamento dentro de um agendamento.
-# O professor registra qual equipamento (ex.: "C13") ficou com cada aluno.
 # ---------------------------------------------------------------------------
 class RelacaoAlunoEquipamento(models.Model):
     agendamento = models.ForeignKey(
@@ -277,19 +320,10 @@ class PedidoRedefinicaoSenha(models.Model):
         ordering = ['-criado_em']
         verbose_name = 'Pedido de redefinição de senha'
         verbose_name_plural = 'Pedidos de redefinição de senha'
+        indexes = [
+            models.Index(fields=['atendido', '-criado_em']),
+        ]
 
     def __str__(self):
         estado = 'atendido' if self.atendido else 'pendente'
         return f"Redefinição de {self.user.username} ({estado})"
-
-
-# Sinais para criar o perfil automaticamente quando um usuário for criado
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        Perfil.objects.create(user=instance)
-
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    instance.perfil.save()

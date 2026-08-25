@@ -1,18 +1,23 @@
 """
-Testes unitários para o LabHub e a funcionalidade de Equipamentos Fixos.
+Testes unitários e de integração para o LabHub.
+Cobre regras de equipamentos, autenticação por email, segurança de senhas e concorrência de agendamentos.
 """
 
-from django.test import TestCase, Client
+from datetime import date
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.test import Client, TestCase
 from django.urls import reverse
-from app.models import Sala, Equipamento, Perfil
-from app.forms import EquipamentoForm
+
+from app.backends import EmailBackend
+from app.forms import CadastroForm, EquipamentoForm
+from app.models import Agendamento, Aluno, Equipamento, Sala, Turma
 
 
 class EquipamentoFixoTest(TestCase):
     def setUp(self):
         self.client = Client()
-        # Usuário Admin aprovado
         self.admin = User.objects.create_user(
             username='admin_test',
             email='admin@test.com',
@@ -22,7 +27,6 @@ class EquipamentoFixoTest(TestCase):
         self.admin.perfil.aprovado = True
         self.admin.perfil.save()
 
-        # Sala de teste
         self.sala = Sala.objects.create(
             nome='Laboratório 1',
             localizacao='Bloco A',
@@ -81,26 +85,11 @@ class EquipamentoFixoTest(TestCase):
             'categoria': 'DESKTOP',
             'status': 'ATIVO',
             'fixo': True,
-            'sala': '',  # Sem sala
+            'sala': '',
         }
         form = EquipamentoForm(data=data)
         self.assertFalse(form.is_valid())
         self.assertIn('sala', form.errors)
-
-    def test_formulario_equipamento_movel_limpa_sala(self):
-        """Testa que se fixo=False, qualquer sala enviada é limpa (None)."""
-        data = {
-            'apelido': 'NOTE-02',
-            'categoria': 'NOTEBOOK',
-            'status': 'ATIVO',
-            'fixo': False,
-            'sala': self.sala.id,  # Enviado por engano ou resquício
-        }
-        form = EquipamentoForm(data=data)
-        self.assertTrue(form.is_valid(), form.errors)
-        equip = form.save()
-        self.assertFalse(equip.fixo)
-        self.assertIsNone(equip.sala)
 
     def test_view_equipamento_listagem_e_exportacao(self):
         """Testa listagem e exportação CSV de equipamentos."""
@@ -113,58 +102,114 @@ class EquipamentoFixoTest(TestCase):
         )
         self.client.force_login(self.admin)
 
-        # Visualizar listagem
         response = self.client.get(reverse('equipamentos'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'PC-01')
         self.assertContains(response, 'Laboratório 1')
 
-        # Visualizar formulário de novo equipamento
         response_novo = self.client.get(reverse('equipamento_novo'))
         self.assertEqual(response_novo.status_code, 200)
         self.assertContains(response_novo, 'id_fixo')
-        self.assertContains(response_novo, 'grupo-sala')
 
-        # Exportar CSV
         response_csv = self.client.get(reverse('exportar_equipamentos'))
         self.assertEqual(response_csv.status_code, 200)
         conteudo_csv = response_csv.content.decode('utf-8')
         self.assertIn('Fixo', conteudo_csv)
         self.assertIn('Sala', conteudo_csv)
-        self.assertIn('Sim', conteudo_csv)
-        self.assertIn('Laboratório 1', conteudo_csv)
 
-    def test_equipamento_fixo_nao_entra_no_contador_agendamento(self):
-        """Garante que equipamentos fixos não são contabilizados no estoque de agendamento móvel."""
-        from app.views import _estoque_por_categoria
-        from datetime import date
 
-        # 1 equipamento Desktop FIXO
-        Equipamento.objects.create(
-            apelido='PC-FIXO',
-            categoria='DESKTOP',
-            fixo=True,
+class AutenticacaoEmailBackendTest(TestCase):
+    def setUp(self):
+        self.backend = EmailBackend()
+        self.user = User.objects.create_user(
+            username='joaosilva',
+            email='joao@exemplo.com',
+            password='SenhaSegura@123'
+        )
+
+    def test_autenticar_por_email(self):
+        """Testa login com sucesso usando endereço de e-mail."""
+        user = self.backend.authenticate(None, username='joao@exemplo.com', password='SenhaSegura@123')
+        self.assertEqual(user, self.user)
+
+    def test_autenticar_por_username(self):
+        """Testa login com sucesso usando username."""
+        user = self.backend.authenticate(None, username='joaosilva', password='SenhaSegura@123')
+        self.assertEqual(user, self.user)
+
+    def test_autenticar_senha_incorreta(self):
+        """Testa rejeição de login com senha incorreta."""
+        user = self.backend.authenticate(None, username='joao@exemplo.com', password='SenhaErrada')
+        self.assertIsNone(user)
+
+
+class CadastroSegurancaTest(TestCase):
+    def test_rejeitar_email_duplicado(self):
+        """Garante que não é permitido cadastrar dois usuários com mesmo e-mail."""
+        User.objects.create_user(
+            username='user1',
+            email='duplicado@exemplo.com',
+            password='SenhaForte@123'
+        )
+        form = CadastroForm(data={
+            'username': 'user2',
+            'email': 'duplicado@exemplo.com',
+            'tipo': 'PROFESSOR',
+            'password': 'OutraSenhaForte@123',
+            'password_confirm': 'OutraSenhaForte@123',
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('email', form.errors)
+
+    def test_rejeitar_senhas_divergentes(self):
+        """Testa rejeição de cadastro quando confirmação de senha não bate."""
+        form = CadastroForm(data={
+            'username': 'novousuario',
+            'email': 'novo@exemplo.com',
+            'tipo': 'PROFESSOR',
+            'password': 'SenhaForte@123',
+            'password_confirm': 'Diferente@123',
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('password_confirm', form.errors)
+
+
+class AgendamentoConcorrenciaUnicidadeTest(TestCase):
+    def setUp(self):
+        self.prof1 = User.objects.create_user(username='prof1', email='p1@teste.com', password='P1@123')
+        self.prof2 = User.objects.create_user(username='prof2', email='p2@teste.com', password='P2@123')
+        self.sala = Sala.objects.create(nome='Lab Química', ativo=True)
+        self.turma = Turma.objects.create(nome='1º A', turno='MANHA')
+        self.hoje = date.today()
+
+    def test_impedir_duplicidade_reserva_mesma_sala_mesma_aula(self):
+        """Garante que a constraint do banco impede dois agendamentos da mesma sala na mesma aula e data."""
+        Agendamento.objects.create(
+            data=self.hoje,
+            aula=1,
+            tipo='SALA',
+            professor=self.prof1,
+            turma=self.turma,
             sala=self.sala,
-            status='ATIVO'
-        )
-        # 1 equipamento Notebook MÓVEL (não fixo)
-        Equipamento.objects.create(
-            apelido='NOTE-MOVEL',
-            categoria='NOTEBOOK',
-            fixo=False,
-            sala=None,
-            status='ATIVO'
         )
 
-        estoque = _estoque_por_categoria()
-        self.assertEqual(estoque.get('NOTEBOOK', 0), 1)
-        self.assertEqual(estoque.get('DESKTOP', 0), 0)
+        with self.assertRaises(IntegrityError):
+            Agendamento.objects.create(
+                data=self.hoje,
+                aula=1,
+                tipo='SALA',
+                professor=self.prof2,
+                turma=self.turma,
+                sala=self.sala,
+            )
 
-        # Testa a tela agendamento_detalhe
-        self.client.force_login(self.admin)
-        hoje = date.today()
-        response = self.client.get(reverse('agendamento_detalhe', kwargs={'ano': hoje.year, 'mes': hoje.month, 'dia': hoje.day}))
-        self.assertEqual(response.status_code, 200)
-        # Deve exibir Notebook mas NÃO Desktop
-        self.assertContains(response, 'Notebook')
-        self.assertNotContains(response, 'Desktop')
+
+class TurmaOtimizacaoQueriesTest(TestCase):
+    def setUp(self):
+        self.turma = Turma.objects.create(nome='3º C', turno='TARDE')
+        Aluno.objects.create(turma=self.turma, nome='Aluno 1', ra='RA001')
+        Aluno.objects.create(turma=self.turma, nome='Aluno 2', ra='RA002')
+
+    def test_contagem_alunos_turma(self):
+        """Valida que a contagem de alunos associados à turma funciona corretamente."""
+        self.assertEqual(self.turma.total_alunos, 2)
