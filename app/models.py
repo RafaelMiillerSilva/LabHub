@@ -166,6 +166,7 @@ class Turma(models.Model):
         ('NOITE', 'Noite'),
     )
 
+    id = models.AutoField(primary_key=True)
     nome = models.CharField(max_length=50, help_text='Ex: 6º B')
     turno = models.CharField(max_length=10, choices=TURNO_CHOICES, default='MANHA')
     criado_em = models.DateTimeField(auto_now_add=True)

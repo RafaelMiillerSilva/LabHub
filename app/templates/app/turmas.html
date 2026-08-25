@@ -275,7 +275,7 @@
                             <tr>
                                 <td style="padding-left: 20px; vertical-align: middle;"><strong>{{ t.nome }}</strong></td>
                                 <td style="vertical-align: middle; color: #4B5563;">{{ t.get_turno_display }}</td>
-                                <td class="text-center" style="vertical-align: middle; color: #4B5563;">{{ t.total_alunos }}</td>
+                                <td class="text-center" style="vertical-align: middle; color: #4B5563;">{{ t.num_alunos }}</td>
                                 <td class="text-center" style="padding-right: 20px; vertical-align: middle;">
                                     <a href="{% url 'turma_detalhe' t.id %}" class="btn btn-xs btn-outline-primary">👥 Gerenciar alunos</a>
                                     <a href="{% url 'turmas' %}?editar={{ t.id }}" class="btn btn-xs btn-info" style="border-radius: 6px;">✏️</a>

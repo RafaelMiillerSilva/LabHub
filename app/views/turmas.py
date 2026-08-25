@@ -57,7 +57,8 @@ def turmas(request):
         form = TurmaForm(instance=instancia)
 
     # Consulta otimizada com annotate para evitar N+1 queries no template
-    turmas_qs = Turma.objects.annotate(total_alunos=Count('alunos')).all()
+    # Nota: o nome 'num_alunos' é usado para evitar colisão com a @property total_alunos do model
+    turmas_qs = Turma.objects.annotate(num_alunos=Count('alunos')).all()
 
     return render(request, 'app/turmas.html', {
         'title': 'Turmas',

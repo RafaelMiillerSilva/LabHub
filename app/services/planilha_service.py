@@ -55,6 +55,8 @@ def ler_planilha(arquivo):
             )
         wb = openpyxl.load_workbook(arquivo, read_only=True, data_only=True)
         ws = wb.active
+        if ws is None:
+            return None, 'O arquivo .xlsx não contém nenhuma planilha ativa.'
         linhas = []
         for row in ws.iter_rows(values_only=True):
             linhas.append(['' if c is None else c for c in row])
