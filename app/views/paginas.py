@@ -18,7 +18,7 @@ from .common import (
 
 
 def _home_dashboard(request):
-    """View do painel/dashboard dentro de app/index.html."""
+    """View do painel/dashboard dentro de app/index.html (Visão Semanal)."""
     hoje = date.today()
 
     try:
@@ -32,49 +32,64 @@ def _home_dashboard(request):
         except ValueError:
             data_atual = hoje
 
-    dia_ant = data_atual - timedelta(days=1)
-    dia_prox = data_atual + timedelta(days=1)
+    # Encontrar o domingo da semana atual
+    dias_para_domingo = data_atual.isoweekday() % 7
+    domingo = data_atual - timedelta(days=dias_para_domingo)
+    sabado = domingo + timedelta(days=6)
 
-    mes_ant = data_atual.month - 1
-    ano_mes_ant = data_atual.year
-    if mes_ant < 1:
-        mes_ant = 12
-        ano_mes_ant -= 1
-
-    mes_prox = data_atual.month + 1
-    ano_mes_prox = data_atual.year
-    if mes_prox > 12:
-        mes_prox = 1
-        ano_mes_prox += 1
-
-    ano_ant = data_atual.year - 1
-    ano_prox = data_atual.year + 1
+    semana_ant = domingo - timedelta(days=7)
+    semana_prox = domingo + timedelta(days=7)
 
     is_admin = request.user.is_staff or is_admin_aprovado(request.user)
 
-    reservas_dia = (
-        Agendamento.objects.filter(data=data_atual)
+    reservas_qs = (
+        Agendamento.objects.filter(data__range=(domingo, sabado))
         .select_related('sala', 'turma', 'professor')
         .prefetch_related('itens')
-        .order_by('aula')
     )
+
+    dias_cabecalho = []
+    for i in range(7):
+        d = domingo + timedelta(days=i)
+        dias_cabecalho.append({
+            'data': d,
+            'numero': d.day,
+            'mes_nome': MESES_PT[d.month - 1][:3],
+            'nome_curto': DIAS_SEMANA_LONGO[d.weekday()][:3],
+            'hoje': d == hoje
+        })
+
+    grade_semanal = []
+    for aula in range(1, 10):
+        linha = []
+        for i in range(7):
+            d = domingo + timedelta(days=i)
+            # Reservas no slot
+            reservas_slot = [r for r in reservas_qs if r.data == d and r.aula == aula]
+            
+            tem_reserva_usuario = any(r.professor == request.user for r in reservas_slot)
+            
+            linha.append({
+                'data': d,
+                'reservas': reservas_slot,
+                'tem_reserva_usuario': tem_reserva_usuario
+            })
+        grade_semanal.append({'aula': aula, 'dias': linha})
 
     context = {
         'dashboard': True,
         'data_atual': data_atual,
-        'dia_ant': dia_ant, 'dia_prox': dia_prox,
-        'mes_ant': mes_ant, 'ano_mes_ant': ano_mes_ant,
-        'mes_prox': mes_prox, 'ano_mes_prox': ano_mes_prox,
-        'ano_ant': ano_ant, 'ano_prox': ano_prox,
+        'semana_ant': semana_ant,
+        'semana_prox': semana_prox,
+        'domingo': domingo,
+        'sabado': sabado,
         'hoje_ano': hoje.year,
         'hoje_mes': hoje.month,
         'hoje_dia': hoje.day,
-        'mes_nome': MESES_PT[data_atual.month - 1],
-        'dia_semana': DIAS_SEMANA_LONGO[data_atual.weekday()],
         'is_admin': is_admin,
         'solicitacoes_pendentes': Perfil.objects.filter(aprovado=False).count(),
-        'reservas_dia': reservas_dia,
-        'total_reservas': reservas_dia.count(),
+        'dias_cabecalho': dias_cabecalho,
+        'grade_semanal': grade_semanal,
     }
     return render(request, 'app/index.html', context)
 
