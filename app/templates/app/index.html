@@ -156,10 +156,17 @@
                         <tr>
                             <th class="text-center" style="width:60px;">Aula</th>
                             {% for cabecalho in dias_cabecalho %}
-                            <th class="text-center" style="{% if cabecalho.hoje %}background: #EBF2FF; border-bottom: 2px solid #1A4A8A;{% endif %}">
+                            {% if cabecalho.hoje %}
+                            <th class="text-center" style="background: #EBF2FF; border-bottom: 2px solid #1A4A8A;">
                                 <div style="font-size: 11px; text-transform: uppercase;">{{ cabecalho.nome_curto }}</div>
-                                <div style="font-size: 16px; font-weight: bold; color: {% if cabecalho.hoje %}#1A4A8A{% else %}#1A1A2E{% endif %};">{{ cabecalho.numero }}</div>
+                                <div style="font-size: 16px; font-weight: bold; color: #1A4A8A;">{{ cabecalho.numero }}</div>
                             </th>
+                            {% else %}
+                            <th class="text-center">
+                                <div style="font-size: 11px; text-transform: uppercase;">{{ cabecalho.nome_curto }}</div>
+                                <div style="font-size: 16px; font-weight: bold; color: #1A1A2E;">{{ cabecalho.numero }}</div>
+                            </th>
+                            {% endif %}
                             {% endfor %}
                         </tr>
                     </thead>
