@@ -624,7 +624,7 @@ def cancelar_reserva(request, agendamento_id):
         # Enviar notificação ao professor caso o admin cancele
         if request.user != prof:
             Notificacao.objects.create(
-                usuario=prof,
+                destinatario=prof,
                 mensagem=f'Sua reserva do dia {ag.data.strftime("%d/%m/%Y")} ({ag.aula}ª aula) foi cancelada pelo administrador {request.user.get_full_name() or request.user.username}.'
             )
 
