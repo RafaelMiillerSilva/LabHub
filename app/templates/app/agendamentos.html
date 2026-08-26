@@ -524,6 +524,9 @@
                                 {% else %}
                                 <span class="lh-badge" style="background:#FFF3E0; color:#E65100;">💻 Equip.</span>
                                 {% endif %}
+                                {% if ag.fixo %}
+                                <span class="lh-badge" style="background:#EBF2FF; color:#1A4A8A; margin-left: 4px;">📌 Fixo</span>
+                                {% endif %}
                             </td>
                             <td>
                                 <strong>
@@ -547,10 +550,19 @@
                                 {% if ag.professor == user or is_admin %}
                                 <form action="{% url 'cancelar_reserva' ag.id %}" method="post" style="display:inline;" data-ajax="true">
                                     {% csrf_token %}
+                                    <input type="hidden" name="cancelar_tipo" value="hoje">
+                                    {% if ag.fixo %}
+                                    <button type="button" class="lh-btn-xs lh-btn-danger btn-cancelar-fixo"
+                                            data-ag-data="{{ ag.data|date:'d/m/Y' }}"
+                                            data-ag-aula="{{ ag.aula }}">
+                                        🗑️ Cancelar
+                                    </button>
+                                    {% else %}
                                     <button type="submit" class="lh-btn-xs lh-btn-danger"
                                             data-confirm="Cancelar esta reserva de {{ ag.data|date:'d/m/Y' }}, {{ ag.aula }}ª aula?">
                                         🗑️ Cancelar
                                     </button>
+                                    {% endif %}
                                 </form>
                                 {% else %}
                                 <span class="text-muted" style="font-size:12px;">—</span>
@@ -594,6 +606,28 @@
                     {% if is_admin %}
                     <a id="proceedPastLink" href="#" class="btn btn-primary" style="font-weight: 600; border-radius: 6px; background: #1A4A8A; border: none;">Prosseguir</a>
                     {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- ===================== POPUP CANCELAR AGENDAMENTO FIXO ===================== -->
+    <div class="modal fade" id="modalCancelarFixo" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color:#fff; border-top-left-radius:6px; border-top-right-radius:6px;">
+                    <h4 class="modal-title" style="font-weight: 700;">📌 Agendamento Fixo</h4>
+                </div>
+                <div class="modal-body">
+                    <p style="font-weight: 500; margin-bottom: 6px;">Este é um agendamento fixo.</p>
+                    <p style="font-weight: 600; color: #1A1A2E;">Cancelar só para hoje?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" style="font-weight: 600; border-radius: 6px;">Voltar</button>
+                    <button type="button" class="btn btn-danger" id="btnCancelarTodos" style="font-weight: 600; border-radius: 6px;">Não, cancelar todos</button>
+                    <button type="button" class="btn btn-primary" id="btnCancelarHoje" style="font-weight: 600; border-radius: 6px; background: #1A4A8A; border: none;">Sim, só hoje</button>
                 </div>
             </div>
         </div>
@@ -731,6 +765,40 @@
 
         // Chama na primeira inicialização da página
         bindEvents();
+
+        // ── Modal de cancelamento de agendamento fixo ──
+        var formFixoPendente = null;
+
+        $(document).on('click', '.btn-cancelar-fixo', function (e) {
+            e.preventDefault();
+            formFixoPendente = this.closest('form');
+            $('#modalCancelarFixo').modal('show');
+        });
+
+        $('#btnCancelarHoje').on('click', function () {
+            $('#modalCancelarFixo').modal('hide');
+            if (!formFixoPendente) return;
+            // cancelar_tipo já é 'hoje' por padrão no hidden field
+            formFixoPendente.querySelector('[name=cancelar_tipo]').value = 'hoje';
+            if (formFixoPendente.getAttribute('data-ajax') === 'true' && typeof window.LabHubAjaxSubmit === 'function') {
+                window.LabHubAjaxSubmit(formFixoPendente);
+            } else {
+                formFixoPendente.submit();
+            }
+            formFixoPendente = null;
+        });
+
+        $('#btnCancelarTodos').on('click', function () {
+            $('#modalCancelarFixo').modal('hide');
+            if (!formFixoPendente) return;
+            formFixoPendente.querySelector('[name=cancelar_tipo]').value = 'todos';
+            if (formFixoPendente.getAttribute('data-ajax') === 'true' && typeof window.LabHubAjaxSubmit === 'function') {
+                window.LabHubAjaxSubmit(formFixoPendente);
+            } else {
+                formFixoPendente.submit();
+            }
+            formFixoPendente = null;
+        });
     });
 </script>
 {% endblock %}

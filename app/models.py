@@ -233,6 +233,11 @@ class Agendamento(models.Model):
         related_name='agendamentos'
     )
     observacao = models.TextField(blank=True, verbose_name='Observação')
+    fixo = models.BooleanField(default=False, help_text='Agendamento fixo semanal')
+    fixo_grupo_id = models.CharField(
+        max_length=36, blank=True, default='',
+        help_text='UUID que agrupa agendamentos fixos do mesmo conjunto'
+    )
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -242,6 +247,7 @@ class Agendamento(models.Model):
         indexes = [
             models.Index(fields=['data', 'aula', 'tipo']),
             models.Index(fields=['professor', 'data']),
+            models.Index(fields=['fixo_grupo_id']),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -328,3 +334,27 @@ class PedidoRedefinicaoSenha(models.Model):
     def __str__(self):
         estado = 'atendido' if self.atendido else 'pendente'
         return f"Redefinição de {self.user.username} ({estado})"
+
+
+# ---------------------------------------------------------------------------
+# Notificações do sistema para os professores
+# ---------------------------------------------------------------------------
+class Notificacao(models.Model):
+    destinatario = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='notificacoes'
+    )
+    mensagem = models.TextField()
+    lida = models.BooleanField(default=False)
+    criada_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-criada_em']
+        verbose_name = 'Notificação'
+        verbose_name_plural = 'Notificações'
+        indexes = [
+            models.Index(fields=['destinatario', 'lida', '-criada_em']),
+        ]
+
+    def __str__(self):
+        status = 'lida' if self.lida else 'nova'
+        return f"Notificação para {self.destinatario.username} ({status})"

@@ -471,6 +471,15 @@
                             <label>Observação (opcional)</label>
                             <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: aula de reforço, prova, etc."></textarea>
                         </div>
+                        {% if is_admin %}
+                        <div class="form-group">
+                            <label class="fixo-checkbox-wrap" style="max-width: 360px; display: flex; align-items: center; gap: 10px; background: #EBF2FF; padding: 10px 14px; border-radius: 8px; cursor: pointer; transition: background 0.15s; margin-bottom: 4px;">
+                                <input type="checkbox" name="fixo" value="1" style="width: 18px; height: 18px; accent-color: #1A4A8A; cursor: pointer;">
+                                <span style="font-weight: 600; font-size: 14px; color: #1A4A8A;">📌 Fixar neste dia da semana</span>
+                            </label>
+                            <p class="text-muted" style="font-size: 12px; margin-top: 4px; margin-left: 2px;">O agendamento será repetido em todas as {{ dia_semana }}s até o final do ano.</p>
+                        </div>
+                        {% endif %}
                         <button type="submit" class="btn btn-agendar">📌 Agendar Salas</button>
                     </div>
                 </div>
@@ -576,6 +585,15 @@
                             <label>Observação (opcional)</label>
                             <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: projeto de robótica, pesquisa, etc."></textarea>
                         </div>
+                        {% if is_admin %}
+                        <div class="form-group">
+                            <label class="fixo-checkbox-wrap" style="max-width: 360px; display: flex; align-items: center; gap: 10px; background: #EBF2FF; padding: 10px 14px; border-radius: 8px; cursor: pointer; transition: background 0.15s; margin-bottom: 4px;">
+                                <input type="checkbox" name="fixo" value="1" style="width: 18px; height: 18px; accent-color: #1A4A8A; cursor: pointer;">
+                                <span style="font-weight: 600; font-size: 14px; color: #1A4A8A;">📌 Fixar neste dia da semana</span>
+                            </label>
+                            <p class="text-muted" style="font-size: 12px; margin-top: 4px; margin-left: 2px;">O agendamento será repetido em todas as {{ dia_semana }}s até o final do ano.</p>
+                        </div>
+                        {% endif %}
                         <button type="submit" class="btn btn-agendar">📌 Agendar Equipamentos</button>
                     </div>
                 </div>

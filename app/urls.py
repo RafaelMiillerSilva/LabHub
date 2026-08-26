@@ -49,6 +49,10 @@ urlpatterns = [
     path('agendamentos/<int:agendamento_id>/cancelar/', views.cancelar_reserva, name='cancelar_reserva'),
     path('agendamentos/<int:agendamento_id>/relacao/', views.relacao_agendamento, name='relacao_agendamento'),
 
+    # Notificações
+    path('notificacoes/', views.listar_notificacoes, name='listar_notificacoes'),
+    path('notificacoes/lidas/', views.marcar_lidas, name='marcar_lidas'),
+
     # Autenticação e Senha
     path('esqueci-senha/', views.esqueci_senha, name='esqueci_senha'),
     path('logout/', LogoutView.as_view(next_page='home'), name='logout'),

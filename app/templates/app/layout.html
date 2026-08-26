@@ -122,6 +122,148 @@
                 padding: 10px 12px;
             }
         }
+
+        /* ── Notificações (Sino) ── */
+        .notif-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .notif-bell {
+            cursor: pointer;
+            font-size: 18px;
+            padding: 10px 14px;
+            color: #4B5563;
+            transition: color 0.2s;
+            position: relative;
+            display: inline-block;
+        }
+
+            .notif-bell:hover {
+                color: #1A4A8A;
+            }
+
+        .notif-badge {
+            position: absolute;
+            top: 5px;
+            right: 6px;
+            background: #E53935;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 800;
+            min-width: 18px;
+            height: 18px;
+            line-height: 18px;
+            text-align: center;
+            border-radius: 50%;
+            padding: 0 4px;
+            display: none;
+        }
+
+        .notif-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            width: 360px;
+            max-height: 420px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(15, 38, 69, 0.12);
+            z-index: 1090;
+        }
+
+            .notif-dropdown.open {
+                display: block;
+            }
+
+        .notif-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid #E5E9F0;
+            font-weight: 700;
+            font-size: 14px;
+            color: #1A1A2E;
+        }
+
+        .notif-limpar {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1A4A8A;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            transition: color 0.15s;
+        }
+
+            .notif-limpar:hover {
+                color: #153d74;
+            }
+
+        .notif-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #F0F4F8;
+            transition: background 0.15s;
+        }
+
+            .notif-item:last-child {
+                border-bottom: none;
+            }
+
+            .notif-item:hover {
+                background: #F7F9FC;
+            }
+
+            .notif-item.nao-lida {
+                background: #EBF2FF;
+            }
+
+                .notif-item.nao-lida:hover {
+                    background: #d0e4ff;
+                }
+
+        .notif-remetente {
+            font-weight: 700;
+            font-size: 13px;
+            color: #1A4A8A;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .notif-msg {
+            font-size: 13px;
+            color: #4B5563;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .notif-tempo {
+            font-size: 11px;
+            color: #9CA3AF;
+            margin-top: 4px;
+        }
+
+        .notif-vazio {
+            padding: 32px 16px;
+            text-align: center;
+            color: #9CA3AF;
+            font-size: 13px;
+        }
+
+        @media (max-width: 480px) {
+            .notif-dropdown {
+                width: 300px;
+                right: -40px;
+            }
+        }
     </style>
     {% block styles %}{% endblock %}
 </head>
@@ -150,6 +292,21 @@
                         <li><a href="{% url 'salas' %}">Salas</a></li>
                         <li><a href="{% url 'equipamentos' %}">Equipamentos</a></li>
                         <li><a href="{% url 'agendamentos' %}">Agendamentos</a></li>
+                        <li class="notif-wrapper">
+                            <span class="notif-bell" id="notifBell" title="Notificações">
+                                🔔
+                                <span class="notif-badge" id="notifBadge">0</span>
+                            </span>
+                            <div class="notif-dropdown" id="notifDropdown">
+                                <div class="notif-header">
+                                    <span>🔔 Notificações</span>
+                                    <button class="notif-limpar" id="notifLimpar">Limpar</button>
+                                </div>
+                                <div id="notifLista">
+                                    <div class="notif-vazio">📭 Nenhuma notificação</div>
+                                </div>
+                            </div>
+                        </li>
                         {% endif %}
 
                         <li><a href="{% url 'about' %}">Sobre</a></li>
@@ -287,12 +444,117 @@
         })();
     </script>
 
+    {% if user.is_authenticated and user.perfil.aprovado %}
+    <script>
+    (function () {
+        var bell = document.getElementById('notifBell');
+        var dropdown = document.getElementById('notifDropdown');
+        var badge = document.getElementById('notifBadge');
+        var lista = document.getElementById('notifLista');
+        var limpar = document.getElementById('notifLimpar');
+
+        if (!bell || !dropdown) return;
+
+        function renderNotificacoes(data) {
+            // Atualiza badge
+            if (data.nao_lidas > 0) {
+                badge.textContent = data.nao_lidas > 99 ? '99+' : data.nao_lidas;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+
+            // Renderiza lista
+            if (!data.notificacoes || data.notificacoes.length === 0) {
+                lista.innerHTML = '<div class="notif-vazio">\ud83d\udced Nenhuma notifica\u00e7\u00e3o</div>';
+                return;
+            }
+
+            var html = '';
+            data.notificacoes.forEach(function (n) {
+                html += '<div class="notif-item' + (n.lida ? '' : ' nao-lida') + '">';
+                html += '  <div class="notif-remetente">\ud83d\udda5\ufe0f Sistema</div>';
+                html += '  <div class="notif-msg">' + escapeHtml(n.mensagem) + '</div>';
+                html += '  <div class="notif-tempo">' + escapeHtml(n.criada_em) + '</div>';
+                html += '</div>';
+            });
+            lista.innerHTML = html;
+        }
+
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function carregarNotificacoes() {
+            fetch('{% url "listar_notificacoes" %}', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.ok) renderNotificacoes(data);
+            })
+            .catch(function () {});
+        }
+
+        // Toggle dropdown ao clicar no sino
+        bell.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var isOpen = dropdown.classList.contains('open');
+            dropdown.classList.toggle('open');
+            if (!isOpen) carregarNotificacoes();
+        });
+
+        // Fecha ao clicar fora
+        document.addEventListener('click', function (e) {
+            if (!dropdown.contains(e.target) && e.target !== bell) {
+                dropdown.classList.remove('open');
+            }
+        });
+
+        // Impede que cliques dentro do dropdown fechem ele
+        dropdown.addEventListener('click', function (e) {
+            e.stopPropagation();
+        });
+
+        // Bot\u00e3o Limpar
+        limpar.addEventListener('click', function () {
+            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            var tokenValue = csrfToken ? csrfToken.value : '';
+
+            fetch('{% url "marcar_lidas" %}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': tokenValue,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: '',
+            })
+            .then(function (r) { return r.json(); })
+            .then(function () { carregarNotificacoes(); })
+            .catch(function () {});
+        });
+
+        // Carrega contagem inicial ao carregar a p\u00e1gina
+        carregarNotificacoes();
+    })();
+    </script>
+    {% endif %}
+
     {% if messages %}
+    <div id="django-messages-data" style="display: none;" aria-hidden="true">
+        {% for message in messages %}
+        <span class="django-message-item" data-message="{{ message }}" data-tags="{{ message.tags }}"></span>
+        {% endfor %}
+    </div>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        {% for message in messages %}
-        window.LabHubFlash('{{ message|escapejs }}', '{{ message.tags|escapejs }}');
-        {% endfor %}
+        var messageNodes = document.querySelectorAll('#django-messages-data .django-message-item');
+        messageNodes.forEach(function (node) {
+            window.LabHubFlash(node.getAttribute('data-message'), node.getAttribute('data-tags'));
+        });
     });
     </script>
     {% endif %}

@@ -3,6 +3,7 @@ Views de agendamentos de salas e dispositivos móveis, concorrência e atribuiç
 """
 
 import calendar
+import uuid
 from collections import defaultdict
 from datetime import date, timedelta
 
@@ -10,7 +11,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Sum
+from django.db.models import Count, Max, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -18,6 +19,7 @@ from app.models import (
     Agendamento,
     Equipamento,
     ItemDispositivo,
+    Notificacao,
     RelacaoAlunoEquipamento,
     Sala,
     Turma,
@@ -68,10 +70,115 @@ def _estoque_por_categoria():
     return {l['categoria']: l['n'] for l in linhas}
 
 
+def _datas_futuras_mesmo_dia_semana(data_base):
+    """Gera todas as datas do mesmo dia da semana, de data_base até 31/12 do ano."""
+    fim_ano = date(data_base.year, 12, 31)
+    datas = []
+    d = data_base + timedelta(days=7)
+    while d <= fim_ano:
+        datas.append(d)
+        d += timedelta(days=7)
+    return datas
+
+
+def _sobrepor_conflito_sala(data_alvo, aula, sala_id, request_user):
+    """
+    Remove agendamento de sala conflitante e notifica o professor deslocado.
+    Retorna True se havia conflito (e foi removido).
+    """
+    conflitante = Agendamento.objects.filter(
+        data=data_alvo, aula=aula, tipo='SALA', sala_id=sala_id
+    ).select_related('professor', 'turma', 'sala').first()
+
+    if not conflitante:
+        return False
+
+    sala_nome = conflitante.sala.nome if conflitante.sala else 'sala'
+    Notificacao.objects.create(
+        destinatario=conflitante.professor,
+        mensagem=(
+            f'Sua reserva de {data_alvo:%d/%m/%Y} ({aula}ª aula, {sala_nome}) '
+            f'foi substituída por um agendamento fixo.'
+        ),
+    )
+    conflitante.delete()
+    return True
+
+
+def estender_agendamentos_fixos():
+    """
+    Verifica grupos fixos ativos e estende até 31/12 do ano corrente.
+    Chamada automaticamente ao acessar a página de agendamentos.
+    """
+    hoje = date.today()
+    fim_ano = date(hoje.year, 12, 31)
+
+    # Encontra grupos fixos cuja última data é anterior ao fim do ano
+    grupos = (
+        Agendamento.objects
+        .filter(fixo=True)
+        .exclude(fixo_grupo_id='')
+        .values('fixo_grupo_id')
+        .annotate(ultima_data=Max('data'))
+        .filter(ultima_data__lt=fim_ano)
+    )
+
+    for grupo in grupos:
+        grupo_id = grupo['fixo_grupo_id']
+        ultima_data = grupo['ultima_data']
+
+        # Pega um agendamento modelo do grupo para copiar seus dados
+        modelo = (
+            Agendamento.objects
+            .filter(fixo_grupo_id=grupo_id)
+            .select_related('professor', 'turma', 'sala')
+            .prefetch_related('itens')
+            .order_by('-data')
+            .first()
+        )
+        if not modelo:
+            continue
+
+        # Gera datas do dia da semana seguinte ao último até fim do ano
+        d = ultima_data + timedelta(days=7)
+        while d <= fim_ano:
+            if modelo.tipo == 'SALA' and modelo.sala_id:
+                _sobrepor_conflito_sala(d, modelo.aula, modelo.sala_id, modelo.professor)
+                try:
+                    with transaction.atomic():
+                        Agendamento.objects.create(
+                            data=d, aula=modelo.aula, tipo=modelo.tipo,
+                            professor=modelo.professor, turma=modelo.turma,
+                            sala=modelo.sala, observacao=modelo.observacao,
+                            fixo=True, fixo_grupo_id=grupo_id,
+                        )
+                except IntegrityError:
+                    pass
+            elif modelo.tipo == 'DISPOSITIVO':
+                try:
+                    with transaction.atomic():
+                        novo = Agendamento.objects.create(
+                            data=d, aula=modelo.aula, tipo='DISPOSITIVO',
+                            professor=modelo.professor, turma=modelo.turma,
+                            sala=None, observacao=modelo.observacao,
+                            fixo=True, fixo_grupo_id=grupo_id,
+                        )
+                        for item in modelo.itens.all():
+                            ItemDispositivo.objects.create(
+                                agendamento=novo,
+                                categoria=item.categoria,
+                                quantidade=item.quantidade,
+                            )
+                except IntegrityError:
+                    pass
+            d += timedelta(days=7)
+
+
 def _processar_agendamento_sala(request, data, ano, mes, dia):
     turma_id = request.POST.get('turma')
     selecionadas = request.POST.getlist('reserva')
     observacao = request.POST.get('observacao', '').strip()
+    marcar_fixo = request.POST.get('fixo') == '1' and is_admin_aprovado(request.user)
 
     if not turma_id:
         messages.warning(request, 'Escolha a turma antes de agendar.')
@@ -84,6 +191,7 @@ def _processar_agendamento_sala(request, data, ano, mes, dia):
     professor = _resolver_professor(request)
     criados = 0
     conflitos = 0
+    grupo_id = str(uuid.uuid4()) if marcar_fixo else ''
 
     for item in selecionadas:
         try:
@@ -106,10 +214,28 @@ def _processar_agendamento_sala(request, data, ano, mes, dia):
                     data=data, aula=aula, tipo='SALA',
                     professor=professor, turma=turma,
                     sala_id=sala_id, observacao=observacao,
+                    fixo=marcar_fixo, fixo_grupo_id=grupo_id,
                 )
                 criados += 1
         except IntegrityError:
             conflitos += 1
+
+        # Criar agendamentos fixos futuros
+        if marcar_fixo:
+            datas_futuras = _datas_futuras_mesmo_dia_semana(data)
+            for data_futura in datas_futuras:
+                _sobrepor_conflito_sala(data_futura, aula, sala_id, request.user)
+                try:
+                    with transaction.atomic():
+                        Agendamento.objects.create(
+                            data=data_futura, aula=aula, tipo='SALA',
+                            professor=professor, turma=turma,
+                            sala_id=sala_id, observacao=observacao,
+                            fixo=True, fixo_grupo_id=grupo_id,
+                        )
+                        criados += 1
+                except IntegrityError:
+                    pass
 
     if criados:
         registrar_acao(
@@ -119,10 +245,16 @@ def _processar_agendamento_sala(request, data, ano, mes, dia):
             solicitante_email=professor.email,
             tipo_solicitado=professor.perfil.tipo if hasattr(professor, 'perfil') else '',
         )
-        messages.success(
-            request,
-            f'{criados} reserva(s) de sala realizada(s) para {data:%d/%m/%Y}.'
-        )
+        if marcar_fixo:
+            messages.success(
+                request,
+                f'{criados} reserva(s) de sala criada(s) (fixo semanal até o final do ano).'
+            )
+        else:
+            messages.success(
+                request,
+                f'{criados} reserva(s) de sala realizada(s) para {data:%d/%m/%Y}.'
+            )
     if conflitos:
         messages.warning(
             request,
@@ -134,6 +266,7 @@ def _processar_agendamento_sala(request, data, ano, mes, dia):
 def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
     turma_id = request.POST.get('turma')
     observacao = request.POST.get('observacao', '').strip()
+    marcar_fixo = request.POST.get('fixo') == '1' and is_admin_aprovado(request.user)
 
     if not turma_id:
         messages.warning(request, 'Escolha a turma antes de agendar.')
@@ -157,6 +290,7 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
 
     turma = get_object_or_404(Turma, id=turma_id)
     professor = _resolver_professor(request)
+    grupo_id = str(uuid.uuid4()) if marcar_fixo else ''
 
     aulas_agendadas = 0
     ajustes = 0
@@ -185,6 +319,7 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
                 data=data, aula=aula, tipo='DISPOSITIVO',
                 professor=professor, turma=turma,
                 sala=None, observacao=observacao,
+                fixo=marcar_fixo, fixo_grupo_id=grupo_id,
             )
             for categoria, usar in itens_validos:
                 ItemDispositivo.objects.create(
@@ -192,6 +327,30 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
                 )
                 reservado[(aula, categoria)] = reservado.get((aula, categoria), 0) + usar
             aulas_agendadas += 1
+
+    # Criar agendamentos fixos futuros para dispositivos
+    if marcar_fixo and aulas_agendadas:
+        datas_futuras = _datas_futuras_mesmo_dia_semana(data)
+        for data_futura in datas_futuras:
+            for aula, itens in selecao.items():
+                itens_validos = [(cat, qtd) for cat, qtd in itens.items() if qtd > 0]
+                if not itens_validos:
+                    continue
+                try:
+                    with transaction.atomic():
+                        novo = Agendamento.objects.create(
+                            data=data_futura, aula=aula, tipo='DISPOSITIVO',
+                            professor=professor, turma=turma,
+                            sala=None, observacao=observacao,
+                            fixo=True, fixo_grupo_id=grupo_id,
+                        )
+                        for categoria, usar in itens_validos:
+                            ItemDispositivo.objects.create(
+                                agendamento=novo, categoria=categoria, quantidade=usar
+                            )
+                        aulas_agendadas += 1
+                except IntegrityError:
+                    pass
 
     if aulas_agendadas:
         registrar_acao(
@@ -201,10 +360,16 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
             solicitante_email=professor.email,
             tipo_solicitado=professor.perfil.tipo if hasattr(professor, 'perfil') else '',
         )
-        messages.success(
-            request,
-            f'Equipamentos reservados em {aulas_agendadas} aula(s) no dia {data:%d/%m/%Y}.'
-        )
+        if marcar_fixo:
+            messages.success(
+                request,
+                f'Equipamentos reservados em {aulas_agendadas} aula(s) (fixo semanal até o final do ano).'
+            )
+        else:
+            messages.success(
+                request,
+                f'Equipamentos reservados em {aulas_agendadas} aula(s) no dia {data:%d/%m/%Y}.'
+            )
     if ajustes:
         messages.warning(
             request,
@@ -220,6 +385,9 @@ def agendamentos(request):
     """Exibe o calendário mensal com visão de agendamentos e navegação reativa."""
     if not is_usuario_aprovado(request.user):
         return redirect('home')
+
+    # Extensão dinâmica: estende agendamentos fixos até 31/12 do ano corrente
+    estender_agendamentos_fixos()
 
     hoje = date.today()
 
@@ -424,7 +592,7 @@ def cancelar_reserva(request, agendamento_id):
         ag = get_object_or_404(Agendamento, id=agendamento_id)
         is_admin = is_admin_aprovado(request.user)
 
-        if ag.professor_id != request.user.id and not is_admin:
+        if ag.professor != request.user and not is_admin:
             msg = 'Você só pode cancelar as suas próprias reservas.'
             if is_ajax(request):
                 return JsonResponse({'ok': False, 'message': msg})
@@ -432,7 +600,18 @@ def cancelar_reserva(request, agendamento_id):
             return redirect('agendamentos')
 
         prof = ag.professor
-        ag.delete()
+        cancelar_tipo = request.POST.get('cancelar_tipo', 'hoje')
+
+        if cancelar_tipo == 'todos' and ag.fixo and ag.fixo_grupo_id:
+            # Cancelar todos os futuros do grupo fixo
+            removidos = Agendamento.objects.filter(
+                fixo_grupo_id=ag.fixo_grupo_id,
+                data__gte=date.today(),
+            ).delete()[0]
+            msg = f'{removidos} reserva(s) fixa(s) cancelada(s).'
+        else:
+            ag.delete()
+            msg = 'Reserva cancelada com sucesso.'
 
         registrar_acao(
             usuario=request.user,
@@ -441,8 +620,6 @@ def cancelar_reserva(request, agendamento_id):
             solicitante_email=prof.email,
             tipo_solicitado=prof.perfil.tipo if hasattr(prof, 'perfil') else '',
         )
-
-        msg = 'Reserva cancelada com sucesso.'
 
         if is_ajax(request):
             restantes = Agendamento.objects.filter(
@@ -543,7 +720,7 @@ def relacao_agendamento(request, agendamento_id):
     )
 
     is_admin = is_admin_aprovado(request.user)
-    pode_editar = is_admin or ag.professor_id == request.user.id
+    pode_editar = is_admin or ag.professor == request.user
     alunos = list(ag.turma.alunos.all())
 
     if request.method == 'POST':
@@ -557,7 +734,7 @@ def relacao_agendamento(request, agendamento_id):
             ag.observacao = request.POST.get('observacao', '').strip()
 
             turma = Turma.objects.filter(id=request.POST.get('turma')).first()
-            if turma and turma.id != ag.turma_id:
+            if turma and turma != ag.turma:
                 ag.relacoes.all().delete()
                 ag.turma = turma
 

@@ -46,6 +46,10 @@ from .agendamentos import (
     _disponibilidade_dispositivos,
     _estoque_por_categoria,
 )
+from .notificacoes import (
+    listar_notificacoes,
+    marcar_lidas,
+)
 
 __all__ = [
     'home',
@@ -81,4 +85,6 @@ __all__ = [
     'relacao_agendamento',
     '_disponibilidade_dispositivos',
     '_estoque_por_categoria',
+    'listar_notificacoes',
+    'marcar_lidas',
 ]
