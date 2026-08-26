@@ -401,6 +401,8 @@
                     } else if (res.acao === 'atualizar_linha') {
                         var trA = form.closest('tr');
                         if (trA) trA.parentNode.replaceChild(window.LabHubElemento(res.html), trA);
+                    } else if (res.acao === 'recarregar_pagina') {
+                        setTimeout(function() { window.location.reload(); }, 600);
                     }
                 })
                 .catch(function () {

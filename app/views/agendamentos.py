@@ -589,60 +589,67 @@ def cancelar_reserva(request, agendamento_id):
         return redirect('home')
 
     if request.method == 'POST':
-        ag = get_object_or_404(Agendamento, id=agendamento_id)
-        is_admin = is_admin_aprovado(request.user)
+        try:
+            ag = get_object_or_404(Agendamento, id=agendamento_id)
+            is_admin = is_admin_aprovado(request.user)
 
-        if ag.professor != request.user and not is_admin:
-            msg = 'Você só pode cancelar as suas próprias reservas.'
-            if is_ajax(request):
-                return JsonResponse({'ok': False, 'message': msg})
-            messages.error(request, msg)
-            return redirect('agendamentos')
+            if ag.professor != request.user and not is_admin:
+                msg = 'Você só pode cancelar as suas próprias reservas.'
+                if is_ajax(request):
+                    return JsonResponse({'ok': False, 'message': msg})
+                messages.error(request, msg)
+                return redirect('agendamentos')
 
-        prof = ag.professor
-        cancelar_tipo = request.POST.get('cancelar_tipo', 'hoje')
+            prof = ag.professor
+            cancelar_tipo = request.POST.get('cancelar_tipo', 'hoje')
 
-        if cancelar_tipo == 'todos' and ag.fixo and ag.fixo_grupo_id:
-            # Cancelar todos os futuros do grupo fixo
-            removidos = Agendamento.objects.filter(
-                fixo_grupo_id=ag.fixo_grupo_id,
-                data__gte=date.today(),
-            ).delete()[0]
-            msg = f'{removidos} reserva(s) fixa(s) cancelada(s).'
-        else:
-            ag.delete()
-            msg = 'Reserva cancelada com sucesso.'
+            if cancelar_tipo == 'todos' and ag.fixo and ag.fixo_grupo_id:
+                # Cancelar todos os futuros do grupo fixo
+                removidos = Agendamento.objects.filter(
+                    fixo_grupo_id=ag.fixo_grupo_id,
+                    data__gte=date.today(),
+                ).delete()[0]
+                msg = f'{removidos} reserva(s) fixa(s) cancelada(s).'
+            else:
+                ag.delete()
+                msg = 'Reserva cancelada com sucesso.'
 
-        registrar_acao(
-            usuario=request.user,
-            acao='CANCELOU_AGENDAMENTO',
-            solicitante_username=prof.username,
-            solicitante_email=prof.email,
-            tipo_solicitado=prof.perfil.tipo if hasattr(prof, 'perfil') else '',
-        )
-
-        # Enviar notificação ao professor caso o admin cancele
-        if request.user != prof:
-            Notificacao.objects.create(
-                destinatario=prof,
-                mensagem=f'Sua reserva do dia {ag.data.strftime("%d/%m/%Y")} ({ag.aula}ª aula) foi cancelada pelo administrador {request.user.get_full_name() or request.user.username}.'
+            registrar_acao(
+                usuario=request.user,
+                acao='CANCELOU_AGENDAMENTO',
+                solicitante_username=prof.username,
+                solicitante_email=prof.email,
+                tipo_solicitado=prof.perfil.tipo if hasattr(prof, 'perfil') else '',
             )
 
-        if is_ajax(request):
-            restantes = Agendamento.objects.filter(
-                professor=request.user, data__gte=date.today()
-            ).count()
-            return JsonResponse({
-                'ok': True, 'acao': 'remover_linha', 'message': msg,
-                'restantes': restantes,
-                'vazio_html': (
-                    '<tr><td colspan="6" class="text-center text-muted" style="padding: 32px;">'
-                    '<span>📭</span>'
-                    '<p style="margin-top: 8px; font-style: italic;">Você não tem reservas futuras. '
-                    'Clique em um dia para agendar.</p></td></tr>'
-                ),
-            })
-        messages.warning(request, msg)
+            # Enviar notificação ao professor caso o admin cancele
+            if request.user != prof:
+                Notificacao.objects.create(
+                    destinatario=prof,
+                    mensagem=f'Sua reserva do dia {ag.data.strftime("%d/%m/%Y")} ({ag.aula}ª aula) foi cancelada pelo administrador {request.user.get_full_name() or request.user.username}.'
+                )
+
+            if is_ajax(request):
+                restantes = Agendamento.objects.filter(
+                    professor=request.user, data__gte=date.today()
+                ).count()
+                return JsonResponse({
+                    'ok': True, 'acao': 'recarregar_pagina' if cancelar_tipo == 'todos' else 'remover_linha', 'message': msg,
+                    'restantes': restantes,
+                    'vazio_html': (
+                        '<tr><td colspan="6" class="text-center text-muted" style="padding: 32px;">'
+                        '<span>📭</span>'
+                        '<p style="margin-top: 8px; font-style: italic;">Você não tem reservas futuras. '
+                        'Clique em um dia para agendar.</p></td></tr>'
+                    ),
+                })
+            messages.warning(request, msg)
+        except Exception as e:
+            import traceback
+            error_msg = f'Erro interno: {str(e)}\n\n{traceback.format_exc()}'
+            if is_ajax(request):
+                return JsonResponse({'ok': False, 'message': error_msg})
+            messages.error(request, error_msg)
 
     return redirect('agendamentos')
 
