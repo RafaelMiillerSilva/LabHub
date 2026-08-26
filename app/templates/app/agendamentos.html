@@ -766,39 +766,6 @@
         // Chama na primeira inicialização da página
         bindEvents();
 
-        // ── Modal de cancelamento de agendamento fixo ──
-        var formFixoPendente = null;
-
-        $(document).on('click', '.btn-cancelar-fixo', function (e) {
-            e.preventDefault();
-            formFixoPendente = this.closest('form');
-            $('#modalCancelarFixo').modal('show');
-        });
-
-        $('#btnCancelarHoje').on('click', function () {
-            $('#modalCancelarFixo').modal('hide');
-            if (!formFixoPendente) return;
-            // cancelar_tipo já é 'hoje' por padrão no hidden field
-            formFixoPendente.querySelector('[name=cancelar_tipo]').value = 'hoje';
-            if (formFixoPendente.getAttribute('data-ajax') === 'true' && typeof window.LabHubAjaxSubmit === 'function') {
-                window.LabHubAjaxSubmit(formFixoPendente);
-            } else {
-                formFixoPendente.submit();
-            }
-            formFixoPendente = null;
-        });
-
-        $('#btnCancelarTodos').on('click', function () {
-            $('#modalCancelarFixo').modal('hide');
-            if (!formFixoPendente) return;
-            formFixoPendente.querySelector('[name=cancelar_tipo]').value = 'todos';
-            if (formFixoPendente.getAttribute('data-ajax') === 'true' && typeof window.LabHubAjaxSubmit === 'function') {
-                window.LabHubAjaxSubmit(formFixoPendente);
-            } else {
-                formFixoPendente.submit();
-            }
-            formFixoPendente = null;
-        });
     });
 </script>
 {% endblock %}

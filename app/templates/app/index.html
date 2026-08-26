@@ -123,6 +123,16 @@
             font-size: 13px;
             color: var(--lh-blue);
         }
+
+        .lh-reserva-minha {
+            background: #E8F5E9 !important;
+            border: 1px solid #A5D6A7 !important;
+        }
+
+        .lh-reserva-outra {
+            background: #F7F9FC !important;
+            border: 1px solid #E5E9F0 !important;
+        }
 </style>
 
 <!-- ============================ AGENDA SEMANAL ============================ -->
@@ -181,7 +191,7 @@
                                 {% if dia.reservas %}
                                     <div style="display: flex; flex-direction: column; gap: 4px; height: 100%;">
                                         {% for r in dia.reservas %}
-                                            <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-item" data-usuario="{{ r.professor.username }}" style="display: block; padding: 6px; border-radius: 6px; font-size: 11px; text-decoration: none; color: #1A1A2E; text-align: left; transition: transform 0.1s; {% if r.professor == request.user %}background: #E8F5E9; border: 1px solid #A5D6A7;{% else %}background: #F7F9FC; border: 1px solid #E5E9F0;{% endif %}" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                                            <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-item {% if r.professor == request.user %}lh-reserva-minha{% else %}lh-reserva-outra{% endif %}" data-usuario="{{ r.professor.username }}" style="display: block; padding: 6px; border-radius: 6px; font-size: 11px; text-decoration: none; color: #1A1A2E; text-align: left; transition: transform 0.1s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
                                                     <strong style="font-size: 11px;">
                                                         {% if r.tipo == 'SALA' %}
@@ -251,8 +261,8 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }
     }
-    bindEvents();
-});
+
+    const containerSelector = '.body-content';
 
     // Delegação de eventos globais para buscar as páginas via Fetch
     document.body.addEventListener('click', function(e) {

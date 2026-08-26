@@ -435,6 +435,39 @@
                 }
             });
 
+            // ── Modal de cancelamento de agendamento fixo ──
+            var formFixoPendente = null;
+
+            $(document).on('click', '.btn-cancelar-fixo', function (e) {
+                e.preventDefault();
+                formFixoPendente = this.closest('form');
+                $('#modalCancelarFixo').modal('show');
+            });
+
+            $(document).on('click', '#btnCancelarHoje', function () {
+                $('#modalCancelarFixo').modal('hide');
+                if (!formFixoPendente) return;
+                formFixoPendente.querySelector('[name=cancelar_tipo]').value = 'hoje';
+                if (formFixoPendente.getAttribute('data-ajax') === 'true' && typeof window.LabHubAjaxSubmit === 'function') {
+                    window.LabHubAjaxSubmit(formFixoPendente);
+                } else {
+                    formFixoPendente.submit();
+                }
+                formFixoPendente = null;
+            });
+
+            $(document).on('click', '#btnCancelarTodos', function () {
+                $('#modalCancelarFixo').modal('hide');
+                if (!formFixoPendente) return;
+                formFixoPendente.querySelector('[name=cancelar_tipo]').value = 'todos';
+                if (formFixoPendente.getAttribute('data-ajax') === 'true' && typeof window.LabHubAjaxSubmit === 'function') {
+                    window.LabHubAjaxSubmit(formFixoPendente);
+                } else {
+                    formFixoPendente.submit();
+                }
+                formFixoPendente = null;
+            });
+
             // Fecha o menu mobile automaticamente ao clicar em um link da navbar
             $('.navbar-collapse a:not(.dropdown-toggle)').on('click', function () {
                 if ($('.navbar-toggle').is(':visible') && $('.navbar-collapse').hasClass('in')) {
