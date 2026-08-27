@@ -49,6 +49,7 @@ from .agendamentos import (
 from .notificacoes import (
     listar_notificacoes,
     marcar_lidas,
+    limpar_notificacoes,
 )
 
 __all__ = [
@@ -87,4 +88,5 @@ __all__ = [
     '_estoque_por_categoria',
     'listar_notificacoes',
     'marcar_lidas',
+    'limpar_notificacoes',
 ]

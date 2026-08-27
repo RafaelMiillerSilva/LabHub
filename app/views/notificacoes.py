@@ -4,12 +4,14 @@ Views de notificações do sistema (AJAX).
 
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from app.models import Notificacao
 from .common import is_usuario_aprovado
 
 
 @login_required
+@ensure_csrf_cookie
 def listar_notificacoes(request):
     """Retorna as últimas 20 notificações do usuário em JSON."""
     if not is_usuario_aprovado(request.user):
