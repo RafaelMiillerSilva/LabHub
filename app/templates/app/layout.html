@@ -2,153 +2,91 @@
 <html lang="pt-br">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ title }} - LabHub</title>
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'app/content/bootstrap.min.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'app/content/site.css' %}" />
     <script src="{% static 'app/scripts/modernizr-2.6.2.js' %}"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-        html, body {
-            height: 100%;
-            margin: 0;
-            background-color: #F5FFFB;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            overflow-x: hidden; /* Evita scroll horizontal indesejado no mobile */
-        }
-
-        .wrapper {
-            min-height: 100%;
-            height: auto !important;
-            height: 100%;
-            margin-bottom: -60px;
-            padding-top: 75px; /* Ajustado para dar folga correta à navbar flutuante */
-        }
-
-        /* BARRA DE NAVEGAÇÃO MODERNA */
+        /* ── Navbar Glassmorphism Flutuante ── */
         .navbar-custom {
             background-color: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.4) !important;
-            border-radius: 12px;
-            margin: 12px 12px 0 12px;
-            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8) !important;
+            border-radius: var(--lh-radius);
+            margin: 10px 12px 0 12px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+            transition: all 0.25s ease;
         }
 
-            .navbar-custom .navbar-brand {
-                color: #1A4A8A !important;
-                font-weight: 700;
-                font-size: 18px;
-                letter-spacing: -0.5px;
-                padding: 12px 15px;
-            }
-
-            .navbar-custom .navbar-nav > li > a {
-                color: #4B5563 !important;
-                font-weight: 500;
-                font-size: 14px;
-                padding: 12px 16px;
-                transition: color 0.2s ease, background-color 0.2s ease;
-                border-radius: 8px;
-                margin: 2px 0;
-            }
-
-                .navbar-custom .navbar-nav > li > a:hover,
-                .navbar-custom .navbar-nav > li > a:focus {
-                    color: #1A4A8A !important;
-                    background-color: rgba(26, 74, 138, 0.08) !important;
-                }
-
-            .navbar-custom .navbar-toggle {
-                border: none;
-                background-color: transparent;
-                margin-top: 8px;
-                margin-bottom: 8px;
-                padding: 8px 12px;
-                border-radius: 8px;
-            }
-
-                .navbar-custom .navbar-toggle:hover {
-                    background-color: rgba(0, 0, 0, 0.03) !important;
-                }
-
-                .navbar-custom .navbar-toggle .icon-bar {
-                    background-color: #4B5563 !important;
-                    width: 20px;
-                    height: 2px;
-                    transition: all 0.2s;
-                }
-
-        .footer, .push {
-            height: 60px;
+        .navbar-custom .navbar-brand {
+            color: var(--lh-primary) !important;
+            font-weight: 800;
+            font-size: 19px;
+            letter-spacing: -0.5px;
+            padding: 14px 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        footer {
-            padding-top: 20px;
-            border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
-            background-color: #D9D9D9;
-            color: #4B5563;
-            font-size: 13px;
-            font-weight: 500;
-            text-align: center;
+        .navbar-custom .navbar-brand span.brand-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10B981;
+            display: inline-block;
         }
 
-        /* RESPONSIVIDADE E AJUSTES MOBILE */
-        @media (max-width: 767px) {
-            .wrapper {
-                padding-top: 70px;
-            }
+        .navbar-custom .navbar-nav > li > a {
+            color: var(--lh-text-muted) !important;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 10px 14px;
+            margin: 4px 2px;
+            transition: all 0.2s ease;
+            border-radius: var(--lh-radius-sm);
+        }
 
-            .navbar-custom {
-                margin: 8px 8px 0 8px;
-            }
+        .navbar-custom .navbar-nav > li > a:hover,
+        .navbar-custom .navbar-nav > li > a:focus {
+            color: var(--lh-primary) !important;
+            background-color: var(--lh-primary-light) !important;
+        }
 
-            .navbar-collapse {
-                border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
-                box-shadow: none;
-                margin-top: 5px;
-                background-color: #ffffff;
-                border-radius: 0 0 12px 12px;
-                padding: 10px 15px;
-                max-height: calc(100vh - 90px);
-                overflow-y: auto;
-            }
+        .navbar-custom .navbar-toggle {
+            border: none;
+            background-color: transparent;
+            margin-top: 8px;
+            margin-bottom: 8px;
+            padding: 9px 12px;
+            border-radius: var(--lh-radius-sm);
+            transition: background-color 0.2s;
+        }
 
-            .navbar-custom .navbar-nav > li > a {
-                padding: 10px 12px;
-            }
+        .navbar-custom .navbar-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.04) !important;
+        }
 
-            .notif-dropdown {
-                position: static;
-                width: 100%;
-                box-shadow: none;
-                border: 1px solid rgba(0, 0, 0, 0.08);
-                margin-top: 10px;
-                max-height: 250px;
-            }
+        .navbar-custom .navbar-toggle .icon-bar {
+            background-color: var(--lh-text) !important;
+            width: 22px;
+            height: 2px;
+            border-radius: 1px;
+            transition: all 0.2s;
+        }
 
-            .avatar-dropdown {
-                position: static;
-                width: 100%;
-                box-shadow: none;
-                border: 1px solid rgba(0, 0, 0, 0.08);
-                margin-top: 10px;
-            }
-
-            .navbar-right-custom {
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                justify-content: flex-start;
-                gap: 4px;
-                padding: 6px 0;
-                border-top: 1px solid rgba(0,0,0,0.05);
-                margin-top: 6px;
-            }
+        /* ── Direita da Navbar (Notificações + Avatar) ── */
+        .navbar-right-custom {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            float: right;
+            margin: 4px 0;
+            list-style: none;
+            padding: 0;
         }
 
         /* ── Notificações (Sino) ── */
@@ -160,107 +98,112 @@
         .notif-bell {
             cursor: pointer;
             font-size: 18px;
-            padding: 10px 14px;
-            color: #4B5563;
-            transition: color 0.2s;
+            padding: 8px 12px;
+            color: var(--lh-text-muted);
+            transition: all 0.2s;
             position: relative;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--lh-radius-sm);
         }
 
-            .notif-bell:hover {
-                color: #1A4A8A;
-            }
+        .notif-bell:hover {
+            color: var(--lh-primary);
+            background-color: var(--lh-primary-light);
+        }
 
         .notif-badge {
             position: absolute;
-            top: 5px;
-            right: 6px;
-            background: #E53935;
-            color: #fff;
+            top: 4px;
+            right: 4px;
+            background: #EF4444;
+            color: #ffffff;
             font-size: 10px;
             font-weight: 800;
             min-width: 18px;
             height: 18px;
             line-height: 18px;
             text-align: center;
-            border-radius: 50%;
+            border-radius: var(--lh-radius-pill);
             padding: 0 4px;
             display: none;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
         }
 
         .notif-dropdown {
             display: none;
             position: absolute;
             right: 0;
-            top: 100%;
-            width: 360px;
-            max-height: 420px;
+            top: calc(100% + 6px);
+            width: 340px;
+            max-height: 400px;
             overflow-y: auto;
-            background: rgba(255, 255, 255, 0.97);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(15, 38, 69, 0.12);
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--lh-border);
+            border-radius: var(--lh-radius);
+            box-shadow: var(--lh-shadow-lg);
             z-index: 1090;
         }
 
-            .notif-dropdown.open {
-                display: block;
-            }
+        .notif-dropdown.open {
+            display: block;
+            animation: lhDropdownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
 
         .notif-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px 16px;
-            border-bottom: 1px solid #E5E9F0;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--lh-border-subtle);
             font-weight: 700;
             font-size: 14px;
-            color: #1A1A2E;
+            color: var(--lh-text);
+            background: var(--lh-surface-subtle);
         }
 
         .notif-limpar {
             font-size: 12px;
             font-weight: 600;
-            color: #1A4A8A;
+            color: var(--lh-primary);
             cursor: pointer;
             border: none;
             background: none;
-            padding: 0;
-            transition: color 0.15s;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.15s;
         }
 
-            .notif-limpar:hover {
-                color: #153d74;
-            }
+        .notif-limpar:hover {
+            color: var(--lh-primary-hover);
+            background: var(--lh-primary-light);
+        }
 
         .notif-item {
             padding: 12px 16px;
-            border-bottom: 1px solid #F0F4F8;
+            border-bottom: 1px solid var(--lh-border-subtle);
             transition: background 0.15s;
         }
 
-            .notif-item:last-child {
-                border-bottom: none;
-            }
+        .notif-item:last-child {
+            border-bottom: none;
+        }
 
-            .notif-item:hover {
-                background: #F7F9FC;
-            }
+        .notif-item:hover {
+            background: var(--lh-surface-subtle);
+        }
 
-            .notif-item.nao-lida {
-                background: #EBF2FF;
-            }
-
-                .notif-item.nao-lida:hover {
-                    background: #d0e4ff;
-                }
+        .notif-item.nao-lida {
+            background: #F0F6FF;
+        }
 
         .notif-remetente {
             font-weight: 700;
-            font-size: 13px;
-            color: #1A4A8A;
+            font-size: 12px;
+            color: var(--lh-primary);
             display: flex;
             align-items: center;
             gap: 6px;
@@ -268,39 +211,25 @@
 
         .notif-msg {
             font-size: 13px;
-            color: #4B5563;
+            color: var(--lh-text);
             margin-top: 4px;
             line-height: 1.4;
         }
 
         .notif-tempo {
             font-size: 11px;
-            color: #9CA3AF;
+            color: var(--lh-text-light);
             margin-top: 4px;
         }
 
         .notif-vazio {
-            padding: 32px 16px;
+            padding: 36px 16px;
             text-align: center;
-            color: #9CA3AF;
+            color: var(--lh-text-light);
             font-size: 13px;
         }
 
-        @media (max-width: 480px) {
-            /* Regras absorvidas pelo media max-width 767px */
-        }
-
-        /* ── Avatar do Usuário na Navbar ── */
-        .navbar-right-custom {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            float: right;
-            margin-right: 0;
-            list-style: none;
-            padding: 0;
-        }
-
+        /* ── Avatar do Usuário ── */
         .avatar-wrapper {
             position: relative;
             display: inline-block;
@@ -311,107 +240,213 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 10px;
-            border-radius: 8px;
+            padding: 4px 6px;
+            border-radius: var(--lh-radius-sm);
             transition: background 0.2s;
         }
+
         .avatar-trigger:hover {
-            background: rgba(26, 74, 138, 0.08);
+            background: var(--lh-primary-light);
         }
 
         .avatar-img {
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid #E5E9F0;
+            border: 2px solid var(--lh-primary-border);
         }
 
         .avatar-iniciais {
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: #fff;
+            background: var(--lh-gradient-primary);
+            color: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 13px;
             font-weight: 700;
             letter-spacing: 0.5px;
-            border: 2px solid #E5E9F0;
+            border: 2px solid var(--lh-primary-border);
         }
 
         .avatar-dropdown {
             display: none;
             position: absolute;
             right: 0;
-            top: 100%;
-            min-width: 180px;
-            background: rgba(255, 255, 255, 0.97);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(15, 38, 69, 0.12);
+            top: calc(100% + 6px);
+            min-width: 190px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--lh-border);
+            border-radius: var(--lh-radius);
+            box-shadow: var(--lh-shadow-lg);
             z-index: 1090;
             overflow: hidden;
         }
+
         .avatar-dropdown.open {
             display: block;
+            animation: lhDropdownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .avatar-dropdown-item {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 12px 16px;
+            padding: 12px 18px;
             font-size: 14px;
-            font-weight: 500;
-            color: #374151;
-            text-decoration: none;
-            transition: background 0.15s;
+            font-weight: 600;
+            color: var(--lh-text);
+            text-decoration: none !important;
+            transition: all 0.15s;
             border: none;
             background: none;
             width: 100%;
             cursor: pointer;
             font-family: inherit;
         }
+
         .avatar-dropdown-item:hover {
-            background: #F3F4F6;
-            color: #1A4A8A;
-            text-decoration: none;
+            background: var(--lh-primary-light);
+            color: var(--lh-primary);
         }
 
         .avatar-dropdown-divider {
             height: 1px;
-            background: #E5E9F0;
+            background: var(--lh-border-subtle);
             margin: 0;
         }
 
         .avatar-dropdown-item--sair {
-            color: #E53935;
+            color: var(--lh-danger);
         }
+
         .avatar-dropdown-item--sair:hover {
-            background: #FFF5F5;
-            color: #C62828;
+            background: var(--lh-danger-light);
+            color: var(--lh-danger-dark);
         }
 
         .navbar-login-btn {
-            color: #4B5563 !important;
-            font-weight: 500;
-            font-size: 14px;
-            padding: 12px 16px;
-            transition: color 0.2s ease, background-color 0.2s ease;
-            border-radius: 8px;
+            color: #ffffff !important;
+            background: var(--lh-gradient-primary);
+            font-weight: 600;
+            font-size: 13px;
+            padding: 8px 16px;
+            border-radius: var(--lh-radius-sm);
             cursor: pointer;
-            background: none;
             border: none;
-            font-family: inherit;
+            box-shadow: 0 2px 8px rgba(26, 74, 138, 0.2);
+            transition: all 0.2s ease;
         }
+
         .navbar-login-btn:hover {
-            color: #1A4A8A !important;
-            background-color: rgba(26, 74, 138, 0.08) !important;
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        @keyframes lhDropdownFade {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Responsividade Mobile Navbar ── */
+        @media (max-width: 767px) {
+            .navbar-custom {
+                margin: 6px 8px 0 8px;
+                border-radius: 10px;
+            }
+
+            .navbar-collapse {
+                border-top: 1px solid var(--lh-border) !important;
+                box-shadow: none;
+                margin-top: 4px;
+                background-color: #ffffff;
+                border-radius: 0 0 10px 10px;
+                padding: 12px 14px;
+                max-height: calc(100vh - 85px);
+                overflow-y: auto;
+            }
+
+            .navbar-custom .navbar-nav > li > a {
+                padding: 12px 14px;
+                font-size: 15px;
+                margin: 2px 0;
+            }
+
+            .navbar-right-custom {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+                padding-top: 10px;
+                border-top: 1px solid var(--lh-border-subtle);
+                margin-top: 8px;
+                float: none;
+            }
+
+            .notif-dropdown,
+            .avatar-dropdown {
+                position: static !important;
+                width: 100% !important;
+                box-shadow: none !important;
+                border: 1px solid var(--lh-border) !important;
+                margin-top: 8px;
+                max-height: 280px;
+            }
+
+            .avatar-trigger {
+                justify-content: flex-start;
+                padding: 10px 12px;
+                background: var(--lh-surface-subtle);
+            }
+        }
+
+        /* ── Rodapé Moderno ── */
+        .footer, .push {
+            height: 60px;
+        }
+
+        footer {
+            padding: 20px 0;
+            border-top: 1px solid var(--lh-border) !important;
+            background-color: var(--lh-surface);
+            color: var(--lh-text-muted);
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        /* ── Modais com visual moderno ── */
+        .modal-content {
+            border-radius: var(--lh-radius-lg);
+            border: 1px solid var(--lh-border);
+            box-shadow: var(--lh-shadow-lg);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--lh-border-subtle);
+        }
+
+        .modal-body {
+            padding: 22px;
+        }
+
+        .modal-footer {
+            padding: 16px 22px;
+            border-top: 1px solid var(--lh-border-subtle);
+            background: var(--lh-surface-subtle);
         }
     </style>
     {% block styles %}{% endblock %}
@@ -427,8 +462,11 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a href="{% url 'home' %}" class="navbar-brand">LabHub</a>
+                    <a href="{% url 'home' %}" class="navbar-brand">
+                        <span class="brand-dot"></span> LabHub
+                    </a>
                 </div>
+
                 <div class="navbar-collapse collapse">
                     <ul class="nav navbar-nav">
                         <li><a href="{% url 'home' %}">Início</a></li>
@@ -466,7 +504,7 @@
                             </div>
                         </div>
 
-                        <!-- Avatar do usuário -->
+                        <!-- Avatar do usuário com menu dropdown -->
                         <div class="avatar-wrapper">
                             <div class="avatar-trigger" id="avatarTrigger" title="{{ user.username }}">
                                 {% if user.perfil.tem_foto %}
@@ -474,6 +512,7 @@
                                 {% else %}
                                 <div class="avatar-iniciais">{{ user.perfil.iniciais }}</div>
                                 {% endif %}
+                                <span style="font-size:14px; font-weight:600; color:var(--lh-text);">{{ user.username }}</span>
                             </div>
                             <div class="avatar-dropdown" id="avatarDropdown">
                                 <a href="{% url 'minha_conta' %}" class="avatar-dropdown-item">
@@ -492,7 +531,7 @@
                     {% else %}
                     <div class="navbar-right-custom">
                         <button type="button" class="navbar-login-btn" data-toggle="modal" data-target="#authModal">
-                            Acessar o Sistema
+                            Acessar o Sistema →
                         </button>
                     </div>
                     {% endif %}
@@ -509,7 +548,7 @@
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2026 - LabHub - Gerenciamento de Equipamentos</p>
+            <p>&copy; 2026 - LabHub · Sistema Inteligente de Gestão Escolar</p>
         </div>
     </footer>
 
@@ -517,39 +556,87 @@
     <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-sm" role="document">
             <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color:#fff; border-top-left-radius:6px; border-top-right-radius:6px;">
-                    <h4 class="modal-title" id="confirmModalTitulo">Confirmar</h4>
+                <div class="modal-header" style="background: var(--lh-gradient-primary); color:#fff;">
+                    <h4 class="modal-title" id="confirmModalTitulo" style="margin:0; font-weight:700; font-size:16px;">Confirmar Ação</h4>
                 </div>
                 <div class="modal-body">
-                    <p id="confirmModalTexto" style="margin-bottom:0;">Tem certeza?</p>
+                    <p id="confirmModalTexto" style="margin:0; font-size:14px; color:var(--lh-text);">Tem certeza?</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="confirmModalOk">Confirmar</button>
+                    <button type="button" class="lh-btn lh-btn--ghost lh-btn--sm" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="lh-btn lh-btn--primary lh-btn--sm" id="confirmModalOk">Confirmar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Avisos globais das ações reativas (AJAX) -->
-    <div id="labhub-flash" style="position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:1080; width:90%; max-width:520px;"></div>
+    {% if not user.is_authenticated %}
+    <!-- Modal de autenticação global para visitantes -->
+    <div class="modal fade" id="authModal" tabindex="-1" role="dialog" aria-labelledby="authModalLabel">
+        <div class="modal-dialog" style="max-width:440px;" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background:var(--lh-gradient-primary); color:#ffffff; display:flex; justify-content:space-between; align-items:center;">
+                    <h4 class="modal-title" id="authModalLabel" style="margin:0; font-weight:800; font-size:18px;">LabHub · Acesso</h4>
+                    <button type="button" class="close" data-dismiss="modal" style="color:#fff; opacity:0.9; font-size:24px; line-height:1;">&times;</button>
+                </div>
+                <div class="modal-body" style="padding:24px;">
+                    <form action="{% url 'home' %}" method="post">
+                        {% csrf_token %}
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">E-mail ou Usuário</label>
+                            <input type="text" name="username" class="form-control" required placeholder="seu.email@escola.com">
+                        </div>
+                        <div style="margin-bottom:18px;">
+                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Senha</label>
+                            <input type="password" name="password" class="form-control" required placeholder="••••••••">
+                        </div>
+                        <input type="hidden" name="next" value="/" />
+                        <button type="submit" name="btn_login" class="lh-btn lh-btn--primary lh-btn--block lh-btn--lg">
+                            Entrar no Sistema
+                        </button>
+                    </form>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; font-size:13px;">
+                        <a href="{% url 'esqueci_senha' %}" style="color:var(--lh-primary); font-weight:600; text-decoration:none;">Esqueci minha senha</a>
+                        <a href="{% url 'home' %}#cadastro" style="color:var(--lh-text-muted); text-decoration:none;">Criar conta</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Avisos globais das ações reativas (Flash / Toast) -->
+    <div id="labhub-flash" style="position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:1095; width:90%; max-width:480px; pointer-events:none;"></div>
 
     <script src="{% static 'app/scripts/jquery-1.10.2.js' %}"></script>
     <script src="{% static 'app/scripts/bootstrap.js' %}"></script>
     <script>
         window.LabHubFlash = function (msg, tipo) {
             if (!msg) return;
-            var cls = 'warning';
-            if (tipo === 'success') cls = 'success';
-            else if (tipo === 'error' || tipo === 'danger') cls = 'danger';
-            else if (tipo === 'info' || tipo === 'debug') cls = 'info';
+            var cls = 'alert-info';
+            var icon = 'ℹ️';
+            if (tipo === 'success') { cls = 'alert-success'; icon = '✅'; }
+            else if (tipo === 'error' || tipo === 'danger') { cls = 'alert-danger'; icon = '❌'; }
+            else if (tipo === 'warning') { cls = 'alert-warning'; icon = '⚠️'; }
+
             var div = document.createElement('div');
-            div.className = 'alert alert-' + cls + ' alert-dismissible';
+            div.className = 'alert ' + cls + ' alert-dismissible';
             div.setAttribute('role', 'alert');
-            div.style.boxShadow = '0 4px 18px rgba(0,0,0,.15)';
-            div.innerHTML = '<button type="button" class="close" data-dismiss="alert">&times;</button>' + msg;
+            div.style.pointerEvents = 'auto';
+            div.style.borderRadius = '12px';
+            div.style.boxShadow = '0 8px 24px rgba(15,23,42,0.15)';
+            div.style.marginBottom = '10px';
+            div.style.fontSize = '14px';
+            div.style.fontWeight = '500';
+            div.style.display = 'flex';
+            div.style.alignItems = 'center';
+            div.style.gap = '10px';
+            div.innerHTML = '<span>' + icon + '</span><span style="flex:1;">' + msg + '</span><button type="button" class="close" data-dismiss="alert" style="position:static; margin-left:auto;">&times;</button>';
+            
             document.getElementById('labhub-flash').appendChild(div);
-            setTimeout(function () { $(div).fadeOut(400, function () { div.remove(); }); }, 4000);
+            setTimeout(function () {
+                $(div).fadeOut(400, function () { div.remove(); });
+            }, 4200);
         };
 
         window.LabHubElemento = function (html) {
@@ -603,8 +690,8 @@
                 var el = this;
                 formPendente = el.closest('form');
                 $('#confirmModalTexto').text(el.getAttribute('data-confirm'));
-                $('#confirmModalOk').removeClass('btn-default btn-primary btn-danger')
-                    .addClass(el.getAttribute('data-confirm-classe') || 'btn-primary');
+                $('#confirmModalOk').removeClass('lh-btn--primary lh-btn--danger lh-btn--success')
+                    .addClass(el.getAttribute('data-confirm-classe') === 'btn-danger' ? 'lh-btn--danger' : 'lh-btn--primary');
                 $modal.modal('show');
             });
 
@@ -654,7 +741,7 @@
                 formFixoPendente = null;
             });
 
-            // Fecha o menu mobile automaticamente ao clicar em um link da navbar
+            // Fecha o menu mobile automaticamente ao clicar em um link
             $('.navbar-collapse a:not(.dropdown-toggle)').on('click', function () {
                 if ($('.navbar-toggle').is(':visible') && $('.navbar-collapse').hasClass('in')) {
                     $('.navbar-toggle').click();
@@ -671,10 +758,9 @@
         var badge = document.getElementById('notifBadge');
         var lista = document.getElementById('notifLista');
         var limpar = document.getElementById('notifLimpar');
+        var avatarTrigger = document.getElementById('avatarTrigger');
+        var avatarDropdown = document.getElementById('avatarDropdown');
 
-        if (!bell || !dropdown) return;
-
-        // Lê o CSRF token do cookie do Django (método mais confiável)
         function getCSRFToken() {
             var name = 'csrftoken';
             var cookies = document.cookie.split(';');
@@ -684,13 +770,11 @@
                     return c.substring(name.length + 1);
                 }
             }
-            // Fallback: tenta pegar do input hidden
             var el = document.querySelector('[name=csrfmiddlewaretoken]');
             return el ? el.value : '';
         }
 
         function renderNotificacoes(data) {
-            // Atualiza badge
             if (data.nao_lidas > 0) {
                 badge.textContent = data.nao_lidas > 99 ? '99+' : data.nao_lidas;
                 badge.style.display = 'inline-block';
@@ -698,16 +782,15 @@
                 badge.style.display = 'none';
             }
 
-            // Renderiza lista
             if (!data.notificacoes || data.notificacoes.length === 0) {
-                lista.innerHTML = '<div class="notif-vazio">\ud83d\udced Nenhuma notifica\u00e7\u00e3o</div>';
+                lista.innerHTML = '<div class="notif-vazio">📭 Nenhuma notificação</div>';
                 return;
             }
 
             var html = '';
             data.notificacoes.forEach(function (n) {
                 html += '<div class="notif-item' + (n.lida ? '' : ' nao-lida') + '">';
-                html += '  <div class="notif-remetente">\ud83d\udda5\ufe0f Sistema</div>';
+                html += '  <div class="notif-remetente">🖥️ Sistema</div>';
                 html += '  <div class="notif-msg">' + escapeHtml(n.mensagem) + '</div>';
                 html += '  <div class="notif-tempo">' + escapeHtml(n.criada_em) + '</div>';
                 html += '</div>';
@@ -747,72 +830,56 @@
             .catch(function () {});
         }
 
-        // Toggle dropdown ao clicar no sino
-        bell.addEventListener('click', function (e) {
-            e.stopPropagation();
-            var isOpen = dropdown.classList.contains('open');
-            dropdown.classList.toggle('open');
+        if (bell && dropdown) {
+            bell.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (avatarDropdown) avatarDropdown.classList.remove('open');
+                var isOpen = dropdown.classList.contains('open');
+                dropdown.classList.toggle('open');
 
-            if (!isOpen) {
-                // Esconde o badge imediatamente
-                badge.style.display = 'none';
+                if (!isOpen) {
+                    badge.style.display = 'none';
+                    postAjax('{% url "marcar_lidas" %}', function () {
+                        carregarNotificacoes();
+                    });
+                }
+            });
 
-                // Marca como lidas no servidor e recarrega a lista
-                postAjax('{% url "marcar_lidas" %}', function () {
+            dropdown.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+        }
+
+        if (limpar) {
+            limpar.addEventListener('click', function () {
+                postAjax('{% url "limpar_notificacoes" %}', function () {
                     carregarNotificacoes();
                 });
-            }
-        });
-
-        // Fecha dropdowns ao clicar fora
-        document.addEventListener('click', function (e) {
-            if (!dropdown.contains(e.target) && e.target !== bell) {
-                dropdown.classList.remove('open');
-            }
-        });
-
-        // Impede que cliques dentro do dropdown fechem ele
-        dropdown.addEventListener('click', function (e) {
-            e.stopPropagation();
-        });
-
-        // Botão Limpar — apaga todas as notificações
-        limpar.addEventListener('click', function () {
-            postAjax('{% url "limpar_notificacoes" %}', function () {
-                carregarNotificacoes();
             });
-        });
-
-        // Carrega contagem inicial ao carregar a página
-        carregarNotificacoes();
-
-        // ── Avatar Dropdown ──
-        var avatarTrigger = document.getElementById('avatarTrigger');
-        var avatarDropdown = document.getElementById('avatarDropdown');
+        }
 
         if (avatarTrigger && avatarDropdown) {
             avatarTrigger.addEventListener('click', function (e) {
                 e.stopPropagation();
-                // Fecha o dropdown de notificações se estiver aberto
-                dropdown.classList.remove('open');
+                if (dropdown) dropdown.classList.remove('open');
                 avatarDropdown.classList.toggle('open');
             });
 
             avatarDropdown.addEventListener('click', function (e) {
                 e.stopPropagation();
             });
-
-            document.addEventListener('click', function (e) {
-                if (!avatarDropdown.contains(e.target) && !avatarTrigger.contains(e.target)) {
-                    avatarDropdown.classList.remove('open');
-                }
-            });
         }
 
-        // Ao abrir notificações, fecha avatar dropdown
-        bell.addEventListener('click', function () {
-            if (avatarDropdown) avatarDropdown.classList.remove('open');
+        document.addEventListener('click', function (e) {
+            if (dropdown && !dropdown.contains(e.target) && e.target !== bell) {
+                dropdown.classList.remove('open');
+            }
+            if (avatarDropdown && !avatarDropdown.contains(e.target) && (!avatarTrigger || !avatarTrigger.contains(e.target))) {
+                avatarDropdown.classList.remove('open');
+            }
         });
+
+        carregarNotificacoes();
     })();
     </script>
     {% endif %}

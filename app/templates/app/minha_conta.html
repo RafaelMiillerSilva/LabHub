@@ -1,299 +1,118 @@
 {% extends "app/layout.html" %}
 
 {% block content %}
-<style>
-    .conta-container {
-        max-width: 720px;
-        margin: 0 auto;
-        padding: 24px 16px 48px;
-    }
 
-    .conta-titulo {
-        font-size: 26px;
-        font-weight: 700;
-        color: #1A1A2E;
-        margin-bottom: 8px;
-    }
+<a href="{% url 'home' %}" class="lh-back-link">
+    ← Voltar ao início
+</a>
 
-    .conta-subtitulo {
-        font-size: 14px;
-        color: #6B7280;
-        margin-bottom: 32px;
-    }
+<div class="lh-hero">
+    <div class="lh-hero-icone">👤</div>
+    <div class="lh-hero-texto">
+        <h2>Minha Conta</h2>
+        <p>Gerencie suas informações de perfil, foto e segurança de acesso.</p>
+    </div>
+</div>
 
-    .conta-card {
-        background: #fff;
-        border: 1px solid #E5E9F0;
-        border-radius: 14px;
-        padding: 28px;
-        margin-bottom: 24px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-    }
-
-    .conta-card__titulo {
-        font-size: 16px;
-        font-weight: 700;
-        color: #1A1A2E;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    /* ── Avatar Section ── */
-    .conta-avatar-area {
-        display: flex;
-        align-items: center;
-        gap: 24px;
-        margin-bottom: 8px;
-    }
-
-    .conta-avatar-preview {
-        width: 96px;
-        height: 96px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid #E5E9F0;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-        flex-shrink: 0;
-    }
-
-    .conta-avatar-iniciais {
-        width: 96px;
-        height: 96px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #1e3c72, #2a5298);
-        color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 32px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        flex-shrink: 0;
-        border: 3px solid #E5E9F0;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-    }
-
-    .conta-avatar-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .conta-avatar-actions .btn-foto {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
-        font-size: 13px;
-        font-weight: 600;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .btn-foto--upload {
-        background: linear-gradient(135deg, #1e3c72, #2a5298);
-        color: #fff;
-    }
-    .btn-foto--upload:hover {
-        opacity: 0.9;
-        transform: translateY(-1px);
-    }
-
-    .btn-foto--remover {
-        background: none;
-        color: #E53935;
-        border: 1px solid #E53935 !important;
-    }
-    .btn-foto--remover:hover {
-        background: #FFF5F5;
-    }
-
-    .conta-foto-hint {
-        font-size: 12px;
-        color: #9CA3AF;
-        margin-top: 4px;
-    }
-
-    /* ── Form Fields ── */
-    .conta-campo {
-        margin-bottom: 18px;
-    }
-
-    .conta-campo label {
-        display: block;
-        font-size: 13px;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 6px;
-    }
-
-    .conta-campo input[type="text"],
-    .conta-campo input[type="email"],
-    .conta-campo input[type="password"] {
-        width: 100%;
-        padding: 10px 14px;
-        border: 1px solid #D1D5DB;
-        border-radius: 8px;
-        font-size: 14px;
-        font-family: inherit;
-        transition: border-color 0.2s, box-shadow 0.2s;
-        background: #FAFBFC;
-        box-sizing: border-box;
-    }
-
-    .conta-campo input:focus {
-        outline: none;
-        border-color: #1A4A8A;
-        box-shadow: 0 0 0 3px rgba(26, 74, 138, 0.12);
-    }
-
-    .conta-campo .campo-readonly {
-        background: #F3F4F6;
-        color: #6B7280;
-        cursor: not-allowed;
-    }
-
-    .conta-btn-salvar {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 10px 24px;
-        font-size: 14px;
-        font-weight: 600;
-        color: #fff;
-        background: linear-gradient(135deg, #1e3c72, #2a5298);
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    .conta-btn-salvar:hover {
-        opacity: 0.92;
-        transform: translateY(-1px);
-    }
-
-    .conta-info-badge {
-        display: inline-block;
-        padding: 4px 12px;
-        font-size: 12px;
-        font-weight: 600;
-        border-radius: 6px;
-        margin-right: 8px;
-    }
-    .conta-info-badge--tipo {
-        background: #EBF2FF;
-        color: #1A4A8A;
-    }
-    .conta-info-badge--status {
-        background: #D4EDDA;
-        color: #155724;
-    }
-
-    .conta-info-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-
-    @media (max-width: 520px) {
-        .conta-avatar-area {
-            flex-direction: column;
-            text-align: center;
-        }
-    }
-</style>
-
-<div class="conta-container">
-    <h1 class="conta-titulo">Minha Conta</h1>
-    <p class="conta-subtitulo">Gerencie suas informações pessoais e segurança.</p>
+<div style="max-width:760px; margin:0 auto 40px;">
 
     <!-- ── Foto de Perfil ── -->
-    <div class="conta-card">
-        <div class="conta-card__titulo">📷 Foto de Perfil</div>
-        <div class="conta-avatar-area">
-            {% if perfil.tem_foto %}
-                <img src="{% url 'foto_perfil' user.id %}" alt="Foto de perfil" class="conta-avatar-preview" id="avatarPreview">
-            {% else %}
-                <div class="conta-avatar-iniciais" id="avatarPreview">{{ perfil.iniciais }}</div>
-            {% endif %}
-            <div class="conta-avatar-actions">
-                <form method="post" enctype="multipart/form-data" style="display:inline;">
-                    {% csrf_token %}
-                    <input type="hidden" name="acao" value="foto">
-                    <input type="file" name="foto" id="fotoInput" accept="image/*" style="display:none;" onchange="this.form.submit();">
-                    <button type="button" class="btn-foto btn-foto--upload" onclick="document.getElementById('fotoInput').click();">
-                        📤 Alterar foto
-                    </button>
-                </form>
+    <div class="lh-card">
+        <div class="lh-card-header">
+            <h3 class="lh-card-title">📷 Foto de Perfil</h3>
+        </div>
+        <div class="lh-card-body">
+            <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
                 {% if perfil.tem_foto %}
-                <form method="post" style="display:inline;">
-                    {% csrf_token %}
-                    <input type="hidden" name="acao" value="remover_foto">
-                    <button type="submit" class="btn-foto btn-foto--remover">🗑️ Remover foto</button>
-                </form>
+                    <img src="{% url 'foto_perfil' user.id %}" alt="Foto de perfil" style="width:96px; height:96px; border-radius:50%; object-fit:cover; border:3px solid var(--lh-primary-border); box-shadow:var(--lh-shadow);" id="avatarPreview">
+                {% else %}
+                    <div style="width:96px; height:96px; border-radius:50%; background:var(--lh-gradient-primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:800; border:3px solid var(--lh-primary-border); box-shadow:var(--lh-shadow);" id="avatarPreview">{{ perfil.iniciais }}</div>
                 {% endif %}
-                <span class="conta-foto-hint">JPG, PNG, WEBP ou GIF · Máx. 2 MB</span>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <form method="post" enctype="multipart/form-data" style="display:inline; margin:0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="acao" value="foto">
+                            <input type="file" name="foto" id="fotoInput" accept="image/*" style="display:none;" onchange="this.form.submit();">
+                            <button type="button" class="lh-btn lh-btn--primary lh-btn--sm" onclick="document.getElementById('fotoInput').click();">
+                                📤 Alterar foto
+                            </button>
+                        </form>
+                        {% if perfil.tem_foto %}
+                        <form method="post" style="display:inline; margin:0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="acao" value="remover_foto">
+                            <button type="submit" class="lh-btn lh-btn--outline-danger lh-btn--sm">🗑️ Remover</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    <span style="font-size:12px; color:var(--lh-text-light);">JPG, PNG, WEBP ou GIF · Máx. 2 MB</span>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- ── Dados Pessoais ── -->
-    <div class="conta-card">
-        <div class="conta-card__titulo">👤 Dados Pessoais</div>
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="acao" value="dados">
+    <div class="lh-card">
+        <div class="lh-card-header">
+            <h3 class="lh-card-title">👤 Dados Pessoais</h3>
+        </div>
+        <div class="lh-card-body">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="acao" value="dados">
 
-            <div class="conta-campo">
-                <label for="username">Nome de Usuário</label>
-                <input type="text" id="username" name="username" value="{{ user.username }}" required>
-            </div>
-
-            <div class="conta-campo">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" value="{{ user.email }}" required>
-            </div>
-
-            <div class="conta-campo">
-                <label>Perfil</label>
-                <div class="conta-info-row">
-                    <span class="conta-info-badge conta-info-badge--tipo">{{ perfil.get_tipo_display }}</span>
-                    <span class="conta-info-badge conta-info-badge--status">✓ Aprovado</span>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Nome de Usuário</label>
+                    <input type="text" id="username" name="username" class="form-control" value="{{ user.username }}" required>
                 </div>
-            </div>
 
-            <button type="submit" class="conta-btn-salvar">💾 Salvar alterações</button>
-        </form>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">E-mail</label>
+                    <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}" required>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Perfil no Sistema</label>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span class="lh-badge lh-badge--primary">{{ perfil.get_tipo_display }}</span>
+                        <span class="lh-badge lh-badge--success">✓ Aprovado</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="lh-btn lh-btn--primary lh-btn--lg">💾 Salvar Alterações</button>
+            </form>
+        </div>
     </div>
 
     <!-- ── Alterar Senha ── -->
-    <div class="conta-card">
-        <div class="conta-card__titulo">🔒 Alterar Senha</div>
-        <form method="post" action="{% url 'alterar_senha' %}">
-            {% csrf_token %}
+    <div class="lh-card">
+        <div class="lh-card-header">
+            <h3 class="lh-card-title">🔒 Segurança & Senha</h3>
+        </div>
+        <div class="lh-card-body">
+            <form method="post" action="{% url 'alterar_senha' %}">
+                {% csrf_token %}
 
-            <div class="conta-campo">
-                <label for="senha_atual">Senha atual</label>
-                <input type="password" id="senha_atual" name="senha_atual" required>
-            </div>
+                <div style="margin-bottom:14px;">
+                    <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Senha Atual</label>
+                    <input type="password" id="senha_atual" name="senha_atual" class="form-control" required placeholder="Sua senha atual">
+                </div>
 
-            <div class="conta-campo">
-                <label for="nova_senha">Nova senha</label>
-                <input type="password" id="nova_senha" name="nova_senha" required minlength="6">
-            </div>
+                <div style="margin-bottom:14px;">
+                    <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Nova Senha</label>
+                    <input type="password" id="nova_senha" name="nova_senha" class="form-control" required minlength="6" placeholder="Mínimo 6 caracteres">
+                </div>
 
-            <div class="conta-campo">
-                <label for="confirmar_senha">Confirmar nova senha</label>
-                <input type="password" id="confirmar_senha" name="confirmar_senha" required minlength="6">
-            </div>
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Confirmar Nova Senha</label>
+                    <input type="password" id="confirmar_senha" name="confirmar_senha" class="form-control" required minlength="6" placeholder="Repita a nova senha">
+                </div>
 
-            <button type="submit" class="conta-btn-salvar">🔐 Alterar senha</button>
-        </form>
+                <button type="submit" class="lh-btn lh-btn--warning lh-btn--lg">🔐 Alterar Senha</button>
+            </form>
+        </div>
     </div>
 </div>
+
 {% endblock %}

@@ -1,389 +1,242 @@
 {% extends "app/layout.html" %}
 {% block content %}
 
-<!-- ==================== ESTILOS MODERNOS DO DETALHE DO AGENDAMENTO (OTIMIZADOS) ==================== -->
+<!-- ==================== ESTILOS DO DETALHE DO AGENDAMENTO ==================== -->
 <style>
-    .lh-det-container {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    .det-head {
-        margin-bottom: 12px;
-    }
-
-        .det-head .voltar {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1A4A8A;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            transition: color 0.2s;
-        }
-
-            .det-head .voltar:hover {
-                color: #153d74;
-            }
-
-    .agend-hero {
+    .nav-tabs-modern {
+        border-bottom: 2px solid var(--lh-border);
         display: flex;
-        align-items: center;
-        gap: 16px;
+        gap: 8px;
         margin-bottom: 24px;
     }
 
-    .agend-hero-icone {
-        width: 58px;
-        height: 58px;
-        border-radius: 15px;
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        flex-shrink: 0;
-        box-shadow: 0 6px 16px rgba(26, 74, 138, .25);
+    .nav-tabs-modern > li > a {
+        border: none !important;
+        background: transparent !important;
+        color: var(--lh-text-muted) !important;
+        font-weight: 700;
+        font-size: 15px;
+        padding: 12px 18px;
+        border-radius: 0;
+        border-bottom: 2px solid transparent !important;
+        transition: color 0.2s ease, border-color 0.2s ease;
+        margin: 0;
     }
 
-    .agend-hero-texto {
-        flex: 1;
-        min-width: 180px;
+    .nav-tabs-modern > li.active > a,
+    .nav-tabs-modern > li.active > a:hover,
+    .nav-tabs-modern > li.active > a:focus {
+        color: var(--lh-primary) !important;
+        border-bottom: 2px solid var(--lh-primary) !important;
     }
-
-        .agend-hero-texto h2 {
-            margin: 0;
-            font-size: 26px;
-            font-weight: 700;
-            color: #1A2333;
-            letter-spacing: -0.5px;
-        }
-
-        .agend-hero-texto p {
-            margin: 4px 0 0;
-            color: #4B5563;
-            font-size: 14px;
-        }
-
-    .agend-hero-stat {
-        text-align: center;
-        background: #fff;
-        border: 1px solid rgba(0, 0, 0, .06);
-        box-shadow: 0 4px 18px rgba(0, 0, 0, .05);
-        border-radius: 14px;
-        padding: 10px 22px;
-        flex-shrink: 0;
-    }
-
-        .agend-hero-stat .num {
-            display: block;
-            font-size: 26px;
-            font-weight: 800;
-            color: #1A4A8A;
-            line-height: 1;
-        }
-
-        .agend-hero-stat .lbl {
-            font-size: 12px;
-            color: #6B7280;
-            text-transform: capitalize;
-        }
-
-    @media (max-width: 600px) {
-        .agend-hero {
-            flex-wrap: wrap;
-        }
-    }
-
-    .nav-tabs-modern {
-        border-bottom: 2px solid #E5E9F0;
-        display: flex;
-        gap: 8px;
-    }
-
-        .nav-tabs-modern > li > a {
-            border: none !important;
-            background: transparent !important;
-            color: #6B7280 !important;
-            font-weight: 600;
-            font-size: 15px;
-            padding: 12px 20px;
-            border-radius: 0;
-            border-bottom: 2px solid transparent !important;
-            transition: color 0.2s ease, border-color 0.2s ease;
-            margin: 0;
-        }
-
-        .nav-tabs-modern > li.active > a,
-        .nav-tabs-modern > li.active > a:hover,
-        .nav-tabs-modern > li.active > a:focus {
-            color: #1A4A8A !important;
-            border-bottom: 2px solid #1A4A8A !important;
-        }
-
-        .nav-tabs-modern > li > a:hover {
-            color: #1A1A2E !important;
-            border-bottom: 2px solid #6B7280 !important;
-        }
 
     .painel-aula {
-        background: #ffffff !important;
-        border: 1px solid rgba(0, 0, 0, 0.05) !important;
-        border-radius: 12px !important;
-        box-shadow: 0 2px 12px rgba(15, 38, 69, 0.04) !important;
+        background: var(--lh-surface) !important;
+        border: 1px solid var(--lh-border) !important;
+        border-radius: var(--lh-radius) !important;
+        box-shadow: var(--lh-shadow-sm) !important;
         margin-bottom: 12px !important;
         overflow: hidden;
     }
 
-        .painel-aula .panel-heading {
-            background: #ffffff !important;
-            padding: 0 !important;
-            border: none !important;
-        }
+    .painel-aula .panel-heading {
+        background: var(--lh-surface) !important;
+        padding: 0 !important;
+        border: none !important;
+    }
 
-        .painel-aula .panel-title a {
-            display: block;
-            padding: 18px 20px;
-            text-decoration: none !important;
-            color: #1A1A2E !important;
-            font-weight: 700;
-            font-size: 15px;
-            outline: none !important;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-    .resumo-livres {
-        font-size: 12px;
+    .painel-aula .panel-title a {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        text-decoration: none !important;
+        color: var(--lh-text) !important;
         font-weight: 700;
-        padding: 4px 12px;
-        border-radius: 20px;
-    }
-
-    .livres-ok {
-        background: #E8F5E9;
-        color: #2E7D32;
-    }
-
-    .livres-zero {
-        background: #FFEBEE;
-        color: #C62828;
+        font-size: 15px;
+        outline: none !important;
+        -webkit-tap-highlight-color: transparent;
+        flex-wrap: wrap;
+        gap: 8px;
     }
 
     .painel-aula .panel-body {
-        border-top: 1px solid #F0F4F8 !important;
-        background: #F7F9FC;
+        border-top: 1px solid var(--lh-border-subtle) !important;
+        background: var(--lh-surface-subtle);
         padding: 16px 20px;
     }
 
-    .aula-item, .dispo-row {
+    .aula-item {
         display: block;
-        border: 1px solid #E5E9F0;
-        border-radius: 8px;
+        border: 1px solid var(--lh-border);
+        border-radius: var(--lh-radius-sm);
         padding: 12px 16px;
         margin-bottom: 10px;
         font-weight: 500;
-        background: #ffffff;
+        background: var(--lh-surface);
+        transition: all 0.15s ease;
     }
 
     .aula-verde {
-        border-left: 4px solid #4CAF50;
+        border-left: 4px solid #10B981;
         cursor: pointer;
     }
 
-        .aula-verde:hover {
-            background: #F3FBF3;
-            border-color: #4CAF50;
-        }
+    .aula-verde:hover {
+        background: #F0FDF4;
+        border-color: #10B981;
+    }
 
     .aula-vermelho {
-        border-left: 4px solid #E53935;
-        background: #FAFAFA;
+        border-left: 4px solid #EF4444;
+        background: #FEF2F2;
     }
 
     .nome-sala {
         font-size: 15px;
         font-weight: 700;
-        color: #1A1A2E;
+        color: var(--lh-text);
     }
 
     .info-sala {
         font-size: 13px;
-        color: #6B7280;
+        color: var(--lh-text-muted);
         font-weight: 400;
         margin-top: 2px;
         display: inline-block;
     }
 
-    .badge-status {
-        float: right;
-        font-size: 11px;
-        font-weight: 700;
-        padding: 3px 10px;
-        border-radius: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-    }
-
-    .bg-verde {
-        background: #4CAF50;
-        color: #fff;
-    }
-
-    .bg-vermelho {
-        background: #E53935;
-        color: #fff;
-    }
-
-    .bg-laranja {
-        background: #EF6C00;
-        color: #fff;
-    }
-
     .aula-check {
         margin-right: 10px;
-        transform: scale(1.15);
+        transform: scale(1.2);
         vertical-align: middle;
+        accent-color: var(--lh-primary);
+        cursor: pointer;
+    }
+
+    .dispo-row {
+        background: var(--lh-surface);
+        border: 1px solid var(--lh-border);
+        border-radius: var(--lh-radius-sm);
+        padding: 14px 16px;
+        margin-bottom: 12px;
     }
 
     .dispo-verde {
-        border-left: 4px solid #4CAF50;
+        border-left: 4px solid #10B981;
     }
 
     .dispo-laranja {
-        border-left: 4px solid #FF9800;
+        border-left: 4px solid #F59E0B;
     }
 
     .dispo-vermelho {
-        border-left: 4px solid #E53935;
-        background: #FAFAFA;
+        border-left: 4px solid #EF4444;
+        background: #FEF2F2;
     }
 
     .dispo-controle {
         display: flex;
         align-items: center;
         gap: 12px;
-        margin-top: 12px;
+        margin-top: 10px;
+        flex-wrap: wrap;
     }
 
     .dispo-slider {
         flex: 1;
+        min-width: 120px;
         height: 6px;
         -webkit-appearance: none;
-        background: #E5E9F0;
+        appearance: none;
+        background: var(--lh-border);
         border-radius: 4px;
         outline: none;
-        will-change: transform; /* Otimização de GPU para evitar lag */
     }
 
-        .dispo-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #1A4A8A;
-            cursor: pointer;
-        }
+    .dispo-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--lh-primary);
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(26, 74, 138, 0.3);
+    }
+
+    .dispo-stepper-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background: var(--lh-surface-subtle);
+        border: 1px solid var(--lh-border);
+        color: var(--lh-text);
+        font-size: 16px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .dispo-stepper-btn:hover {
+        background: var(--lh-primary-light);
+        color: var(--lh-primary);
+    }
 
     .dispo-valor {
         min-width: 44px;
         text-align: center;
-        font-weight: 700;
+        font-weight: 800;
         font-size: 15px;
-        color: #1A4A8A;
-        background: #EBF2FF;
+        color: var(--lh-primary);
+        background: var(--lh-primary-light);
         border-radius: 6px;
         padding: 4px 8px;
     }
 
-    .grupo-tipo {
-        font-weight: 700;
-        color: #1A1A2E;
-        margin: 18px 0 10px;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-    }
-
     .card-reserva {
-        border-left: 4px solid #1A4A8A;
-        background: #ffffff;
+        border-left: 4px solid var(--lh-primary);
+        background: var(--lh-surface);
         padding: 12px 16px;
         margin-bottom: 10px;
-        border-radius: 8px;
-        border: 1px solid #E5E9F0;
+        border-radius: var(--lh-radius-sm);
+        border: 1px solid var(--lh-border);
         border-left-width: 4px;
     }
 
-    .panel-finalizar {
-        background: #ffffff !important;
-        border: 1px solid rgba(0, 0, 0, 0.05) !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 20px rgba(15, 38, 69, 0.06) !important;
-        margin-top: 24px;
-        overflow: hidden;
-    }
-
-        .panel-finalizar .panel-body {
-            padding: 24px;
+    @media (max-width: 600px) {
+        .painel-aula .panel-title a {
+            padding: 14px 16px;
         }
 
-        .panel-finalizar label {
-            font-weight: 600;
-            color: #4B5563;
-            margin-bottom: 6px;
-            font-size: 14px;
+        .painel-aula .panel-body {
+            padding: 12px 14px;
         }
-
-        .panel-finalizar .form-control {
-            border-radius: 8px;
-            border: 1px solid #D1D5DB;
-            padding: 10px 12px;
-            height: auto;
-            font-size: 14px;
-            box-shadow: none !important;
-        }
-
-    .btn-agendar {
-        background: #1A4A8A !important;
-        border: none !important;
-        color: #ffffff !important;
-        font-weight: 600 !important;
-        font-size: 16px !important;
-        padding: 12px 28px !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 12px rgba(26, 74, 138, 0.2) !important;
-    }
-
-        .btn-agendar:hover {
-            background: #153d74 !important;
-        }
-
-    .alert-modern {
-        border-radius: 8px;
-        border: none;
-        font-weight: 500;
     }
 </style>
 
 <div class="lh-det-container">
 
-    <div class="det-head">
-        <a href="{% url 'agendamentos' %}?ano={{ ano }}&mes={{ mes }}" class="voltar">← Voltar ao calendário</a>
-    </div>
+    <a href="{% url 'agendamentos' %}?ano={{ ano }}&mes={{ mes }}" class="lh-back-link">
+        ← Voltar ao calendário
+    </a>
 
-    <div class="agend-hero">
-        <div class="agend-hero-icone">📅</div>
-        <div class="agend-hero-texto">
+    <div class="lh-hero">
+        <div class="lh-hero-icone">📅</div>
+        <div class="lh-hero-texto">
             <h2>Agendamento — {{ data|date:"d/m/Y" }}</h2>
             <p>{{ dia_semana }}, {{ dia }} de {{ mes_nome }} de {{ ano }}</p>
         </div>
-        <div class="agend-hero-stat">
+        <div class="lh-hero-stat">
             <span class="num">{{ dia }}</span>
             <span class="lbl">{{ mes_nome|slice:":3" }}.</span>
         </div>
     </div>
 
-    <ul class="nav nav-tabs nav-tabs-modern" role="tablist" style="margin-bottom: 24px;">
+    <ul class="nav nav-tabs nav-tabs-modern" role="tablist">
         <li role="presentation" class="active">
             <a href="#tab-sala" role="tab" data-toggle="tab">🏫 Sala de Aula</a>
         </li>
@@ -397,23 +250,32 @@
         <!-- ===================== ABA 1: SALA DE AULA ===================== -->
         <div role="tabpanel" class="tab-pane active" id="tab-sala">
             {% if not tem_salas %}
-            <div class="alert alert-warning alert-modern">Nenhuma sala cadastrada. Cadastre em <a href="{% url 'salas' %}" class="alert-link">Salas</a>.</div>
+            <div class="lh-card" style="padding:24px; text-align:center; color:var(--lh-text-muted);">
+                <p style="margin:0 0 10px; font-size:15px;">Nenhuma sala cadastrada no sistema.</p>
+                <a href="{% url 'salas' %}" class="lh-btn lh-btn--primary lh-btn--sm">Cadastrar Salas</a>
+            </div>
             {% elif not turmas %}
-            <div class="alert alert-warning alert-modern">Nenhuma turma cadastrada. Cadastre em <a href="{% url 'turmas' %}" class="alert-link">Turmas</a>.</div>
+            <div class="lh-card" style="padding:24px; text-align:center; color:var(--lh-text-muted);">
+                <p style="margin:0 0 10px; font-size:15px;">Nenhuma turma cadastrada.</p>
+                <a href="{% url 'turmas' %}" class="lh-btn lh-btn--primary lh-btn--sm">Cadastrar Turmas</a>
+            </div>
             {% else %}
 
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="tipo" value="sala">
 
-                <div class="panel-group" id="acordeao-salas" style="margin-bottom: 0;">
+                <div class="panel-group" id="acordeao-salas" style="margin-bottom: 20px;">
                     {% for aula in aulas %}
                     <div class="panel panel-default painel-aula">
                         <div class="panel-heading">
-                            <h4 class="panel-title">
+                            <h4 class="panel-title" style="margin:0;">
                                 <a data-toggle="collapse" data-parent="#acordeao-salas" href="#aula{{ aula.numero }}">
-                                    {{ aula.numero }}ª Aula <small class="text-muted" style="font-weight: 400; margin-left: 4px;">({{ aula.horario }})</small>
-                                    <span class="resumo-livres {% if aula.livres %}livres-ok{% else %}livres-zero{% endif %}" style="float:right;">
+                                    <span>
+                                        <span class="lh-badge lh-badge--primary" style="margin-right:6px;">{{ aula.numero }}ª Aula</span>
+                                        <small style="color:var(--lh-text-muted); font-weight:500;">({{ aula.horario }})</small>
+                                    </span>
+                                    <span class="lh-badge {% if aula.livres %}lh-badge--success{% else %}lh-badge--danger{% endif %}">
                                         {{ aula.livres }} de {{ aula.total }} livres
                                     </span>
                                 </a>
@@ -424,16 +286,16 @@
                                 {% for s in aula.salas %}
                                 {% if s.ocupado %}
                                 <div class="aula-item aula-vermelho">
-                                    <span class="badge-status bg-vermelho">Ocupada</span>
+                                    <span class="lh-badge lh-badge--danger" style="float:right;">Ocupada</span>
                                     <span class="nome-sala">{{ s.sala.nome }}</span><br>
                                     <span class="info-sala">{{ s.turma }} — {{ s.professor }}</span>
-                                    <div style="margin-top: 6px;">
-                                        <a href="{% url 'relacao_agendamento' s.ag_id %}" class="btn btn-xs btn-default" style="border-radius: 4px; font-weight: 500;">📋 Relação</a>
+                                    <div style="margin-top: 8px;">
+                                        <a href="{% url 'relacao_agendamento' s.ag_id %}" class="lh-btn lh-btn--xs lh-btn--outline">📋 Ver Relação</a>
                                     </div>
                                 </div>
                                 {% else %}
                                 <label class="aula-item aula-verde">
-                                    <span class="badge-status bg-verde">Livre</span>
+                                    <span class="lh-badge lh-badge--success" style="float:right;">Livre</span>
                                     <input type="checkbox" class="aula-check" name="reserva" value="{{ aula.numero }}:{{ s.sala.id }}">
                                     <span class="nome-sala">{{ s.sala.nome }}</span>
                                     {% if s.sala.localizacao %}<span class="info-sala"> — {{ s.sala.localizacao }}</span>{% endif %}
@@ -446,11 +308,14 @@
                     {% endfor %}
                 </div>
 
-                <div class="panel panel-default panel-finalizar">
-                    <div class="panel-body">
+                <div class="lh-card">
+                    <div class="lh-card-header">
+                        <h3 class="lh-card-title">📝 Finalizar Agendamento de Sala</h3>
+                    </div>
+                    <div class="lh-card-body">
                         {% if is_admin %}
-                        <div class="form-group" style="max-width: 360px;">
-                            <label>Agendar em nome de</label>
+                        <div class="form-group" style="max-width:400px; margin-bottom:16px;">
+                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Agendar em nome de</label>
                             <select name="professor" class="form-control">
                                 {% for p in professores %}
                                 <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
@@ -458,8 +323,9 @@
                             </select>
                         </div>
                         {% endif %}
-                        <div class="form-group" style="max-width: 360px;">
-                            <label>Turma do agendamento</label>
+
+                        <div class="form-group" style="max-width:400px; margin-bottom:16px;">
+                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Turma do agendamento</label>
                             <select name="turma" class="form-control" required>
                                 <option value="">— selecione a turma —</option>
                                 {% for t in turmas %}
@@ -467,20 +333,25 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label>Observação (opcional)</label>
-                            <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: aula de reforço, prova, etc."></textarea>
+
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Observação (opcional)</label>
+                            <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: aula de reforço, apresentação de trabalhos, etc."></textarea>
                         </div>
+
                         {% if is_admin %}
-                        <div class="form-group">
-                            <label class="fixo-checkbox-wrap" style="max-width: 360px; display: flex; align-items: center; gap: 10px; background: #EBF2FF; padding: 10px 14px; border-radius: 8px; cursor: pointer; transition: background 0.15s; margin-bottom: 4px;">
-                                <input type="checkbox" name="fixo" value="1" style="width: 18px; height: 18px; accent-color: #1A4A8A; cursor: pointer;">
-                                <span style="font-weight: 600; font-size: 14px; color: #1A4A8A;">📌 Fixar neste dia da semana</span>
+                        <div class="form-group" style="margin-bottom:20px;">
+                            <label style="display:flex; align-items:center; gap:10px; background:var(--lh-primary-light); padding:10px 14px; border-radius:8px; cursor:pointer; margin:0; max-width:400px;">
+                                <input type="checkbox" name="fixo" value="1" style="width:18px; height:18px; accent-color:var(--lh-primary); cursor:pointer;">
+                                <span style="font-weight:700; font-size:14px; color:var(--lh-primary);">📌 Fixar neste dia da semana</span>
                             </label>
-                            <p class="text-muted" style="font-size: 12px; margin-top: 4px; margin-left: 2px;">O agendamento será repetido em todas as {{ dia_semana }}s até o final do ano.</p>
+                            <p style="font-size:12px; color:var(--lh-text-muted); margin:4px 0 0 2px;">O agendamento será repetido em todas as {{ dia_semana }}s até o final do ano letivo.</p>
                         </div>
                         {% endif %}
-                        <button type="submit" class="btn btn-agendar">📌 Agendar Salas</button>
+
+                        <button type="submit" class="lh-btn lh-btn--primary lh-btn--lg">
+                            📌 Confirmar Agendamento de Salas
+                        </button>
                     </div>
                 </div>
             </form>
@@ -490,24 +361,33 @@
         <!-- ================== ABA 2: EQUIPAMENTOS MÓVEIS ================== -->
         <div role="tabpanel" class="tab-pane" id="tab-movel">
             {% if not tem_equipamentos %}
-            <div class="alert alert-warning alert-modern">Nenhum equipamento cadastrado. Cadastre em <a href="{% url 'equipamentos' %}" class="alert-link">Equipamentos</a>.</div>
+            <div class="lh-card" style="padding:24px; text-align:center; color:var(--lh-text-muted);">
+                <p style="margin:0 0 10px; font-size:15px;">Nenhum equipamento cadastrado no sistema.</p>
+                <a href="{% url 'equipamentos' %}" class="lh-btn lh-btn--primary lh-btn--sm">Cadastrar Equipamentos</a>
+            </div>
             {% elif not turmas %}
-            <div class="alert alert-warning alert-modern">Nenhuma turma cadastrada.</div>
+            <div class="lh-card" style="padding:24px; text-align:center; color:var(--lh-text-muted);">
+                <p style="margin:0 0 10px; font-size:15px;">Nenhuma turma cadastrada.</p>
+                <a href="{% url 'turmas' %}" class="lh-btn lh-btn--primary lh-btn--sm">Cadastrar Turmas</a>
+            </div>
             {% else %}
 
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="tipo" value="dispositivo">
 
-                <div class="panel-group" id="acordeao-disp" style="margin-bottom: 0;">
+                <div class="panel-group" id="acordeao-disp" style="margin-bottom: 20px;">
                     {% for aula in aulas_disp %}
                     <div class="panel panel-default painel-aula">
                         <div class="panel-heading">
-                            <h4 class="panel-title">
+                            <h4 class="panel-title" style="margin:0;">
                                 <a data-toggle="collapse" data-parent="#acordeao-disp" href="#disp{{ aula.numero }}">
-                                    {{ aula.numero }}ª Aula <small class="text-muted" style="font-weight: 400; margin-left: 4px;">({{ aula.horario }})</small>
+                                    <span>
+                                        <span class="lh-badge lh-badge--primary" style="margin-right:6px;">{{ aula.numero }}ª Aula</span>
+                                        <small style="color:var(--lh-text-muted); font-weight:500;">({{ aula.horario }})</small>
+                                    </span>
                                     {% if aula.cards %}
-                                    <span class="resumo-livres livres-zero" style="float:right;">{{ aula.cards|length }} reserva(s)</span>
+                                    <span class="lh-badge lh-badge--warning">{{ aula.cards|length }} reserva(s)</span>
                                     {% endif %}
                                 </a>
                             </h4>
@@ -516,40 +396,45 @@
                             <div class="panel-body">
                                 {% for grupo in aula.grupos %}
                                 <div class="dispo-row dispo-{{ grupo.status }}">
-                                    <div>
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
                                         <span class="nome-sala">{{ grupo.label }}</span>
-                                        <span class="badge-status bg-{{ grupo.status }}">{{ grupo.restante }} / {{ grupo.total }}</span>
+                                        <span class="lh-badge {% if grupo.status == 'verde' %}lh-badge--success{% elif grupo.status == 'laranja' %}lh-badge--warning{% else %}lh-badge--danger{% endif %}">
+                                            {{ grupo.restante }} / {{ grupo.total }} livres
+                                        </span>
                                     </div>
+
                                     {% if grupo.restante > 0 %}
                                     <div class="dispo-controle">
+                                        <button type="button" class="dispo-stepper-btn btn-minus" data-target="slider_{{ aula.numero }}_{{ grupo.categoria }}">−</button>
                                         <input type="range" class="dispo-slider"
+                                               id="slider_{{ aula.numero }}_{{ grupo.categoria }}"
                                                name="qtd_{{ aula.numero }}_{{ grupo.categoria }}"
-                                               min="0" max="{{ grupo.restante }}" value="0"
-                                               oninput="this.nextElementSibling.textContent = this.value">
-                                        <span class="dispo-valor">0</span>
+                                               min="0" max="{{ grupo.restante }}" value="0">
+                                        <button type="button" class="dispo-stepper-btn btn-plus" data-target="slider_{{ aula.numero }}_{{ grupo.categoria }}">+</button>
+                                        <span class="dispo-valor" id="val_{{ aula.numero }}_{{ grupo.categoria }}">0</span>
                                     </div>
                                     {% else %}
-                                    <div style="margin-top: 6px;">
-                                        <em class="text-muted" style="font-size:13px;">Esgotado nesta aula</em>
+                                    <div style="margin-top: 8px;">
+                                        <span style="font-size:13px; color:var(--lh-danger); font-weight:600;">Esgotado para esta aula</span>
                                     </div>
                                     {% endif %}
                                 </div>
                                 {% endfor %}
 
                                 {% if aula.cards %}
-                                <hr style="border-top-color: #E5E9F0;">
-                                <p class="grupo-tipo">Reservas desta aula</p>
+                                <hr style="border-top:1px solid var(--lh-border); margin:18px 0 14px;">
+                                <p style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); letter-spacing:0.04em; margin-bottom:10px;">Reservas desta aula</p>
                                 {% for ag in aula.cards %}
                                 <div class="card-reserva">
                                     <strong>{{ ag.turma.nome }}</strong>
-                                    <span class="text-muted">— {{ ag.professor.get_full_name|default:ag.professor.username }}</span>
-                                    <div style="margin-top:6px; display: flex; gap: 4px; flex-wrap: wrap;">
+                                    <span style="color:var(--lh-text-muted); font-size:13px;">— {{ ag.professor.get_full_name|default:ag.professor.username }}</span>
+                                    <div style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;">
                                         {% for item in ag.itens.all %}
-                                        <span class="label label-primary" style="background: #1A4A8A; font-weight: 500; font-size: 11px; padding: 3px 8px; border-radius: 4px;">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
+                                        <span class="lh-badge lh-badge--primary">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
                                         {% endfor %}
                                     </div>
                                     <div style="margin-top: 8px;">
-                                        <a href="{% url 'relacao_agendamento' ag.id %}" class="btn btn-xs btn-default" style="border-radius: 4px; font-weight: 500;">📋 Relação</a>
+                                        <a href="{% url 'relacao_agendamento' ag.id %}" class="lh-btn lh-btn--xs lh-btn--outline">📋 Relação</a>
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -560,11 +445,14 @@
                     {% endfor %}
                 </div>
 
-                <div class="panel panel-default panel-finalizar">
-                    <div class="panel-body">
+                <div class="lh-card">
+                    <div class="lh-card-header">
+                        <h3 class="lh-card-title">📝 Finalizar Agendamento de Equipamentos</h3>
+                    </div>
+                    <div class="lh-card-body">
                         {% if is_admin %}
-                        <div class="form-group" style="max-width: 360px;">
-                            <label>Agendar em nome de</label>
+                        <div class="form-group" style="max-width:400px; margin-bottom:16px;">
+                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Agendar em nome de</label>
                             <select name="professor" class="form-control">
                                 {% for p in professores %}
                                 <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
@@ -572,8 +460,9 @@
                             </select>
                         </div>
                         {% endif %}
-                        <div class="form-group" style="max-width: 360px;">
-                            <label>Turma do agendamento</label>
+
+                        <div class="form-group" style="max-width:400px; margin-bottom:16px;">
+                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Turma do agendamento</label>
                             <select name="turma" class="form-control" required>
                                 <option value="">— selecione a turma —</option>
                                 {% for t in turmas %}
@@ -581,20 +470,25 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label>Observação (opcional)</label>
-                            <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: projeto de robótica, pesquisa, etc."></textarea>
+
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Observação (opcional)</label>
+                            <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: trabalho em grupo, pesquisa na internet, etc."></textarea>
                         </div>
+
                         {% if is_admin %}
-                        <div class="form-group">
-                            <label class="fixo-checkbox-wrap" style="max-width: 360px; display: flex; align-items: center; gap: 10px; background: #EBF2FF; padding: 10px 14px; border-radius: 8px; cursor: pointer; transition: background 0.15s; margin-bottom: 4px;">
-                                <input type="checkbox" name="fixo" value="1" style="width: 18px; height: 18px; accent-color: #1A4A8A; cursor: pointer;">
-                                <span style="font-weight: 600; font-size: 14px; color: #1A4A8A;">📌 Fixar neste dia da semana</span>
+                        <div class="form-group" style="margin-bottom:20px;">
+                            <label style="display:flex; align-items:center; gap:10px; background:var(--lh-primary-light); padding:10px 14px; border-radius:8px; cursor:pointer; margin:0; max-width:400px;">
+                                <input type="checkbox" name="fixo" value="1" style="width:18px; height:18px; accent-color:var(--lh-primary); cursor:pointer;">
+                                <span style="font-weight:700; font-size:14px; color:var(--lh-primary);">📌 Fixar neste dia da semana</span>
                             </label>
-                            <p class="text-muted" style="font-size: 12px; margin-top: 4px; margin-left: 2px;">O agendamento será repetido em todas as {{ dia_semana }}s até o final do ano.</p>
+                            <p style="font-size:12px; color:var(--lh-text-muted); margin:4px 0 0 2px;">O agendamento será repetido em todas as {{ dia_semana }}s até o final do ano letivo.</p>
                         </div>
                         {% endif %}
-                        <button type="submit" class="btn btn-agendar">📌 Agendar Equipamentos</button>
+
+                        <button type="submit" class="lh-btn lh-btn--primary lh-btn--lg">
+                            📌 Confirmar Agendamento de Equipamentos
+                        </button>
                     </div>
                 </div>
             </form>
@@ -604,13 +498,39 @@
     </div>
 </div>
 
-<!-- Script otimizador de eventos de input para zerar o lag do navegador -->
 <script>
-    document.addEventListener("input", function (e) {
-        if (e.target && e.target.classList.contains('dispo-slider')) {
-            let valSpan = e.target.nextElementSibling;
-            if (valSpan) valSpan.textContent = e.target.value;
-        }
+    document.addEventListener("DOMContentLoaded", function () {
+        // Atualiza valor do slider
+        document.addEventListener("input", function (e) {
+            if (e.target && e.target.classList.contains('dispo-slider')) {
+                let id = e.target.id;
+                let valId = id.replace('slider_', 'val_');
+                let valSpan = document.getElementById(valId);
+                if (valSpan) valSpan.textContent = e.target.value;
+            }
+        });
+
+        // Botões - e + para steppers mobile
+        document.addEventListener("click", function(e) {
+            let btnMinus = e.target.closest('.btn-minus');
+            let btnPlus = e.target.closest('.btn-plus');
+
+            if (btnMinus) {
+                let targetId = btnMinus.getAttribute('data-target');
+                let slider = document.getElementById(targetId);
+                if (slider && parseInt(slider.value) > 0) {
+                    slider.value = parseInt(slider.value) - 1;
+                    slider.dispatchEvent(new Event('input'));
+                }
+            } else if (btnPlus) {
+                let targetId = btnPlus.getAttribute('data-target');
+                let slider = document.getElementById(targetId);
+                if (slider && parseInt(slider.value) < parseInt(slider.max)) {
+                    slider.value = parseInt(slider.value) + 1;
+                    slider.dispatchEvent(new Event('input'));
+                }
+            }
+        });
     });
 </script>
 

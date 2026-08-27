@@ -1,292 +1,22 @@
 {% extends "app/layout.html" %}
 
-{% block styles %}
-<style>
-    .eq-topo {
-        margin-bottom: 20px;
-    }
-
-        .eq-topo .eq-voltar {
-            font-size: 14px;
-            color: #1A4A8A;
-            font-weight: 500;
-            text-decoration: none;
-        }
-
-            .eq-topo .eq-voltar:hover {
-                text-decoration: underline;
-            }
-
-        .eq-topo h2 {
-            margin: 8px 0 0 0;
-            font-size: 26px;
-            font-weight: 700;
-            color: #1A2333;
-            letter-spacing: -0.5px;
-        }
-
-    .eq-alert {
-        border-radius: 12px;
-        border: 1px solid rgba(185, 74, 72, 0.25);
-        background: rgba(185, 74, 72, 0.06);
-        color: #8a3634;
-        padding: 14px 18px;
-        margin-bottom: 20px;
-    }
-
-        .eq-alert ul {
-            margin: 0;
-            padding-left: 18px;
-        }
-
-    .eq-layout {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        align-items: flex-start;
-    }
-
-    .eq-card {
-        background: #ffffff;
-        border-radius: 16px;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
-        overflow: hidden;
-        flex: 2 1 420px;
-    }
-
-    .eq-card-excluir {
-        flex: 1 1 280px;
-    }
-
-    .eq-card-header {
-        padding: 16px 22px;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        background: rgba(26, 74, 138, 0.03);
-    }
-
-        .eq-card-header h3 {
-            margin: 0;
-            font-size: 15px;
-            font-weight: 600;
-            color: #1A2333;
-        }
-
-    .eq-card-excluir .eq-card-header {
-        background: rgba(185, 74, 72, 0.05);
-    }
-
-    .eq-card-body {
-        padding: 22px;
-    }
-
-    .eq-form-group {
-        margin-bottom: 18px;
-    }
-
-        .eq-form-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            color: #4B5563;
-            margin-bottom: 6px;
-        }
-
-        .eq-form-group .help-block {
-            color: #6B7280;
-            margin-top: 6px;
-        }
-
-    /* Restyle native form widgets rendered by Django ({{ form.field }}) */
-    .eq-card-body input[type="text"],
-    .eq-card-body input[type="number"],
-    .eq-card-body input[type="file"],
-    .eq-card-body select,
-    .eq-card-body textarea {
-        display: block !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        height: auto !important;
-        min-height: 42px;
-        border: 1px solid #D8DCE3 !important;
-        border-radius: 10px !important;
-        padding: 10px 14px !important;
-        font-size: 14px !important;
-        line-height: 1.4 !important;
-        color: #1A2333 !important;
-        background: #fbfbfc !important;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        box-sizing: border-box !important;
-        white-space: normal;
-        overflow: visible;
-        text-overflow: unset;
-    }
-
-    .eq-card-body select {
-        min-height: 42px;
-        appearance: auto;
-        -webkit-appearance: menulist;
-    }
-
-    .eq-card-body textarea {
-        min-height: 90px;
-        resize: vertical;
-    }
-
-        .eq-card-body input[type="text"]:focus,
-        .eq-card-body input[type="number"]:focus,
-        .eq-card-body select:focus,
-        .eq-card-body textarea:focus {
-            outline: none;
-            border-color: #1A4A8A;
-            box-shadow: 0 0 0 3px rgba(26, 74, 138, 0.12);
-            background: #ffffff;
-        }
-
-    .eq-foto-atual {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 10px;
-    }
-
-        .eq-foto-atual img {
-            max-height: 110px;
-            border-radius: 10px;
-            border: 1px solid #e3e6ee;
-        }
-
-    .eq-row-2 {
-        display: flex;
-        gap: 16px;
-        flex-wrap: wrap;
-    }
-
-        .eq-row-2 .eq-form-group {
-            flex: 1 1 200px;
-        }
-
-    .eq-acoes {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 6px;
-    }
-
-    .eq-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        border: none;
-        border-radius: 10px;
-        padding: 12px 22px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        text-decoration: none;
-        transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-    }
-
-        .eq-btn:hover {
-            transform: translateY(-1px);
-        }
-
-    .eq-btn-primario {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        color: #fff;
-        box-shadow: 0 4px 14px rgba(26, 74, 138, 0.25);
-    }
-
-        .eq-btn-primario:hover {
-            color: #fff;
-            box-shadow: 0 6px 18px rgba(26, 74, 138, 0.32);
-        }
-
-    .eq-btn-secundario {
-        background: #ffffff;
-        color: #4B5563;
-        border: 1px solid #D8DCE3;
-    }
-
-        .eq-btn-secundario:hover {
-            background: #f5f6f8;
-            color: #4B5563;
-        }
-
-    .eq-btn-info {
-        background: rgba(26, 74, 138, 0.08);
-        color: #1A4A8A;
-    }
-
-        .eq-btn-info:hover {
-            background: rgba(26, 74, 138, 0.14);
-            color: #1A4A8A;
-        }
-
-    .eq-btn-perigo {
-        background: rgba(185, 74, 72, 0.1);
-        color: #b94a48;
-        width: 100%;
-    }
-
-        .eq-btn-perigo:hover {
-            background: rgba(185, 74, 72, 0.16);
-            color: #b94a48;
-        }
-
-    .eq-divisor {
-        border: none;
-        border-top: 1px solid rgba(0, 0, 0, 0.06);
-        margin: 20px 0;
-    }
-
-    .eq-card-excluir p {
-        color: #6B7280;
-        font-size: 14px;
-    }
-
-    @media (max-width: 767px) {
-        .eq-layout {
-            flex-direction: column;
-        }
-
-        .eq-card, .eq-card-excluir {
-            flex: 1 1 100%;
-            width: 100%;
-        }
-
-        .eq-acoes {
-            flex-direction: column;
-        }
-
-            .eq-acoes .eq-btn {
-                width: 100%;
-            }
-
-        .eq-row-2 {
-            flex-direction: column;
-            gap: 0;
-        }
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 
-<div class="eq-topo">
-    <a href="{% url 'equipamentos' %}{% if q or cat %}?q={{ q }}&cat={{ cat }}{% endif %}" class="eq-voltar">&larr; Voltar para Equipamentos</a>
-    <h2>
-        {% if editando %}✏️ Editar Equipamento{% else %}➕ Cadastrar Equipamento{% endif %}
-    </h2>
+<a href="{% url 'equipamentos' %}{% if q or cat %}?q={{ q }}&cat={{ cat }}{% endif %}" class="lh-back-link">
+    ← Voltar para Equipamentos
+</a>
+
+<div class="lh-hero">
+    <div class="lh-hero-icone">💻</div>
+    <div class="lh-hero-texto">
+        <h2>{% if editando %}✏️ Editar Equipamento{% else %}➕ Cadastrar Equipamento{% endif %}</h2>
+        <p>{% if editando %}Atualize as informações do aparelho {{ editando.apelido }}.{% else %}Preencha os dados do novo equipamento escolar.{% endif %}</p>
+    </div>
 </div>
 
 {% if form.errors %}
-<div class="eq-alert">
-    <ul>
+<div class="lh-badge lh-badge--danger" style="display:block; padding:12px 16px; margin-bottom:20px; border-radius:8px;">
+    <ul style="margin:0; padding-left:18px; text-align:left;">
         {% for field in form %}{% for error in field.errors %}
         <li>{{ field.label }}: {{ error }}</li>
         {% endfor %}{% endfor %}
@@ -296,124 +26,121 @@
 </div>
 {% endif %}
 
-<div class="eq-layout">
-    <div class="eq-card">
-        <div class="eq-card-header">
-            <h3>Dados do equipamento</h3>
-        </div>
-        <div class="eq-card-body">
-            <!-- ALTERADO: Preserva os parâmetros no action do formulário -->
-            <form method="post" enctype="multipart/form-data" action="{% if editando %}{% url 'equipamento_editar' editando.id %}{% else %}{% url 'equipamento_novo' %}{% endif %}{% if q or cat %}?q={{ q }}&cat={{ cat }}{% endif %}">
-                {% csrf_token %}
+<div class="row">
+    <div class="col-md-8 col-sm-12">
+        <div class="lh-card">
+            <div class="lh-card-header">
+                <h3 class="lh-card-title">Dados do Equipamento</h3>
+            </div>
+            <div class="lh-card-body">
+                <form method="post" enctype="multipart/form-data" action="{% if editando %}{% url 'equipamento_editar' editando.id %}{% else %}{% url 'equipamento_novo' %}{% endif %}{% if q or cat %}?q={{ q }}&cat={{ cat }}{% endif %}">
+                    {% csrf_token %}
 
-                <div class="eq-form-group">
-                    <label>Foto (opcional)</label>
-                    {% if editando.tem_foto %}
-                    <div class="eq-foto-atual">
-                        <img src="{% url 'foto_equipamento' editando.id %}" alt="foto atual">
-                        <label class="checkbox-inline" style="margin-left:0; font-size:13px; color:#4B5563; font-weight:500; text-transform:none;">
-                            {{ form.remover_foto }} Remover foto
+                    <div style="margin-bottom:18px;">
+                        <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Foto (opcional)</label>
+                        {% if editando.tem_foto %}
+                        <div style="display:flex; align-items:center; gap:14px; margin-bottom:10px; flex-wrap:wrap;">
+                            <img src="{% url 'foto_equipamento' editando.id %}" alt="foto atual" style="max-height:100px; border-radius:8px; border:1px solid var(--lh-border);">
+                            <label style="font-size:13px; font-weight:600; color:var(--lh-danger); cursor:pointer; display:flex; align-items:center; gap:6px; margin:0;">
+                                {{ form.remover_foto }} Remover foto atual
+                            </label>
+                        </div>
+                        {% endif %}
+                        {{ form.foto }}
+                        <span style="display:block; font-size:12px; color:var(--lh-text-light); margin-top:4px;">
+                            A imagem é comprimida automaticamente e salva no banco de dados.
+                        </span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-6" style="margin-bottom:14px;">
+                            <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Categoria</label>
+                            {{ form.categoria }}
+                        </div>
+                        <div class="col-sm-6" style="margin-bottom:14px;">
+                            <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Apelido (ex: C01, PROJ-02)</label>
+                            {{ form.apelido }}
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Identificação da escola (Etiqueta)</label>
+                        {{ form.identificacao_escola }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-6" style="margin-bottom:14px;">
+                            <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Número de patrimônio</label>
+                            {{ form.numero_patrimonio }}
+                        </div>
+                        <div class="col-sm-6" style="margin-bottom:14px;">
+                            <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Número de série</label>
+                            {{ form.numero_serie }}
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:14px;" id="grupo-imei">
+                        <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">IMEI <span style="font-weight:400; color:var(--lh-text-light); text-transform:none;">(tablets e smartphones)</span></label>
+                        {{ form.imei }}
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Status de Operação</label>
+                        {{ form.status }}
+                    </div>
+
+                    <div style="background:var(--lh-surface-subtle); border:1px solid var(--lh-border); border-radius:10px; padding:14px 16px; margin-bottom:16px;">
+                        <label style="margin:0; font-size:14px; font-weight:700; color:var(--lh-text); cursor:pointer; display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" name="fixo" id="id_fixo" {% if form.fixo.value %}checked{% endif %} style="transform:scale(1.2); accent-color:var(--lh-primary); cursor:pointer;">
+                            <span>Equipamento Fixo (permanece instalado em uma sala)</span>
                         </label>
+                        <span style="font-size:12px; color:var(--lh-text-muted); margin:4px 0 0 24px; display:block;">
+                            Marque se este equipamento não é móvel e fica alocado fixamente em uma sala ou laboratório.
+                        </span>
                     </div>
-                    {% endif %}
-                    {{ form.foto }}
-                    <span class="help-block">
-                        A imagem é reduzida e comprimida automaticamente e guardada no banco de dados.
-                    </span>
-                </div>
 
-                <div class="eq-form-group">
-                    <label>Categoria</label>
-                    {{ form.categoria }}
-                </div>
-
-                <div class="eq-form-group">
-                    <label>Apelido</label>
-                    {{ form.apelido }}
-                </div>
-
-                <div class="eq-form-group">
-                    <label>Identificação da escola</label>
-                    {{ form.identificacao_escola }}
-                </div>
-
-                <div class="eq-row-2">
-                    <div class="eq-form-group">
-                        <label>Número de patrimônio</label>
-                        {{ form.numero_patrimonio }}
+                    <div style="margin-bottom:16px; display:none;" id="grupo-sala">
+                        <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Sala onde o equipamento é fixo</label>
+                        {{ form.sala }}
                     </div>
-                    <div class="eq-form-group">
-                        <label>Número de série</label>
-                        {{ form.numero_serie }}
+
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Observações</label>
+                        {{ form.observacao }}
                     </div>
-                </div>
 
-                <div class="eq-form-group" id="grupo-imei">
-                    <label>IMEI <span style="text-transform:none; font-weight:400; color:#9CA3AF;">(apenas tablets e smartphones)</span></label>
-                    {{ form.imei }}
-                </div>
-
-                <div class="eq-form-group">
-                    <label>Status</label>
-                    {{ form.status }}
-                </div>
-
-                <div class="eq-form-group" style="background: #f8fafc; border: 1px solid #e3e8ee; border-radius: 10px; padding: 14px 16px;">
-                    <label style="margin: 0; font-size: 14px; font-weight: 600; color: #1A2333; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; text-transform: none;">
-                        <input type="checkbox" name="fixo" id="id_fixo" {% if form.fixo.value %}checked{% endif %} style="transform: scale(1.3); cursor: pointer; margin: 0;">
-                        <span>Equipamento Fixo (permanece instalado em uma sala)</span>
-                    </label>
-                    <span class="help-block" style="margin: 6px 0 0 26px; font-size: 12px; display: block;">
-                        Marque se este equipamento não é móvel e fica instalado permanentemente em uma sala ou laboratório.
-                    </span>
-                </div>
-
-                <div class="eq-form-group" id="grupo-sala" style="display: none;">
-                    <label>Sala onde o equipamento é fixo</label>
-                    {{ form.sala }}
-                    <span class="help-block">
-                        Selecione a sala de aula ou laboratório onde este equipamento está alocado.
-                    </span>
-                </div>
-
-                <div class="eq-form-group">
-                    <label>Observação <span style="text-transform:none; font-weight:400; color:#9CA3AF;">(opcional)</span></label>
-                    {{ form.observacao }}
-                    <span class="help-block">
-                        Anotações sobre o equipamento, histórico de problemas, etc.
-                    </span>
-                </div>
-
-                <div class="eq-acoes">
-                    <button type="submit" class="eq-btn eq-btn-primario">
-                        {% if editando %}💾 Salvar Alterações{% else %}✅ Cadastrar{% endif %}
-                    </button>
-                    <a href="{% url 'equipamentos' %}{% if q or cat %}?q={{ q }}&cat={{ cat }}{% endif %}" class="eq-btn eq-btn-secundario">Cancelar</a>
-                </div>
-
-                {% if editando %}
-                <hr class="eq-divisor">
-                <a href="{% url 'etiqueta_equipamento' editando.id %}" class="eq-btn eq-btn-info">🏷️ Baixar etiqueta</a>
-                {% endif %}
-            </form>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button type="submit" class="lh-btn lh-btn--primary lh-btn--lg">
+                            {% if editando %}💾 Salvar Alterações{% else %}✅ Cadastrar Equipamento{% endif %}
+                        </button>
+                        <a href="{% url 'equipamentos' %}{% if q or cat %}?q={{ q }}&cat={{ cat }}{% endif %}" class="lh-btn lh-btn--ghost lh-btn--lg">Cancelar</a>
+                        {% if editando %}
+                        <a href="{% url 'etiqueta_equipamento' editando.id %}" class="lh-btn lh-btn--outline lh-btn--lg" style="margin-left:auto;">🏷️ Baixar Etiqueta</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
     {% if editando %}
-    <div class="eq-card eq-card-excluir">
-        <div class="eq-card-header">
-            <h3>Excluir</h3>
-        </div>
-        <div class="eq-card-body">
-            <p>Remove este equipamento permanentemente.</p>
-            <!-- ALTERADO: Repassa os parâmetros da busca na rota de exclusão -->
-            <form action="{% url 'equipamento_excluir' editando.id %}{% if q or cat %}?q={{ q }}&cat={{ cat }}{% endif %}" method="post">
-                {% csrf_token %}
-                <button type="submit" class="eq-btn eq-btn-perigo"
-                        data-confirm="Remover o equipamento {{ editando.apelido }}?">
-                    🗑️ Excluir equipamento
-                </button>
-            </form>
+    <div class="col-md-4 col-sm-12">
+        <div class="lh-card" style="border-top:4px solid var(--lh-danger);">
+            <div class="lh-card-header">
+                <h3 class="lh-card-title" style="color:var(--lh-danger);">Excluir Equipamento</h3>
+            </div>
+            <div class="lh-card-body">
+                <p style="font-size:14px; color:var(--lh-text-muted); line-height:1.5; margin-bottom:16px;">
+                    Esta ação remove o equipamento <strong>{{ editando.apelido }}</strong> permanentemente do sistema.
+                </p>
+                <form action="{% url 'equipamento_excluir' editando.id %}{% if q or cat %}?q={{ q }}&cat={{ cat }}{% endif %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="lh-btn lh-btn--danger lh-btn--block"
+                            data-confirm="Tem certeza que deseja remover o equipamento {{ editando.apelido }}?">
+                        🗑️ Excluir Definitivamente
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
     {% endif %}
@@ -428,6 +155,7 @@
         var selCat = document.getElementById('id_categoria');
         var grupoImei = document.getElementById('grupo-imei');
         function toggleImei() {
+            if (!selCat || !grupoImei) return;
             var mostra = comChip.indexOf(selCat.value) !== -1;
             grupoImei.style.display = mostra ? '' : 'none';
         }

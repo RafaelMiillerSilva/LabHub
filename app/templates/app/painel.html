@@ -1,190 +1,67 @@
 {% extends "app/layout.html" %}
+
 {% block content %}
 
 <style>
-    /* Cabeçalho Hero */
-    .painel-hero {
+    .painel-tabs {
         display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 26px;
-    }
-
-    .painel-hero-icone {
-        width: 58px;
-        height: 58px;
-        border-radius: 15px;
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        flex-shrink: 0;
-        box-shadow: 0 6px 16px rgba(26, 74, 138, .25);
-    }
-
-    .painel-hero-texto {
-        flex: 1;
-        min-width: 180px;
-    }
-
-        .painel-hero-texto h2 {
-            margin: 0;
-            font-size: 26px;
-            font-weight: 700;
-            color: #1A2333;
-            letter-spacing: -0.5px;
-        }
-
-        .painel-hero-texto p {
-            margin: 4px 0 0;
-            color: #4B5563;
-            font-size: 14px;
-        }
-
-    /* Abas Customizadas */
-    .nav-tabs-modern {
-        border-bottom: 2px solid #E5E9F0;
-        display: flex;
-        gap: 8px;
+        gap: 6px;
+        border-bottom: 2px solid var(--lh-border);
         margin-bottom: 24px;
+        overflow-x: auto;
+        padding-bottom: 2px;
     }
 
-        .nav-tabs-modern > li > a {
-            border: none !important;
-            background: transparent !important;
-            color: #6B7280 !important;
-            font-weight: 600;
-            font-size: 15px;
-            padding: 12px 20px;
-            border-radius: 0;
-            border-bottom: 2px solid transparent !important;
-            transition: color 0.2s ease, border-color 0.2s ease;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .nav-tabs-modern > li.active > a,
-        .nav-tabs-modern > li.active > a:hover,
-        .nav-tabs-modern > li.active > a:focus {
-            color: #1A4A8A !important;
-            border-bottom: 2px solid #1A4A8A !important;
-        }
-
-        .nav-tabs-modern > li > a:hover {
-            color: #1A1A2E !important;
-            border-bottom: 2px solid #6B7280 !important;
-        }
-
-    /* Badges nas abas */
-    .badge-modern {
-        background-color: #E5E7EB;
-        color: #374151;
-        border-radius: 12px;
-        padding: 3px 8px;
-        font-size: 11px;
+    .painel-tabs > li > a {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 12px 18px;
+        font-size: 14px;
         font-weight: 700;
+        color: var(--lh-text-muted) !important;
+        border: none !important;
+        background: transparent !important;
+        border-bottom: 2px solid transparent !important;
+        border-radius: 0;
+        margin-bottom: -2px;
+        white-space: nowrap;
+        text-decoration: none !important;
+        transition: color 0.15s, border-color 0.15s;
     }
 
-    .badge-danger-modern {
-        background-color: #FEE2E2 !important;
-        color: #B91C1C !important;
-    }
-
-    /* Cards e Elementos Internos */
-    .lh-card {
-        background: #ffffff;
-        border: 1px solid #E5E7EB !important;
-        border-radius: 16px !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
-        overflow: hidden;
-        margin-bottom: 24px;
-    }
-
-    .lh-card-header {
-        padding: 20px 20px 15px 20px;
-        background: transparent;
-        border-bottom: 1px solid #F3F4F6;
-    }
-
-    .lh-card-title {
-        font-size: 17px;
-        font-weight: 700;
-        color: #1A2333;
-        margin: 0;
-    }
-
-    .lh-card-body {
-        padding: 20px;
-    }
-
-    /* Inputs Modernos para Filtros */
-    .form-control-modern {
-        border-radius: 10px !important;
-        border: 1px solid #D1D5DB !important;
-        padding: 8px 14px !important;
-        height: auto !important;
-        font-size: 14px !important;
-        box-shadow: none !important;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
-    }
-
-        .form-control-modern:focus {
-            border-color: #1A4A8A !important;
-            box-shadow: 0 0 0 3px rgba(26, 74, 138, 0.15) !important;
-        }
-
-    /* Botões Padrão para Filtros e Ações */
-    .btn-outline-modern {
-        background: #F3F4F6 !important;
-        color: #4B5563 !important;
-        border: 1px solid #D1D5DB !important;
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        padding: 8px 14px !important;
-        transition: all 0.15s ease;
-    }
-
-        .btn-outline-modern:hover {
-            background: #E5E7EB !important;
-            color: #1A2333 !important;
-        }
-
-    /* Estilização Global para os botões nas tabelas */
-    .table .btn-xs {
-        border-radius: 6px !important;
-        font-weight: 600;
-        padding: 3px 8px;
+    .painel-tabs > li.active > a,
+    .painel-tabs > li.active > a:hover {
+        color: var(--lh-primary) !important;
+        border-bottom: 2px solid var(--lh-primary) !important;
     }
 </style>
 
-<div class="painel-hero">
-    <div class="painel-hero-icone">🛠️</div>
-    <div class="painel-hero-texto">
+<div class="lh-hero">
+    <div class="lh-hero-icone">🛠️</div>
+    <div class="lh-hero-texto">
         <h2>Painel Administrativo</h2>
-        <p>Gerencie solicitações de acesso, usuários, redefinições de senha e histórico do LabHub.</p>
+        <p>Gerencie solicitações de acesso, usuários, redefinições de senha e histórico de ações.</p>
     </div>
 </div>
 
-<ul class="nav nav-tabs nav-tabs-modern" role="tablist">
+<ul class="nav nav-tabs painel-tabs" role="tablist">
     <li role="presentation" class="{% if aba == 'solicitacoes' %}active{% endif %}">
         <a href="#solicitacoes" role="tab" data-toggle="tab">
             🕐 Solicitações
-            <span class="badge badge-modern badge-danger-modern" id="badge-solicitacoes" style="{% if not solicitacoes %}display:none;{% endif %}">{{ solicitacoes|length }}</span>
+            <span class="lh-badge lh-badge--danger" id="badge-solicitacoes" {% if not solicitacoes %}style="display:none;"{% endif %}>{{ solicitacoes|length }}</span>
         </a>
     </li>
     <li role="presentation" class="{% if aba == 'usuarios' %}active{% endif %}">
         <a href="#usuarios" role="tab" data-toggle="tab">
             👤 Usuários
-            <span class="badge badge-modern" id="badge-usuarios" {% if not usuarios %}style="display:none;" {% endif %}>{{ usuarios|length }}</span>
+            <span class="lh-badge lh-badge--primary" id="badge-usuarios" {% if not usuarios %}style="display:none;"{% endif %}>{{ usuarios|length }}</span>
         </a>
     </li>
     <li role="presentation" class="{% if aba == 'senhas' %}active{% endif %}">
         <a href="#senhas" role="tab" data-toggle="tab">
             🔑 Redefinições
-            <span class="badge badge-modern badge-danger-modern" id="badge-senhas" style="{% if not pedidos_senha %}display:none;{% endif %}">{{ pedidos_senha|length }}</span>
+            <span class="lh-badge lh-badge--danger" id="badge-senhas" {% if not pedidos_senha %}style="display:none;"{% endif %}>{{ pedidos_senha|length }}</span>
         </a>
     </li>
     <li role="presentation" class="{% if aba == 'historico' %}active{% endif %}">
@@ -203,46 +80,49 @@
                 <h3 class="lh-card-title">Aguardando Aprovação</h3>
             </div>
             <div class="lh-card-body" style="padding: 0;">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover" style="margin-bottom: 0;">
+                <div class="lh-table-wrap" style="border:none; border-radius:0;">
+                    <table class="lh-table">
                         <thead>
                             <tr>
-                                <th style="padding-left: 20px; color: #6B7280; font-weight: 600;">Usuário</th>
-                                <th style="color: #6B7280; font-weight: 600;">E-mail</th>
-                                <th style="color: #6B7280; font-weight: 600;">Tipo Solicitado</th>
-                                <th style="padding-right: 20px; color: #6B7280; font-weight: 600;">Ações</th>
+                                <th>Usuário</th>
+                                <th>E-mail</th>
+                                <th>Tipo Solicitado</th>
+                                <th class="text-center">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-solicitacoes">
                             {% for soc in solicitacoes %}
                             <tr data-perfil-id="{{ soc.id }}">
-                                <td style="padding-left: 20px; vertical-align: middle;"><strong>{{ soc.user.username }}</strong></td>
-                                <td style="vertical-align: middle; color: #4B5563;">{{ soc.user.email }}</td>
-                                <td style="vertical-align: middle;">
+                                <td><strong>{{ soc.user.username }}</strong></td>
+                                <td style="color:var(--lh-text-muted);">{{ soc.user.email }}</td>
+                                <td>
                                     {% if soc.tipo == 'ADMINISTRADOR' %}
-                                    <span class="label label-warning" style="border-radius: 4px;">{{ soc.get_tipo_display }}</span>
+                                    <span class="lh-badge lh-badge--warning">{{ soc.get_tipo_display }}</span>
                                     {% else %}
-                                    <span class="label label-info" style="border-radius: 4px;">{{ soc.get_tipo_display }}</span>
+                                    <span class="lh-badge lh-badge--primary">{{ soc.get_tipo_display }}</span>
                                     {% endif %}
                                 </td>
-                                <td style="padding-right: 20px; vertical-align: middle;">
-                                    <form action="{% url 'aprovar_usuario' soc.id %}" method="post" style="display:inline;" data-ajax="true">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-xs btn-success" data-confirm="Aprovar acesso de {{ soc.user.username }}?">
-                                            ✅ Aprovar
-                                        </button>
-                                    </form>
-                                    <form action="{% url 'negar_usuario' soc.id %}" method="post" style="display:inline; margin-left: 5px;" data-ajax="true">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-xs btn-danger" data-confirm="Negar e REMOVER os dados de {{ soc.user.username }}? Esta ação não pode ser desfeita.">
-                                            ❌ Negar
-                                        </button>
-                                    </form>
+                                <td class="text-center">
+                                    <div style="display:inline-flex; gap:6px;">
+                                        <form action="{% url 'aprovar_usuario' soc.id %}" method="post" style="display:inline; margin:0;" data-ajax="true">
+                                            {% csrf_token %}
+                                            <button type="submit" class="lh-btn lh-btn--xs lh-btn--success" data-confirm="Aprovar acesso de {{ soc.user.username }}?">
+                                                ✅ Aprovar
+                                            </button>
+                                        </form>
+                                        <form action="{% url 'negar_usuario' soc.id %}" method="post" style="display:inline; margin:0;" data-ajax="true">
+                                            {% csrf_token %}
+                                            <button type="submit" class="lh-btn lh-btn--xs lh-btn--outline-danger" data-confirm="Negar e REMOVER os dados de {{ soc.user.username }}? Esta ação não pode ser desfeita.">
+                                                ❌ Negar
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr id="linha-vazia-solicitacoes">
-                                <td colspan="4" class="text-center text-muted" style="padding: 40px;">
+                                <td colspan="4" class="text-center" style="padding: 40px 16px; color:var(--lh-text-muted);">
+                                    <span style="font-size:32px; display:block; margin-bottom:8px;">✅</span>
                                     <em>Nenhuma solicitação pendente no momento.</em>
                                 </td>
                             </tr>
@@ -260,28 +140,28 @@
             <div class="lh-card-header">
                 <h3 class="lh-card-title">Usuários do Sistema</h3>
             </div>
-            <div class="lh-card-body" style="padding-top: 15px;">
-                <p class="text-muted" style="margin-top:0; font-size: 13px;">
-                    Ative ou desative o acesso de um usuário e defina quem é administrador. Contas desativadas continuam cadastradas, mas não conseguem entrar no sistema.
+            <div class="lh-card-body" style="padding-bottom:16px;">
+                <p style="margin:0 0 14px; font-size:13px; color:var(--lh-text-muted);">
+                    Ative ou desative o acesso de um usuário e defina quem é administrador.
                 </p>
 
-                <form method="get" class="form-inline" style="margin-bottom:20px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <form method="get" style="display:flex; gap:8px; flex-wrap:wrap; margin:0;">
                     <input type="hidden" name="tab" value="usuarios">
-                    <input type="text" name="q" value="{{ q }}" class="form-control form-control-modern" style="min-width: 280px;" placeholder="Buscar por usuário ou e-mail...">
-                    <button class="btn btn-outline-modern" type="submit">🔍 Buscar</button>
-                    {% if q %}<a href="{% url 'painel' %}?tab=usuarios" class="btn btn-link" style="color: #6B7280; font-weight: 500;">Limpar filtro</a>{% endif %}
+                    <input type="text" name="q" value="{{ q }}" class="form-control" style="max-width:320px;" placeholder="Buscar por usuário ou e-mail...">
+                    <button class="lh-btn lh-btn--outline lh-btn--sm" type="submit">🔍 Buscar</button>
+                    {% if q %}<a href="{% url 'painel' %}?tab=usuarios" class="lh-btn lh-btn--ghost lh-btn--sm">Limpar filtro</a>{% endif %}
                 </form>
             </div>
-            <div style="padding: 0;">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover" style="margin-bottom: 0;">
+            <div class="lh-card-body" style="padding: 0;">
+                <div class="lh-table-wrap" style="border:none; border-radius:0;">
+                    <table class="lh-table">
                         <thead>
                             <tr>
-                                <th style="padding-left: 20px; color: #6B7280; font-weight: 600;">Usuário</th>
-                                <th style="color: #6B7280; font-weight: 600;">E-mail</th>
-                                <th style="color: #6B7280; font-weight: 600;">Nível</th>
-                                <th class="text-center" style="color: #6B7280; font-weight: 600;">Status</th>
-                                <th class="text-center" style="padding-right: 20px; color: #6B7280; font-weight: 600;">Ações</th>
+                                <th>Usuário</th>
+                                <th>E-mail</th>
+                                <th>Nível</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-usuarios">
@@ -289,7 +169,7 @@
                             {% include 'app/_usuario_linha.html' %}
                             {% empty %}
                             <tr id="linha-vazia-usuarios">
-                                <td colspan="5" class="text-center text-muted" style="padding: 40px;">
+                                <td colspan="5" class="text-center" style="padding:40px 16px; color:var(--lh-text-muted);">
                                     <em>{% if q %}Nenhum usuário encontrado para "{{ q }}".{% else %}Nenhum usuário aprovado ainda.{% endif %}</em>
                                 </td>
                             </tr>
@@ -307,41 +187,41 @@
             <div class="lh-card-header">
                 <h3 class="lh-card-title">Pedidos de Redefinição de Senha</h3>
             </div>
-            <div class="lh-card-body" style="padding: 0;">
-                <p class="text-muted" style="padding: 16px 20px 0; margin: 0; font-size: 13px;">
-                    Defina uma nova senha para quem esqueceu ou cancele a solicitação caso tenha sido efetuada por engano.
+            <div class="lh-card-body" style="padding:0;">
+                <p style="padding:16px 20px 0; margin:0 0 10px; font-size:13px; color:var(--lh-text-muted);">
+                    Defina uma nova senha para quem esqueceu ou cancele solicitações indevidas.
                 </p>
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover" style="margin-bottom: 0;">
+                <div class="lh-table-wrap" style="border:none; border-radius:0;">
+                    <table class="lh-table">
                         <thead>
                             <tr>
-                                <th style="padding-left: 20px; color:#6B7280; font-weight:600;">Usuário</th>
-                                <th style="color:#6B7280; font-weight:600;">E-mail</th>
-                                <th style="color:#6B7280; font-weight:600;">Pedido em</th>
-                                <th style="padding-right: 20px; color:#6B7280; font-weight:600;">Ações</th>
+                                <th>Usuário</th>
+                                <th>E-mail</th>
+                                <th>Pedido em</th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for p in pedidos_senha %}
                             <tr>
-                                <td style="padding-left: 20px; vertical-align: middle;"><strong>{{ p.user.username }}</strong></td>
-                                <td style="vertical-align: middle; color:#4B5563;">{{ p.user.email|default:"—" }}</td>
-                                <td style="vertical-align: middle; color:#4B5563;">{{ p.criado_em|date:"d/m/Y H:i" }}</td>
-                                <td style="padding-right: 20px; vertical-align: middle;">
+                                <td><strong>{{ p.user.username }}</strong></td>
+                                <td style="color:var(--lh-text-muted);">{{ p.user.email|default:"—" }}</td>
+                                <td style="color:var(--lh-text-muted); font-size:13px;">{{ p.criado_em|date:"d/m/Y H:i" }}</td>
+                                <td>
                                     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                                         <form action="{% url 'redefinir_senha_admin' p.id %}" method="post"
-                                              style="display:flex; gap:8px; align-items:center;">
+                                              style="display:flex; gap:6px; align-items:center; margin:0;">
                                             {% csrf_token %}
-                                            <input type="text" name="nova_senha" class="form-control input-sm" required
-                                                   minlength="6" placeholder="Nova senha (mín. 6)" style="width:180px;">
-                                            <button type="submit" class="btn btn-xs btn-success"
+                                            <input type="text" name="nova_senha" class="form-control" required
+                                                   minlength="6" placeholder="Nova senha (mín. 6)" style="width:160px; padding:6px 10px;">
+                                            <button type="submit" class="lh-btn lh-btn--xs lh-btn--success"
                                                     data-confirm="Definir uma nova senha para {{ p.user.username }}?">
                                                 🔑 Redefinir
                                             </button>
                                         </form>
-                                        <form action="{% url 'cancelar_redefinicao_senha_admin' p.id %}" method="post" style="display:inline;">
+                                        <form action="{% url 'cancelar_redefinicao_senha_admin' p.id %}" method="post" style="display:inline; margin:0;">
                                             {% csrf_token %}
-                                            <button type="submit" class="btn btn-xs btn-danger"
+                                            <button type="submit" class="lh-btn lh-btn--xs lh-btn--outline-danger"
                                                     data-confirm="Cancelar a solicitação de redefinição de {{ p.user.username }}?">
                                                 ❌ Cancelar
                                             </button>
@@ -351,7 +231,8 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted" style="padding: 40px;">
+                                <td colspan="4" class="text-center" style="padding:40px 16px; color:var(--lh-text-muted);">
+                                    <span style="font-size:32px; display:block; margin-bottom:8px;">🔑</span>
                                     <em>Nenhum pedido de redefinição pendente.</em>
                                 </td>
                             </tr>
@@ -369,64 +250,64 @@
             <div class="lh-card-header">
                 <h3 class="lh-card-title">Histórico de Ações do Sistema</h3>
             </div>
-            <div class="lh-card-body" style="padding-top: 15px;">
-                <form method="get" class="form-inline" style="margin-bottom:20px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+            <div class="lh-card-body" style="padding-bottom:16px;">
+                <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin:0;">
                     <input type="hidden" name="tab" value="historico">
-                    <div class="form-group" style="margin: 0;">
-                        <label for="de" style="font-size: 12px; color: #6B7280; margin-bottom: 4px; display: block;">Data Inicial</label>
-                        <input type="date" id="de" name="de" value="{{ de }}" class="form-control form-control-modern">
+                    <div style="margin:0;">
+                        <label for="de" style="font-size:12px; font-weight:700; color:var(--lh-text-muted); margin-bottom:4px; display:block; text-transform:uppercase;">Data Inicial</label>
+                        <input type="date" id="de" name="de" value="{{ de }}" class="form-control">
                     </div>
-                    <div class="form-group" style="margin: 0;">
-                        <label for="ate" style="font-size: 12px; color: #6B7280; margin-bottom: 4px; display: block;">Data Final</label>
-                        <input type="date" id="ate" name="ate" value="{{ ate }}" class="form-control form-control-modern">
+                    <div style="margin:0;">
+                        <label for="ate" style="font-size:12px; font-weight:700; color:var(--lh-text-muted); margin-bottom:4px; display:block; text-transform:uppercase;">Data Final</label>
+                        <input type="date" id="ate" name="ate" value="{{ ate }}" class="form-control">
                     </div>
-                    <button type="submit" class="btn btn-outline-modern">📅 Filtrar Período</button>
-                    {% if de or ate %}<a href="{% url 'painel' %}?tab=historico" class="btn btn-link" style="color: #6B7280; font-weight: 500;">Limpar</a>{% endif %}
+                    <button type="submit" class="lh-btn lh-btn--outline lh-btn--sm">📅 Filtrar Período</button>
+                    {% if de or ate %}<a href="{% url 'painel' %}?tab=historico" class="lh-btn lh-btn--ghost lh-btn--sm">Limpar</a>{% endif %}
                 </form>
             </div>
 
-            <div style="padding: 0;">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover" style="margin-bottom: 0;">
+            <div class="lh-card-body" style="padding: 0;">
+                <div class="lh-table-wrap" style="border:none; border-radius:0;">
+                    <table class="lh-table">
                         <thead>
                             <tr>
-                                <th style="padding-left: 20px; color: #6B7280; font-weight: 600;">Data / Hora</th>
-                                <th style="color: #6B7280; font-weight: 600;">Usuário Afetado</th>
-                                <th style="color: #6B7280; font-weight: 600;">E-mail</th>
-                                <th style="color: #6B7280; font-weight: 600;">Tipo</th>
-                                <th style="color: #6B7280; font-weight: 600;">Ação Realizada</th>
-                                <th style="padding-right: 20px; color: #6B7280; font-weight: 600;">Autor da Ação</th>
+                                <th>Data / Hora</th>
+                                <th>Usuário Afetado</th>
+                                <th>E-mail</th>
+                                <th>Tipo</th>
+                                <th>Ação Realizada</th>
+                                <th>Autor</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for h in historico %}
                             <tr>
-                                <td style="padding-left: 20px; vertical-align: middle; color: #4B5563;">{{ h.data_acao|date:"d/m/Y H:i" }}</td>
-                                <td style="vertical-align: middle;"><strong>{{ h.username_solicitante }}</strong></td>
-                                <td style="vertical-align: middle; color: #4B5563;">{{ h.email_solicitante|default:"—" }}</td>
-                                <td style="vertical-align: middle;">
+                                <td style="color:var(--lh-text-muted); font-size:13px;">{{ h.data_acao|date:"d/m/Y H:i" }}</td>
+                                <td><strong>{{ h.username_solicitante }}</strong></td>
+                                <td style="color:var(--lh-text-muted);">{{ h.email_solicitante|default:"—" }}</td>
+                                <td>
                                     {% if h.tipo_solicitado == 'ADMINISTRADOR' %}
-                                    <span class="label label-warning" style="border-radius: 4px;">{{ h.tipo_solicitado }}</span>
+                                    <span class="lh-badge lh-badge--warning">{{ h.tipo_solicitado }}</span>
                                     {% else %}
-                                    <span class="label label-info" style="border-radius: 4px;">{{ h.tipo_solicitado }}</span>
+                                    <span class="lh-badge lh-badge--primary">{{ h.tipo_solicitado }}</span>
                                     {% endif %}
                                 </td>
-                                <td style="vertical-align: middle;">
+                                <td>
                                     {% if h.acao == 'APROVADO' or h.acao == 'ATIVADO' or h.acao == 'PROMOVIDO' or h.acao == 'AGENDOU' %}
-                                    <span class="label label-success" style="border-radius: 4px;">{{ h.get_acao_display }}</span>
+                                    <span class="lh-badge lh-badge--success">{{ h.get_acao_display }}</span>
                                     {% elif h.acao == 'NEGADO' or h.acao == 'DESATIVADO' or h.acao == 'REBAIXADO' or h.acao == 'CANCELOU_AGENDAMENTO' or h.acao == 'SENHA_CANCELADA' %}
-                                    <span class="label label-danger" style="border-radius: 4px;">{{ h.get_acao_display }}</span>
+                                    <span class="lh-badge lh-badge--danger">{{ h.get_acao_display }}</span>
                                     {% elif h.acao == 'ALTEROU_AGENDAMENTO' or h.acao == 'REDEFINIDO' %}
-                                    <span class="label label-warning" style="border-radius: 4px;">{{ h.get_acao_display }}</span>
+                                    <span class="lh-badge lh-badge--warning">{{ h.get_acao_display }}</span>
                                     {% else %}
-                                    <span class="label label-default" style="border-radius: 4px;">{{ h.get_acao_display }}</span>
+                                    <span class="lh-badge lh-badge--muted">{{ h.get_acao_display }}</span>
                                     {% endif %}
                                 </td>
-                                <td style="padding-right: 20px; vertical-align: middle; color: #4B5563;">{{ h.admin.username|default:"—" }}</td>
+                                <td style="color:var(--lh-text-muted);">{{ h.admin.username|default:"—" }}</td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center text-muted" style="padding: 40px;">
+                                <td colspan="6" class="text-center" style="padding:40px 16px; color:var(--lh-text-muted);">
                                     <em>{% if de or ate %}Nenhuma ação no período selecionado.{% else %}Nenhuma ação registrada ainda.{% endif %}</em>
                                 </td>
                             </tr>
@@ -466,8 +347,8 @@
             if (pendentes === 0 && !document.getElementById('linha-vazia-solicitacoes')) {
                 var vazia = document.createElement('tr');
                 vazia.id = 'linha-vazia-solicitacoes';
-                vazia.innerHTML = '<td colspan="4" class="text-center text-muted" style="padding:40px;">' +
-                    '<em>Nenhuma solicitação pendente no momento.</em></td>';
+                vazia.innerHTML = '<td colspan="4" class="text-center" style="padding:40px 16px; color:var(--lh-text-muted);">' +
+                    '<span style="font-size:32px; display:block; margin-bottom:8px;">✅</span><em>Nenhuma solicitação pendente no momento.</em></td>';
                 tb.appendChild(vazia);
             }
         }

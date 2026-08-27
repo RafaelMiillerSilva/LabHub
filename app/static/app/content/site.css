@@ -1,134 +1,563 @@
+/* ==========================================================================
+   LABHUB - DESIGN SYSTEM MODERNO & RESPONSIVO
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    /* Cores Primárias e Gradientes */
+    --lh-primary: #1A4A8A;
+    --lh-primary-hover: #153D74;
+    --lh-primary-light: #EBF2FF;
+    --lh-primary-border: #CBD5E1;
+    --lh-gradient-primary: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    --lh-gradient-hero: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+
+    /* Cores de Status / Feedback */
+    --lh-success: #10B981;
+    --lh-success-dark: #047857;
+    --lh-success-light: #ECFDF5;
+    --lh-warning: #F59E0B;
+    --lh-warning-dark: #B45309;
+    --lh-warning-light: #FFFBEB;
+    --lh-danger: #EF4444;
+    --lh-danger-dark: #B91C1C;
+    --lh-danger-light: #FEF2F2;
+    --lh-info: #0284C7;
+    --lh-info-light: #F0F9FF;
+
+    /* Superfície, Fundo e Neutros */
+    --lh-bg: #F4F7FB;
+    --lh-surface: #FFFFFF;
+    --lh-surface-subtle: #F8FAFC;
+    --lh-border: #E2E8F0;
+    --lh-border-subtle: #F1F5F9;
+
+    /* Tipografia */
+    --lh-text: #1E293B;
+    --lh-text-muted: #64748B;
+    --lh-text-light: #94A3B8;
+
+    /* Sombras & Bordas */
+    --lh-radius: 12px;
+    --lh-radius-lg: 16px;
+    --lh-radius-sm: 8px;
+    --lh-radius-pill: 9999px;
+    --lh-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --lh-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+    --lh-shadow-lg: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+/* ── Reset & Base ── */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--lh-bg);
+    color: var(--lh-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+}
+
 body {
-    padding-top: 50px;
-    padding-bottom: 20px;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
-/* Set padding to keep content from hitting the edges */
+.wrapper {
+    min-height: 100%;
+    height: auto !important;
+    margin-bottom: -60px;
+    padding-top: 84px;
+}
+
 .body-content {
-    padding-left: 15px;
-    padding-right: 15px;
+    padding-left: 16px;
+    padding-right: 16px;
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-/* Set width on the form input elements since they're 100% wide by default */
-input,
+/* ── Reset de formulários (Remove limite rígido de 280px) ── */
+input, select, textarea {
+    max-width: 100%;
+}
+
+.form-control,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
 select,
 textarea {
-    max-width: 280px;
+    display: block;
+    width: 100%;
+    border-radius: var(--lh-radius-sm);
+    border: 1px solid var(--lh-border);
+    padding: 10px 14px;
+    height: auto;
+    font-size: 14px;
+    color: var(--lh-text);
+    background-color: var(--lh-surface);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
 }
 
-/* styles for validation helpers */
-.field-validation-error {
-    color: #b94a48;
+.form-control:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--lh-primary);
+    box-shadow: 0 0 0 3px rgba(26, 74, 138, 0.15);
 }
 
-.field-validation-valid {
-    display: none;
-}
-
-input.input-validation-error {
-    border: 1px solid #b94a48;
-}
-
-input[type="checkbox"].input-validation-error {
-    border: 0 none;
-}
-
+/* ── Alertas e Validação ── */
+.field-validation-error,
 .validation-summary-errors {
-    color: #b94a48;
+    color: var(--lh-danger);
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 4px;
 }
 
+.field-validation-valid,
 .validation-summary-valid {
     display: none;
 }
 
-/* ==========================================================================
-   AJUSTES LABHUB - CARDS LEVES, SLIDERS E COMPATIBILIDADE MOBILE (BOOTSTRAP 3)
-   ========================================================================== */
-
-/* 1. Remoção de animações de transição ao expandir/recolher as aulas */
-.collapsing {
-    -webkit-transition: none !important;
-    -moz-transition: none !important;
-    -o-transition: none !important;
-    transition: none !important;
-}
-
-/* 2. Estilização dos Cards (Visual Leve e Clean) */
-.panel-aula {
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 8px !important;
-    background-color: #ffffff;
-    box-shadow: none !important;
-    margin-bottom: 10px !important;
-    overflow: hidden;
-}
-
-    .panel-aula .panel-heading {
-        background-color: #f8fafc !important;
-        border-bottom: 1px solid #e2e8f0 !important;
-        padding: 12px 15px;
-    }
-
-    .panel-aula .panel-title a {
-        text-decoration: none;
-        color: #1A4A8A;
-        font-weight: 600;
-        font-size: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .panel-aula .panel-body {
-        padding: 15px;
-        background-color: #ffffff;
-    }
-
-/* 3. Sliders de Equipamentos (<input type="range">) */
-.slider-group {
-    margin-bottom: 15px;
-}
-
-    .slider-group:last-child {
-        margin-bottom: 0;
-    }
-
-.slider-label {
-    display: flex;
-    justify-content: space-between;
+/* ── Botões Globais (.lh-btn) ── */
+.lh-btn {
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
     font-size: 14px;
-    color: #4B5563;
-    margin-bottom: 6px;
+    padding: 10px 18px;
+    border-radius: var(--lh-radius-sm);
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
+    line-height: 1.25;
+}
+
+.lh-btn:hover {
+    transform: translateY(-1px);
+}
+
+.lh-btn:active {
+    transform: translateY(0);
+}
+
+.lh-btn--primary {
+    background: var(--lh-gradient-primary);
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(26, 74, 138, 0.2);
+}
+
+.lh-btn--primary:hover {
+    box-shadow: 0 6px 16px rgba(26, 74, 138, 0.3);
+    opacity: 0.95;
+}
+
+.lh-btn--success {
+    background: #10B981;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.lh-btn--success:hover {
+    background: #059669;
+}
+
+.lh-btn--danger {
+    background: #EF4444;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.lh-btn--danger:hover {
+    background: #DC2626;
+}
+
+.lh-btn--warning {
+    background: #F59E0B;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.lh-btn--warning:hover {
+    background: #D97706;
+}
+
+.lh-btn--outline {
+    background: #ffffff;
+    color: var(--lh-primary) !important;
+    border-color: var(--lh-primary);
+}
+
+.lh-btn--outline:hover {
+    background: var(--lh-primary-light);
+}
+
+.lh-btn--outline-danger {
+    background: #ffffff;
+    color: var(--lh-danger) !important;
+    border-color: var(--lh-danger);
+}
+
+.lh-btn--outline-danger:hover {
+    background: var(--lh-danger-light);
+}
+
+.lh-btn--ghost {
+    background: transparent;
+    color: var(--lh-text-muted) !important;
+    border-color: var(--lh-border);
+}
+
+.lh-btn--ghost:hover {
+    background: var(--lh-border-subtle);
+    color: var(--lh-text) !important;
+}
+
+.lh-btn--lg {
+    padding: 13px 26px;
+    font-size: 15px;
+    border-radius: 10px;
+}
+
+.lh-btn--sm {
+    padding: 7px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+}
+
+.lh-btn--xs {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+}
+
+.lh-btn--block {
+    display: flex;
+    width: 100%;
+}
+
+/* ── Cards Globais (.lh-card) ── */
+.lh-card {
+    background: var(--lh-surface);
+    border: 1px solid var(--lh-border);
+    border-radius: var(--lh-radius-lg);
+    box-shadow: var(--lh-shadow);
+    margin-bottom: 24px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lh-card-header {
+    padding: 20px 24px;
+    background: var(--lh-surface);
+    border-bottom: 1px solid var(--lh-border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.lh-card-title {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--lh-text);
+    letter-spacing: -0.3px;
+}
+
+.lh-card-body {
+    padding: 24px;
+}
+
+.lh-card-footer {
+    padding: 16px 24px;
+    background: var(--lh-surface-subtle);
+    border-top: 1px solid var(--lh-border-subtle);
+}
+
+/* ── Hero Sections das Páginas (.lh-hero) ── */
+.lh-hero {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.lh-hero-icone {
+    width: 54px;
+    height: 54px;
+    border-radius: var(--lh-radius);
+    background: var(--lh-gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: #ffffff;
+    flex-shrink: 0;
+    box-shadow: 0 6px 16px rgba(26, 74, 138, 0.25);
+}
+
+.lh-hero-texto {
+    flex: 1;
+    min-width: 200px;
+}
+
+.lh-hero-texto h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--lh-text);
+    letter-spacing: -0.5px;
+}
+
+.lh-hero-texto p {
+    margin: 4px 0 0;
+    color: var(--lh-text-muted);
+    font-size: 14px;
+}
+
+.lh-hero-stat {
+    text-align: center;
+    background: var(--lh-surface);
+    border: 1px solid var(--lh-border);
+    box-shadow: var(--lh-shadow-sm);
+    border-radius: var(--lh-radius);
+    padding: 8px 18px;
+    flex-shrink: 0;
+}
+
+.lh-hero-stat .num {
+    display: block;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--lh-primary);
+    line-height: 1;
+}
+
+.lh-hero-stat .lbl {
+    font-size: 12px;
+    color: var(--lh-text-muted);
     font-weight: 500;
 }
 
-.slider-count {
+/* ── Badges Modernos (.lh-badge) ── */
+.lh-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
     font-weight: 700;
-    color: #1A4A8A;
-    background-color: #EBF8FF;
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-size: 13px;
-    border: 1px solid #BEE3F8;
+    border-radius: var(--lh-radius-pill);
+    line-height: 1;
+    letter-spacing: 0.02em;
 }
 
-/* Override do max-width padrão para o slider ocupar 100% da largura do card */
-input[type="range"] {
-    max-width: 100% !important;
-    width: 100%;
-    height: 6px;
-    margin: 6px 0;
+.lh-badge--primary {
+    background: var(--lh-primary-light);
+    color: var(--lh-primary);
+}
+
+.lh-badge--success {
+    background: var(--lh-success-light);
+    color: var(--lh-success-dark);
+}
+
+.lh-badge--warning {
+    background: var(--lh-warning-light);
+    color: var(--lh-warning-dark);
+}
+
+.lh-badge--danger {
+    background: var(--lh-danger-light);
+    color: var(--lh-danger-dark);
+}
+
+.lh-badge--muted {
+    background: #E2E8F0;
+    color: #475569;
+}
+
+/* ── Stepper Controls de Quantidade (Mobile Friendly) ── */
+.stepper-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--lh-surface);
+    border: 1px solid var(--lh-border);
+    border-radius: var(--lh-radius-sm);
+    padding: 4px;
+    width: fit-content;
+}
+
+.stepper-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: var(--lh-surface-subtle);
+    border: 1px solid var(--lh-border);
+    color: var(--lh-text);
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-/* Prevenção de zoom automático em inputs no iOS */
+.stepper-btn:hover:not(:disabled) {
+    background: var(--lh-primary-light);
+    color: var(--lh-primary);
+    border-color: var(--lh-primary);
+}
+
+.stepper-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.stepper-input {
+    width: 48px !important;
+    text-align: center;
+    border: none !important;
+    box-shadow: none !important;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 0 !important;
+    height: 36px !important;
+    background: transparent !important;
+}
+
+/* ── Tabelas Responsivas Modernas ── */
+.lh-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--lh-radius);
+    border: 1px solid var(--lh-border);
+    background: var(--lh-surface);
+}
+
+.lh-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0;
+    font-size: 14px;
+}
+
+.lh-table th {
+    background: var(--lh-surface-subtle);
+    color: var(--lh-text-muted);
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--lh-border);
+    white-space: nowrap;
+}
+
+.lh-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--lh-border-subtle);
+    color: var(--lh-text);
+    vertical-align: middle;
+}
+
+.lh-table tr:last-child td {
+    border-bottom: none;
+}
+
+.lh-table tr:hover td {
+    background-color: #F8FAFD;
+}
+
+/* ── Links de Voltar ── */
+.lh-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--lh-primary);
+    text-decoration: none !important;
+    margin-bottom: 16px;
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.lh-back-link:hover {
+    color: var(--lh-primary-hover);
+    transform: translateX(-3px);
+}
+
+/* ── Ajustes Mobile Globais ── */
 @media screen and (max-width: 767px) {
+    .wrapper {
+        padding-top: 76px;
+    }
+
+    .body-content {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .lh-hero {
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .lh-hero-icone {
+        width: 46px;
+        height: 46px;
+        font-size: 22px;
+    }
+
+    .lh-hero-texto h2 {
+        font-size: 20px;
+    }
+
+    .lh-card-header,
+    .lh-card-body,
+    .lh-card-footer {
+        padding: 16px;
+    }
+
+    /* Prevenção de auto-zoom no iOS ao focar em inputs */
     input[type="text"],
+    input[type="email"],
+    input[type="password"],
     input[type="number"],
     input[type="date"],
     select,
     textarea {
         font-size: 16px !important;
+    }
+
+    .lh-btn {
+        min-height: 42px;
     }
 }
