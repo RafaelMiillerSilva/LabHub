@@ -52,6 +52,7 @@ urlpatterns = [
     # Notificações
     path('notificacoes/', views.listar_notificacoes, name='listar_notificacoes'),
     path('notificacoes/lidas/', views.marcar_lidas, name='marcar_lidas'),
+    path('notificacoes/limpar/', views.limpar_notificacoes, name='limpar_notificacoes'),
 
     # Autenticação e Senha
     path('esqueci-senha/', views.esqueci_senha, name='esqueci_senha'),

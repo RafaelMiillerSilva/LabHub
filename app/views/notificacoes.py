@@ -57,6 +57,19 @@ def marcar_lidas(request):
 
     return JsonResponse({'ok': True, 'message': 'Notificações marcadas como lidas.'})
 
+@login_required
+def limpar_notificacoes(request):
+    """Apaga todas as notificações do usuário."""
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'message': 'Método não permitido.'}, status=405)
+
+    if not is_usuario_aprovado(request.user):
+        return JsonResponse({'ok': False, 'message': 'Acesso negado.'}, status=403)
+
+    Notificacao.objects.filter(destinatario=request.user).delete()
+
+    return JsonResponse({'ok': True, 'message': 'Notificações apagadas com sucesso.'})
+
 
 def _tempo_relativo(dt):
     """Retorna string legível como 'há 2 min', 'há 1h', 'há 3 dias'."""
