@@ -2,8 +2,6 @@
    LABHUB - DESIGN SYSTEM MODERNO & RESPONSIVO
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
 :root {
     /* Cores Primárias e Gradientes */
     --lh-primary: #1A4A8A;
@@ -58,7 +56,6 @@ html, body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
 }
 
 body {
@@ -81,7 +78,7 @@ body {
     margin-right: auto;
 }
 
-/* ── Reset de formulários (Remove limite rígido de 280px) ── */
+/* ── Reset de formulários ── */
 input, select, textarea {
     max-width: 100%;
 }
@@ -112,6 +109,7 @@ input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus,
 input[type="number"]:focus,
+input[type="date"]:focus,
 select:focus,
 textarea:focus {
     outline: none;
@@ -397,59 +395,6 @@ textarea:focus {
 .lh-badge--muted {
     background: #E2E8F0;
     color: #475569;
-}
-
-/* ── Stepper Controls de Quantidade (Mobile Friendly) ── */
-.stepper-wrap {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--lh-surface);
-    border: 1px solid var(--lh-border);
-    border-radius: var(--lh-radius-sm);
-    padding: 4px;
-    width: fit-content;
-}
-
-.stepper-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 6px;
-    background: var(--lh-surface-subtle);
-    border: 1px solid var(--lh-border);
-    color: var(--lh-text);
-    font-size: 18px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.stepper-btn:hover:not(:disabled) {
-    background: var(--lh-primary-light);
-    color: var(--lh-primary);
-    border-color: var(--lh-primary);
-}
-
-.stepper-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-.stepper-input {
-    width: 48px !important;
-    text-align: center;
-    border: none !important;
-    box-shadow: none !important;
-    font-weight: 700;
-    font-size: 15px;
-    padding: 0 !important;
-    height: 36px !important;
-    background: transparent !important;
 }
 
 /* ── Tabelas Responsivas Modernas ── */

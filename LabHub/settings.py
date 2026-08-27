@@ -106,6 +106,9 @@ AUTHENTICATION_BACKENDS = [
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [
+    BASE_DIR / 'app' / 'static',
+]
 
 # Media files (Uploads)
 MEDIA_URL = '/media/'

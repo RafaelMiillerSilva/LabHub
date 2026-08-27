@@ -5,10 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ title }} - LabHub</title>
     {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'app/content/bootstrap.min.css' %}" />
-    <link rel="stylesheet" type="text/css" href="{% static 'app/content/site.css' %}" />
+    <!-- Fontes & CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static 'app/content/bootstrap.min.css' %}?v=2.1" />
+    <link rel="stylesheet" type="text/css" href="{% static 'app/content/site.css' %}?v=2.1" />
     <script src="{% static 'app/scripts/modernizr-2.6.2.js' %}"></script>
     <style>
+        /* ==========================================================================
+           LABHUB DESIGN SYSTEM GLOBAL & BASE
+           ========================================================================== */
+        :root {
+            --lh-primary: #1A4A8A;
+            --lh-primary-hover: #153D74;
+            --lh-primary-light: #EBF2FF;
+            --lh-primary-border: #CBD5E1;
+            --lh-gradient-primary: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --lh-gradient-hero: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            --lh-success: #10B981;
+            --lh-success-dark: #047857;
+            --lh-success-light: #ECFDF5;
+            --lh-warning: #F59E0B;
+            --lh-warning-dark: #B45309;
+            --lh-warning-light: #FFFBEB;
+            --lh-danger: #EF4444;
+            --lh-danger-dark: #B91C1C;
+            --lh-danger-light: #FEF2F2;
+            --lh-info: #0284C7;
+            --lh-info-light: #F0F9FF;
+            --lh-bg: #F4F7FB;
+            --lh-surface: #FFFFFF;
+            --lh-surface-subtle: #F8FAFC;
+            --lh-border: #E2E8F0;
+            --lh-border-subtle: #F1F5F9;
+            --lh-text: #1E293B;
+            --lh-text-muted: #64748B;
+            --lh-text-light: #94A3B8;
+            --lh-radius: 12px;
+            --lh-radius-lg: 16px;
+            --lh-radius-sm: 8px;
+            --lh-radius-pill: 9999px;
+            --lh-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --lh-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+            --lh-shadow-lg: 0 10px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: var(--lh-bg);
+            color: var(--lh-text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .wrapper {
+            min-height: 100%;
+            height: auto !important;
+            margin-bottom: -60px;
+            padding-top: 84px;
+        }
+
+        .body-content {
+            padding-left: 16px;
+            padding-right: 16px;
+            max-width: 1280px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
         /* ── Navbar Glassmorphism Flutuante ── */
         .navbar-custom {
             background-color: rgba(255, 255, 255, 0.95);
@@ -359,8 +432,380 @@
             }
         }
 
+        /* ── Botões Globais (.lh-btn) ── */
+        .lh-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 10px 18px;
+            border-radius: var(--lh-radius-sm);
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-decoration: none !important;
+            transition: all 0.2s ease;
+            user-select: none;
+            white-space: nowrap;
+            line-height: 1.25;
+        }
+
+        .lh-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .lh-btn:active {
+            transform: translateY(0);
+        }
+
+        .lh-btn--primary {
+            background: var(--lh-gradient-primary);
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(26, 74, 138, 0.2);
+        }
+
+        .lh-btn--primary:hover {
+            box-shadow: 0 6px 16px rgba(26, 74, 138, 0.3);
+            opacity: 0.95;
+        }
+
+        .lh-btn--success {
+            background: #10B981;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .lh-btn--success:hover {
+            background: #059669;
+        }
+
+        .lh-btn--danger {
+            background: #EF4444;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .lh-btn--danger:hover {
+            background: #DC2626;
+        }
+
+        .lh-btn--warning {
+            background: #F59E0B;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+        }
+
+        .lh-btn--warning:hover {
+            background: #D97706;
+        }
+
+        .lh-btn--outline {
+            background: #ffffff;
+            color: var(--lh-primary) !important;
+            border-color: var(--lh-primary);
+        }
+
+        .lh-btn--outline:hover {
+            background: var(--lh-primary-light);
+        }
+
+        .lh-btn--outline-danger {
+            background: #ffffff;
+            color: var(--lh-danger) !important;
+            border-color: var(--lh-danger);
+        }
+
+        .lh-btn--outline-danger:hover {
+            background: var(--lh-danger-light);
+        }
+
+        .lh-btn--ghost {
+            background: transparent;
+            color: var(--lh-text-muted) !important;
+            border-color: var(--lh-border);
+        }
+
+        .lh-btn--ghost:hover {
+            background: var(--lh-border-subtle);
+            color: var(--lh-text) !important;
+        }
+
+        .lh-btn--lg {
+            padding: 13px 26px;
+            font-size: 15px;
+            border-radius: 10px;
+        }
+
+        .lh-btn--sm {
+            padding: 7px 12px;
+            font-size: 13px;
+            border-radius: 6px;
+        }
+
+        .lh-btn--xs {
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        .lh-btn--block {
+            display: flex;
+            width: 100%;
+        }
+
+        /* ── Cards Globais (.lh-card) ── */
+        .lh-card {
+            background: var(--lh-surface);
+            border: 1px solid var(--lh-border);
+            border-radius: var(--lh-radius-lg);
+            box-shadow: var(--lh-shadow);
+            margin-bottom: 24px;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .lh-card-header {
+            padding: 20px 24px;
+            background: var(--lh-surface);
+            border-bottom: 1px solid var(--lh-border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .lh-card-title {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--lh-text);
+            letter-spacing: -0.3px;
+        }
+
+        .lh-card-body {
+            padding: 24px;
+        }
+
+        .lh-card-footer {
+            padding: 16px 24px;
+            background: var(--lh-surface-subtle);
+            border-top: 1px solid var(--lh-border-subtle);
+        }
+
+        /* ── Hero Sections das Páginas (.lh-hero) ── */
+        .lh-hero {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .lh-hero-icone {
+            width: 54px;
+            height: 54px;
+            border-radius: var(--lh-radius);
+            background: var(--lh-gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: #ffffff;
+            flex-shrink: 0;
+            box-shadow: 0 6px 16px rgba(26, 74, 138, 0.25);
+        }
+
+        .lh-hero-texto {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .lh-hero-texto h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--lh-text);
+            letter-spacing: -0.5px;
+        }
+
+        .lh-hero-texto p {
+            margin: 4px 0 0;
+            color: var(--lh-text-muted);
+            font-size: 14px;
+        }
+
+        .lh-hero-stat {
+            text-align: center;
+            background: var(--lh-surface);
+            border: 1px solid var(--lh-border);
+            box-shadow: var(--lh-shadow-sm);
+            border-radius: var(--lh-radius);
+            padding: 8px 18px;
+            flex-shrink: 0;
+        }
+
+        .lh-hero-stat .num {
+            display: block;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--lh-primary);
+            line-height: 1;
+        }
+
+        .lh-hero-stat .lbl {
+            font-size: 12px;
+            color: var(--lh-text-muted);
+            font-weight: 500;
+        }
+
+        /* ── Badges Modernos (.lh-badge) ── */
+        .lh-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: var(--lh-radius-pill);
+            line-height: 1;
+            letter-spacing: 0.02em;
+        }
+
+        .lh-badge--primary {
+            background: var(--lh-primary-light);
+            color: var(--lh-primary);
+        }
+
+        .lh-badge--success {
+            background: var(--lh-success-light);
+            color: var(--lh-success-dark);
+        }
+
+        .lh-badge--warning {
+            background: var(--lh-warning-light);
+            color: var(--lh-warning-dark);
+        }
+
+        .lh-badge--danger {
+            background: var(--lh-danger-light);
+            color: var(--lh-danger-dark);
+        }
+
+        .lh-badge--muted {
+            background: #E2E8F0;
+            color: #475569;
+        }
+
+        /* ── Tabelas Responsivas Modernas ── */
+        .lh-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: var(--lh-radius);
+            border: 1px solid var(--lh-border);
+            background: var(--lh-surface);
+        }
+
+        .lh-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+            font-size: 14px;
+        }
+
+        .lh-table th {
+            background: var(--lh-surface-subtle);
+            color: var(--lh-text-muted);
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--lh-border);
+            white-space: nowrap;
+        }
+
+        .lh-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--lh-border-subtle);
+            color: var(--lh-text);
+            vertical-align: middle;
+        }
+
+        .lh-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .lh-table tr:hover td {
+            background-color: #F8FAFD;
+        }
+
+        /* ── Links de Voltar ── */
+        .lh-back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--lh-primary);
+            text-decoration: none !important;
+            margin-bottom: 16px;
+            transition: transform 0.15s ease, color 0.15s ease;
+        }
+
+        .lh-back-link:hover {
+            color: var(--lh-primary-hover);
+            transform: translateX(-3px);
+        }
+
+        /* ── Formulários e Inputs ── */
+        .form-control,
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        input[type="date"],
+        select,
+        textarea {
+            display: block;
+            width: 100%;
+            border-radius: var(--lh-radius-sm);
+            border: 1px solid var(--lh-border);
+            padding: 10px 14px;
+            height: auto;
+            font-size: 14px;
+            color: var(--lh-text);
+            background-color: var(--lh-surface);
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            box-sizing: border-box;
+            max-width: 100%;
+        }
+
+        .form-control:focus,
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        input[type="number"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--lh-primary);
+            box-shadow: 0 0 0 3px rgba(26, 74, 138, 0.15);
+        }
+
         /* ── Responsividade Mobile Navbar ── */
         @media (max-width: 767px) {
+            .wrapper {
+                padding-top: 76px;
+            }
+
+            .body-content {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
             .navbar-custom {
                 margin: 6px 8px 0 8px;
                 border-radius: 10px;
@@ -408,6 +853,21 @@
                 justify-content: flex-start;
                 padding: 10px 12px;
                 background: var(--lh-surface-subtle);
+            }
+
+            /* Prevenção de auto-zoom no iOS */
+            input[type="text"],
+            input[type="email"],
+            input[type="password"],
+            input[type="number"],
+            input[type="date"],
+            select,
+            textarea {
+                font-size: 16px !important;
+            }
+
+            .lh-btn {
+                min-height: 42px;
             }
         }
 
