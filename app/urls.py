@@ -54,6 +54,11 @@ urlpatterns = [
     path('notificacoes/lidas/', views.marcar_lidas, name='marcar_lidas'),
     path('notificacoes/limpar/', views.limpar_notificacoes, name='limpar_notificacoes'),
 
+    # Perfil / Conta
+    path('conta/', views.minha_conta, name='minha_conta'),
+    path('conta/senha/', views.alterar_senha, name='alterar_senha'),
+    path('perfil/<int:user_id>/foto/', views.foto_perfil, name='foto_perfil'),
+
     # Autenticação e Senha
     path('esqueci-senha/', views.esqueci_senha, name='esqueci_senha'),
     path('logout/', LogoutView.as_view(next_page='home'), name='logout'),

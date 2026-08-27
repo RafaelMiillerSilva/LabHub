@@ -51,6 +51,11 @@ from .notificacoes import (
     marcar_lidas,
     limpar_notificacoes,
 )
+from .perfil import (
+    minha_conta,
+    alterar_senha,
+    foto_perfil,
+)
 
 __all__ = [
     'home',
@@ -89,4 +94,7 @@ __all__ = [
     'listar_notificacoes',
     'marcar_lidas',
     'limpar_notificacoes',
+    'minha_conta',
+    'alterar_senha',
+    'foto_perfil',
 ]

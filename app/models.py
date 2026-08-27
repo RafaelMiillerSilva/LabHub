@@ -16,6 +16,11 @@ class Perfil(models.Model):
     tipo = models.CharField(max_length=20, choices=CHOICES_TIPO, default='PROFESSOR')
     aprovado = models.BooleanField(default=False)
 
+    # Foto de perfil guardada no banco (bytes), mesmo padrão de Equipamento
+    foto_dados = models.BinaryField(blank=True, null=True, editable=False)
+    foto_mime = models.CharField(max_length=50, blank=True, default='')
+    tem_foto = models.BooleanField(default=False)
+
     class Meta:
         verbose_name = 'Perfil'
         verbose_name_plural = 'Perfis'
@@ -25,6 +30,15 @@ class Perfil(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.tipo} ({'Aprovado' if self.aprovado else 'Pendente'})"
+
+    @property
+    def iniciais(self):
+        """Retorna as iniciais do usuário para uso como avatar fallback."""
+        nome = self.user.get_full_name() or self.user.username
+        partes = nome.split()
+        if len(partes) >= 2:
+            return (partes[0][0] + partes[-1][0]).upper()
+        return nome[:2].upper()
 
 
 class HistoricoAcao(models.Model):

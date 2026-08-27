@@ -130,6 +130,25 @@
                 margin-top: 10px;
                 max-height: 250px;
             }
+
+            .avatar-dropdown {
+                position: static;
+                width: 100%;
+                box-shadow: none;
+                border: 1px solid rgba(0, 0, 0, 0.08);
+                margin-top: 10px;
+            }
+
+            .navbar-right-custom {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 4px;
+                padding: 6px 0;
+                border-top: 1px solid rgba(0,0,0,0.05);
+                margin-top: 6px;
+            }
         }
 
         /* ── Notificações (Sino) ── */
@@ -270,6 +289,130 @@
         @media (max-width: 480px) {
             /* Regras absorvidas pelo media max-width 767px */
         }
+
+        /* ── Avatar do Usuário na Navbar ── */
+        .navbar-right-custom {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            float: right;
+            margin-right: 0;
+            list-style: none;
+            padding: 0;
+        }
+
+        .avatar-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .avatar-trigger {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .avatar-trigger:hover {
+            background: rgba(26, 74, 138, 0.08);
+        }
+
+        .avatar-img {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #E5E9F0;
+        }
+
+        .avatar-iniciais {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border: 2px solid #E5E9F0;
+        }
+
+        .avatar-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            min-width: 180px;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(15, 38, 69, 0.12);
+            z-index: 1090;
+            overflow: hidden;
+        }
+        .avatar-dropdown.open {
+            display: block;
+        }
+
+        .avatar-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            text-decoration: none;
+            transition: background 0.15s;
+            border: none;
+            background: none;
+            width: 100%;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .avatar-dropdown-item:hover {
+            background: #F3F4F6;
+            color: #1A4A8A;
+            text-decoration: none;
+        }
+
+        .avatar-dropdown-divider {
+            height: 1px;
+            background: #E5E9F0;
+            margin: 0;
+        }
+
+        .avatar-dropdown-item--sair {
+            color: #E53935;
+        }
+        .avatar-dropdown-item--sair:hover {
+            background: #FFF5F5;
+            color: #C62828;
+        }
+
+        .navbar-login-btn {
+            color: #4B5563 !important;
+            font-weight: 500;
+            font-size: 14px;
+            padding: 12px 16px;
+            transition: color 0.2s ease, background-color 0.2s ease;
+            border-radius: 8px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-family: inherit;
+        }
+        .navbar-login-btn:hover {
+            color: #1A4A8A !important;
+            background-color: rgba(26, 74, 138, 0.08) !important;
+        }
     </style>
     {% block styles %}{% endblock %}
 </head>
@@ -298,7 +441,16 @@
                         <li><a href="{% url 'salas' %}">Salas</a></li>
                         <li><a href="{% url 'equipamentos' %}">Equipamentos</a></li>
                         <li><a href="{% url 'agendamentos' %}">Agendamentos</a></li>
-                        <li class="notif-wrapper">
+                        {% endif %}
+
+                        <li><a href="{% url 'about' %}">Sobre</a></li>
+                        <li><a href="{% url 'contact' %}">Contato</a></li>
+                    </ul>
+
+                    {% if user.is_authenticated and user.perfil.aprovado %}
+                    <div class="navbar-right-custom">
+                        <!-- Sino de notificações -->
+                        <div class="notif-wrapper">
                             <span class="notif-bell" id="notifBell" title="Notificações">
                                 🔔
                                 <span class="notif-badge" id="notifBadge">0</span>
@@ -312,12 +464,38 @@
                                     <div class="notif-vazio">📭 Nenhuma notificação</div>
                                 </div>
                             </div>
-                        </li>
-                        {% endif %}
+                        </div>
 
-                        <li><a href="{% url 'about' %}">Sobre</a></li>
-                        <li><a href="{% url 'contact' %}">Contato</a></li>
-                    </ul>
+                        <!-- Avatar do usuário -->
+                        <div class="avatar-wrapper">
+                            <div class="avatar-trigger" id="avatarTrigger" title="{{ user.username }}">
+                                {% if user.perfil.tem_foto %}
+                                <img src="{% url 'foto_perfil' user.id %}" alt="{{ user.username }}" class="avatar-img">
+                                {% else %}
+                                <div class="avatar-iniciais">{{ user.perfil.iniciais }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="avatar-dropdown" id="avatarDropdown">
+                                <a href="{% url 'minha_conta' %}" class="avatar-dropdown-item">
+                                    👤 Você
+                                </a>
+                                <div class="avatar-dropdown-divider"></div>
+                                <form method="post" action="{% url 'logout' %}" style="margin:0;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="avatar-dropdown-item avatar-dropdown-item--sair">
+                                        🚪 Sair
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="navbar-right-custom">
+                        <button type="button" class="navbar-login-btn" data-toggle="modal" data-target="#authModal">
+                            Acessar o Sistema
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -586,7 +764,7 @@
             }
         });
 
-        // Fecha ao clicar fora
+        // Fecha dropdowns ao clicar fora
         document.addEventListener('click', function (e) {
             if (!dropdown.contains(e.target) && e.target !== bell) {
                 dropdown.classList.remove('open');
@@ -607,6 +785,34 @@
 
         // Carrega contagem inicial ao carregar a página
         carregarNotificacoes();
+
+        // ── Avatar Dropdown ──
+        var avatarTrigger = document.getElementById('avatarTrigger');
+        var avatarDropdown = document.getElementById('avatarDropdown');
+
+        if (avatarTrigger && avatarDropdown) {
+            avatarTrigger.addEventListener('click', function (e) {
+                e.stopPropagation();
+                // Fecha o dropdown de notificações se estiver aberto
+                dropdown.classList.remove('open');
+                avatarDropdown.classList.toggle('open');
+            });
+
+            avatarDropdown.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!avatarDropdown.contains(e.target) && !avatarTrigger.contains(e.target)) {
+                    avatarDropdown.classList.remove('open');
+                }
+            });
+        }
+
+        // Ao abrir notificações, fecha avatar dropdown
+        bell.addEventListener('click', function () {
+            if (avatarDropdown) avatarDropdown.classList.remove('open');
+        });
     })();
     </script>
     {% endif %}
