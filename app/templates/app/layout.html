@@ -121,6 +121,15 @@
             .navbar-custom .navbar-nav > li > a {
                 padding: 10px 12px;
             }
+
+            .notif-dropdown {
+                position: static;
+                width: 100%;
+                box-shadow: none;
+                border: 1px solid rgba(0, 0, 0, 0.08);
+                margin-top: 10px;
+                max-height: 250px;
+            }
         }
 
         /* ── Notificações (Sino) ── */
@@ -259,10 +268,7 @@
         }
 
         @media (max-width: 480px) {
-            .notif-dropdown {
-                width: 300px;
-                right: -40px;
-            }
+            /* Regras absorvidas pelo media max-width 767px */
         }
     </style>
     {% block styles %}{% endblock %}
@@ -480,6 +486,7 @@
     </script>
 
     {% if user.is_authenticated and user.perfil.aprovado %}
+    <div style="display:none;">{% csrf_token %}</div>
     <script>
     (function () {
         var bell = document.getElementById('notifBell');
