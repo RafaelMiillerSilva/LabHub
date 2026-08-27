@@ -486,7 +486,6 @@
     </script>
 
     {% if user.is_authenticated and user.perfil.aprovado %}
-    <div style="display:none;">{% csrf_token %}</div>
     <script>
     (function () {
         var bell = document.getElementById('notifBell');
@@ -496,6 +495,21 @@
         var limpar = document.getElementById('notifLimpar');
 
         if (!bell || !dropdown) return;
+
+        // Lê o CSRF token do cookie do Django (método mais confiável)
+        function getCSRFToken() {
+            var name = 'csrftoken';
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var c = cookies[i].trim();
+                if (c.indexOf(name + '=') === 0) {
+                    return c.substring(name.length + 1);
+                }
+            }
+            // Fallback: tenta pegar do input hidden
+            var el = document.querySelector('[name=csrfmiddlewaretoken]');
+            return el ? el.value : '';
+        }
 
         function renderNotificacoes(data) {
             // Atualiza badge
@@ -540,32 +554,33 @@
             .catch(function () {});
         }
 
+        function postAjax(url, callback) {
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: '',
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) { if (callback) callback(data); })
+            .catch(function () {});
+        }
+
         // Toggle dropdown ao clicar no sino
         bell.addEventListener('click', function (e) {
             e.stopPropagation();
             var isOpen = dropdown.classList.contains('open');
             dropdown.classList.toggle('open');
-            
+
             if (!isOpen) {
-                // Esconde o badge imediatamente visualmente
+                // Esconde o badge imediatamente
                 badge.style.display = 'none';
-                
-                // Marca como lidas no servidor silenciosamente
-                var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-                var tokenValue = csrfToken ? csrfToken.value : '';
-                
-                fetch('{% url "marcar_lidas" %}', {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRFToken': tokenValue,
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: '',
-                }).then(function() {
-                    // Após marcar como lido, carrega a lista para mostrar elas como lidas
-                    carregarNotificacoes();
-                }).catch(function() {
+
+                // Marca como lidas no servidor e recarrega a lista
+                postAjax('{% url "marcar_lidas" %}', function () {
                     carregarNotificacoes();
                 });
             }
@@ -583,26 +598,14 @@
             e.stopPropagation();
         });
 
-        // Botão Limpar (agora apaga as mensagens)
+        // Botão Limpar — apaga todas as notificações
         limpar.addEventListener('click', function () {
-            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-            var tokenValue = csrfToken ? csrfToken.value : '';
-
-            fetch('{% url "limpar_notificacoes" %}', {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': tokenValue,
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: '',
-            })
-            .then(function (r) { return r.json(); })
-            .then(function () { carregarNotificacoes(); })
-            .catch(function () {});
+            postAjax('{% url "limpar_notificacoes" %}', function () {
+                carregarNotificacoes();
+            });
         });
 
-        // Carrega contagem inicial ao carregar a p\u00e1gina
+        // Carrega contagem inicial ao carregar a página
         carregarNotificacoes();
     })();
     </script>
