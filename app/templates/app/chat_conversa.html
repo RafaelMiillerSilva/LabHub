@@ -1,0 +1,325 @@
+{% extends "app/layout.html" %}
+
+{% block styles %}
+<style>
+    .chat-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: var(--lh-radius-lg);
+        box-shadow: var(--lh-shadow);
+        border: 1px solid var(--lh-border);
+        display: flex;
+        flex-direction: column;
+        height: 75vh;
+        min-height: 500px;
+    }
+
+    .chat-header {
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--lh-border-subtle);
+        background: var(--lh-surface-subtle);
+        display: flex;
+        align-items: center;
+    }
+
+    .chat-back-btn {
+        margin-right: 16px;
+        color: var(--lh-text-muted);
+        text-decoration: none;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        transition: background-color 0.2s;
+    }
+
+    .chat-back-btn:hover {
+        background-color: var(--lh-border-subtle);
+        color: var(--lh-text);
+    }
+
+    .chat-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--lh-primary-light);
+        color: var(--lh-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        margin-right: 12px;
+    }
+
+    .chat-title {
+        font-weight: 700;
+        color: var(--lh-text);
+        font-size: 16px;
+        margin: 0;
+    }
+
+    .chat-subtitle {
+        font-size: 12px;
+        color: var(--lh-text-muted);
+        margin: 0;
+    }
+
+    .chat-messages {
+        flex: 1;
+        padding: 24px;
+        overflow-y: auto;
+        background-color: #F8FAFC;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .msg-bubble {
+        max-width: 75%;
+        padding: 10px 14px;
+        border-radius: 16px;
+        font-size: 14px;
+        line-height: 1.4;
+        position: relative;
+        word-wrap: break-word;
+    }
+
+    .msg-bubble.received {
+        align-self: flex-start;
+        background-color: #fff;
+        border: 1px solid var(--lh-border-subtle);
+        color: var(--lh-text);
+        border-bottom-left-radius: 4px;
+    }
+
+    .msg-bubble.sent {
+        align-self: flex-end;
+        background-color: #DCF8C6; /* Estilo clássico whatsapp */
+        border: 1px solid #C4E9A7;
+        color: #0F172A;
+        border-bottom-right-radius: 4px;
+    }
+
+    .msg-time {
+        font-size: 10px;
+        color: #94A3B8;
+        display: block;
+        text-align: right;
+        margin-top: 4px;
+    }
+    
+    .msg-bubble.sent .msg-time {
+        color: #568343;
+    }
+
+    .chat-input-area {
+        padding: 16px 24px;
+        border-top: 1px solid var(--lh-border-subtle);
+        background: #fff;
+        display: flex;
+        gap: 12px;
+    }
+
+    .chat-input {
+        flex: 1;
+        border: 1px solid var(--lh-border);
+        border-radius: 20px;
+        padding: 10px 16px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+        resize: none;
+        height: 44px;
+        line-height: 22px;
+    }
+
+    .chat-input:focus {
+        border-color: var(--lh-primary);
+    }
+
+    .chat-send-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background-color: var(--lh-primary);
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        flex-shrink: 0;
+    }
+
+    .chat-send-btn:hover {
+        background-color: var(--lh-primary-dark);
+    }
+
+    .chat-send-btn:disabled {
+        background-color: var(--lh-border);
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <a href="{% url 'chat_inbox' %}" class="chat-back-btn">
+            &larr;
+        </a>
+        <div class="chat-avatar">
+            {{ contato.perfil.iniciais }}
+        </div>
+        <div>
+            <h2 class="chat-title">{{ contato.get_full_name|default:contato.username }}</h2>
+            <p class="chat-subtitle">
+                {% if contato.perfil.tipo == 'ADMINISTRADOR' %}Administrador{% else %}Professor{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        {% for msg in mensagens %}
+        <div class="msg-bubble {% if msg.remetente == request.user %}sent{% else %}received{% endif %}" data-id="{{ msg.id }}">
+            {{ msg.texto }}
+            <span class="msg-time">{{ msg.data_envio|date:"H:i" }}</span>
+        </div>
+        {% empty %}
+        <div id="noMessages" style="text-align: center; color: var(--lh-text-muted); margin-top: 40px; font-size: 14px;">
+            Inicie uma conversa com {{ contato.username }}.
+        </div>
+        {% endfor %}
+    </div>
+
+    <form class="chat-input-area" id="chatForm">
+        {% csrf_token %}
+        <input type="text" class="chat-input" id="chatInput" placeholder="Digite uma mensagem..." autocomplete="off">
+        <button type="submit" class="chat-send-btn" id="chatSendBtn" disabled>
+            ➤
+        </button>
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const chatSendBtn = document.getElementById('chatSendBtn');
+    const chatForm = document.getElementById('chatForm');
+    const noMessages = document.getElementById('noMessages');
+    
+    let ultimoId = 0;
+    
+    // Função para rolar até o final
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Inicializa o ultimoId baseado na última mensagem desenhada na tela
+    function updateUltimoId() {
+        const bubbles = chatMessages.querySelectorAll('.msg-bubble');
+        if (bubbles.length > 0) {
+            const lastBubble = bubbles[bubbles.length - 1];
+            ultimoId = parseInt(lastBubble.getAttribute('data-id')) || ultimoId;
+        }
+    }
+    
+    updateUltimoId();
+    scrollToBottom();
+
+    // Habilita/desabilita o botão de enviar
+    chatInput.addEventListener('input', function() {
+        chatSendBtn.disabled = this.value.trim().length === 0;
+    });
+
+    // Adiciona uma nova bolha na interface
+    function appendMessage(id, texto, timeStr, isSent) {
+        if (noMessages) {
+            noMessages.style.display = 'none';
+        }
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'msg-bubble ' + (isSent ? 'sent' : 'received');
+        bubble.setAttribute('data-id', id);
+        
+        // Evitando XSS escapando HTML básico ao atribuir texto via createTextNode
+        bubble.appendChild(document.createTextNode(texto));
+        
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'msg-time';
+        timeSpan.textContent = timeStr;
+        bubble.appendChild(timeSpan);
+        
+        chatMessages.appendChild(bubble);
+        scrollToBottom();
+        
+        if (id > ultimoId) {
+            ultimoId = id;
+        }
+    }
+
+    // Enviar mensagem
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const texto = chatInput.value.trim();
+        if (!texto) return;
+
+        // Desabilita input enquanto envia
+        chatInput.disabled = true;
+        chatSendBtn.disabled = true;
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        fetch("{% url 'api_chat_enviar' contato.id %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ texto: texto })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.sucesso) {
+                appendMessage(data.mensagem.id, data.mensagem.texto, data.mensagem.data, true);
+                chatInput.value = '';
+            } else {
+                window.LabHubFlash && window.LabHubFlash(data.erro || 'Erro ao enviar mensagem', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Erro de rede:', err);
+        })
+        .finally(() => {
+            chatInput.disabled = false;
+            chatInput.focus();
+            chatSendBtn.disabled = chatInput.value.trim().length === 0;
+        });
+    });
+
+    // Polling: Buscar novas mensagens
+    function fetchNovasMensagens() {
+        fetch(`{% url 'api_chat_buscar' contato.id %}?ultimo_id=${ultimoId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.sucesso && data.mensagens.length > 0) {
+                    data.mensagens.forEach(msg => {
+                        appendMessage(msg.id, msg.texto, msg.data, msg.e_minha);
+                    });
+                }
+            })
+            .catch(err => console.error("Erro no polling de mensagens:", err));
+    }
+
+    // Polling a cada 3 segundos
+    setInterval(fetchNovasMensagens, 3000);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends "app/layout.html" %}
+
+{% block styles %}
+<style>
+    .chat-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: var(--lh-radius-lg);
+        box-shadow: var(--lh-shadow);
+        border: 1px solid var(--lh-border);
+        overflow: hidden;
+    }
+
+    .chat-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--lh-border-subtle);
+        background: var(--lh-surface-subtle);
+    }
+
+    .chat-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .chat-item {
+        display: flex;
+        align-items: center;
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--lh-border-subtle);
+        text-decoration: none !important;
+        transition: background-color 0.2s ease;
+    }
+
+    .chat-item:last-child {
+        border-bottom: none;
+    }
+
+    .chat-item:hover {
+        background-color: #F8FAFC;
+    }
+
+    .chat-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: var(--lh-primary-light);
+        color: var(--lh-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 16px;
+        margin-right: 16px;
+        flex-shrink: 0;
+    }
+
+    .chat-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .chat-name {
+        font-weight: 700;
+        color: var(--lh-text);
+        margin: 0 0 4px 0;
+        font-size: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-preview {
+        color: var(--lh-text-muted);
+        font-size: 13px;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .chat-badge {
+        background-color: var(--lh-danger);
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 12px;
+        margin-left: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: var(--lh-text);">Mensagens</h2>
+        <p style="margin: 4px 0 0 0; font-size: 14px; color: var(--lh-text-muted);">
+            Selecione um contato para iniciar ou continuar uma conversa.
+        </p>
+    </div>
+
+    <ul class="chat-list">
+        {% for contato in contatos %}
+        <a href="{% url 'chat_conversa' contato.usuario.id %}" class="chat-item">
+            <div class="chat-avatar">
+                {{ contato.usuario.perfil.iniciais }}
+            </div>
+            <div class="chat-info">
+                <div class="chat-name">
+                    <span>{{ contato.usuario.get_full_name|default:contato.usuario.username }}</span>
+                    {% if contato.ultima_msg %}
+                    <span style="font-size:11px; color:var(--lh-text-muted); font-weight:500;">
+                        {{ contato.ultima_msg.data_envio|date:"d/m H:i" }}
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="chat-preview">
+                    {% if contato.ultima_msg %}
+                        {% if contato.ultima_msg.remetente == request.user %}
+                            <span style="color:#94A3B8;">Você:</span> 
+                        {% endif %}
+                        {{ contato.ultima_msg.texto }}
+                    {% else %}
+                        <i>Nenhuma mensagem</i>
+                    {% endif %}
+                </div>
+            </div>
+            {% if contato.nao_lidas > 0 %}
+            <div class="chat-badge">{{ contato.nao_lidas }}</div>
+            {% endif %}
+        </a>
+        {% empty %}
+        <div style="padding: 40px 24px; text-align: center; color: var(--lh-text-muted);">
+            Nenhum contato disponível no momento.
+        </div>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

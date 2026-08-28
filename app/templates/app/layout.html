@@ -947,6 +947,16 @@
 
                     {% if user.is_authenticated and user.perfil.aprovado %}
                     <div class="navbar-right-custom">
+                        <!-- Ícone de Chat -->
+                        <div class="notif-wrapper">
+                            <a href="{% url 'chat_inbox' %}" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                                <span class="notif-bell" id="chatIcon" title="Mensagens de Chat">
+                                    💬
+                                    <span class="notif-badge" id="chatBadge" style="display:none; background-color: #3B82F6;">0</span>
+                                </span>
+                            </a>
+                        </div>
+
                         <!-- Sino de notificações -->
                         <div class="notif-wrapper">
                             <span class="notif-bell" id="notifBell" title="Notificações">
@@ -1339,7 +1349,31 @@
             }
         });
 
+        function carregarMensagensNaoLidas() {
+            var chatBadge = document.getElementById('chatBadge');
+            if (!chatBadge) return;
+            fetch('{% url "api_chat_nao_lidas" %}', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.total > 0) {
+                    chatBadge.textContent = data.total > 99 ? '99+' : data.total;
+                    chatBadge.style.display = 'inline-block';
+                } else {
+                    chatBadge.style.display = 'none';
+                }
+            })
+            .catch(function () {});
+        }
+
         carregarNotificacoes();
+        carregarMensagensNaoLidas();
+        // Atualiza a cada 30 segundos
+        setInterval(function() {
+            carregarNotificacoes();
+            carregarMensagensNaoLidas();
+        }, 30000);
     })();
     </script>
     {% endif %}

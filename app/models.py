@@ -372,3 +372,31 @@ class Notificacao(models.Model):
     def __str__(self):
         status = 'lida' if self.lida else 'nova'
         return f"Notificação para {self.destinatario.username} ({status})"
+
+
+# ---------------------------------------------------------------------------
+# Chat entre Usuários
+# ---------------------------------------------------------------------------
+class MensagemChat(models.Model):
+    remetente = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='mensagens_enviadas'
+    )
+    destinatario = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='mensagens_recebidas'
+    )
+    texto = models.TextField()
+    data_envio = models.DateTimeField(auto_now_add=True)
+    lida = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['data_envio']
+        verbose_name = 'Mensagem de Chat'
+        verbose_name_plural = 'Mensagens de Chat'
+        indexes = [
+            models.Index(fields=['remetente', 'destinatario']),
+            models.Index(fields=['destinatario', 'lida']),
+            models.Index(fields=['data_envio']),
+        ]
+
+    def __str__(self):
+        return f"De {self.remetente.username} para {self.destinatario.username} em {self.data_envio:%d/%m/%Y %H:%M}"

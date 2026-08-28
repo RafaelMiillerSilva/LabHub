@@ -55,6 +55,13 @@ urlpatterns = [
     path('notificacoes/lidas/', views.marcar_lidas, name='marcar_lidas'),
     path('notificacoes/limpar/', views.limpar_notificacoes, name='limpar_notificacoes'),
 
+    # Chat
+    path('chat/', views.chat_inbox, name='chat_inbox'),
+    path('chat/<int:usuario_id>/', views.chat_conversa, name='chat_conversa'),
+    path('chat/api/enviar/<int:usuario_id>/', views.api_chat_enviar, name='api_chat_enviar'),
+    path('chat/api/buscar/<int:usuario_id>/', views.api_chat_buscar, name='api_chat_buscar'),
+    path('chat/api/nao-lidas/', views.api_chat_nao_lidas, name='api_chat_nao_lidas'),
+
     # Perfil / Conta
     path('conta/', views.minha_conta, name='minha_conta'),
     path('conta/senha/', views.alterar_senha, name='alterar_senha'),
