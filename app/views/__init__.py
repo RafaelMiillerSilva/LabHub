@@ -40,7 +40,7 @@ from .equipamentos import (
 )
 from .agendamentos import (
     agendamentos,
-    exportar_pdf_mes,
+    exportar_excel_mes,
     agendamento_detalhe,
     cancelar_reserva,
     relacao_agendamento,
@@ -87,7 +87,7 @@ __all__ = [
     'etiquetas_lote',
     'exportar_equipamentos',
     'agendamentos',
-    'exportar_pdf_mes',
+    'exportar_excel_mes',
     'agendamento_detalhe',
     'cancelar_reserva',
     'relacao_agendamento',

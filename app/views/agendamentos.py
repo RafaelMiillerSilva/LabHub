@@ -19,6 +19,8 @@ from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
+import openpyxl
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 
 from app.models import (
     Agendamento,
@@ -504,8 +506,8 @@ def agendamentos(request):
     return render(request, 'app/agendamentos.html', context)
 
 @login_required
-def exportar_pdf_mes(request):
-    """Gera e baixa um arquivo PDF com os agendamentos semanais do mês escolhido."""
+def exportar_excel_mes(request):
+    """Gera e baixa um arquivo Excel com os agendamentos semanais do mês escolhido."""
     if not is_usuario_aprovado(request.user):
         return redirect('home')
 
@@ -521,17 +523,34 @@ def exportar_pdf_mes(request):
 
     nome_mes = MESES_PT[mes - 1]
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="Agendamentos_{nome_mes}_{ano}.pdf"'
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="Agendamentos_{nome_mes}_{ano}.xlsx"'
 
-    doc = SimpleDocTemplate(response, pagesize=landscape(A4), rightMargin=20, leftMargin=20, topMargin=20, bottomMargin=20)
-    elementos = []
-    estilos = getSampleStyleSheet()
-    titulo = Paragraph(f"Agendamentos - {nome_mes} de {ano}", estilos['Title'])
-    elementos.append(titulo)
-    elementos.append(Spacer(1, 20))
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"{nome_mes.capitalize()} {ano}"
 
+    fonte_titulo = Font(bold=True, size=14, color="FFFFFF")
+    fonte_cabecalho = Font(bold=True, size=11, color="FFFFFF")
+    preenchimento_titulo = PatternFill(start_color="1A4A8A", end_color="1A4A8A", fill_type="solid")
+    preenchimento_cabecalho = PatternFill(start_color="475569", end_color="475569", fill_type="solid")
+    preenchimento_aula = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
+    alinhamento_centro = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    alinhamento_topo = Alignment(horizontal="left", vertical="top", wrap_text=True)
+    borda_fina = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+
+    # Título Principal
+    ws.append([f"Agendamentos - {nome_mes.capitalize()} de {ano}"])
+    ws.merge_cells('A1:H1')
+    celula_titulo = ws.cell(row=1, column=1)
+    celula_titulo.font = fonte_titulo
+    celula_titulo.fill = preenchimento_titulo
+    celula_titulo.alignment = alinhamento_centro
+    ws.append([]) # Linha em branco
+
+    linha_atual = 3
     cal = calendar.Calendar(firstweekday=6) # Domingo = 6
+
     for semana in cal.monthdatescalendar(ano, mes):
         if not any(d.month == mes for d in semana):
             continue
@@ -539,51 +558,73 @@ def exportar_pdf_mes(request):
         domingo = semana[0]
         sabado = semana[-1]
         
-        texto_semana = Paragraph(f"Semana de {domingo.strftime('%d/%m')} a {sabado.strftime('%d/%m')}", estilos['Heading2'])
-        elementos.append(texto_semana)
-        
+        # Subtítulo da Semana
+        texto_semana = f"Semana de {domingo.strftime('%d/%m')} a {sabado.strftime('%d/%m')}"
+        ws.append([texto_semana])
+        ws.merge_cells(start_row=linha_atual, start_column=1, end_row=linha_atual, end_column=8)
+        cel_semana = ws.cell(row=linha_atual, column=1)
+        cel_semana.font = Font(bold=True, size=12)
+        linha_atual += 1
+
         reservas_semana = (
             Agendamento.objects.filter(data__range=(domingo, sabado))
             .select_related('sala', 'turma', 'professor')
         )
 
-        dados_tabela = []
         cabecalho = ['Aula'] + [f"{DIAS_SEMANA_PT[d.isoweekday()%7]} {d.day}" for d in semana]
-        dados_tabela.append(cabecalho)
+        ws.append(cabecalho)
+        
+        # Estilizar cabeçalho
+        for col_idx in range(1, 9):
+            cel = ws.cell(row=linha_atual, column=col_idx)
+            cel.font = fonte_cabecalho
+            cel.fill = preenchimento_cabecalho
+            cel.alignment = alinhamento_centro
+            cel.border = borda_fina
+        
+        linha_atual += 1
 
         for aula in range(1, 10):
-            linha = [f"{aula}ª"]
+            linha_dados = [f"{aula}ª"]
             for d in semana:
                 reservas_slot = [r for r in reservas_semana if r.data == d and r.aula == aula]
                 if not reservas_slot:
-                    linha.append("")
+                    linha_dados.append("")
                 else:
                     textos = []
                     for r in reservas_slot:
                         local = r.sala.nome if r.tipo == 'SALA' else 'Equip'
                         textos.append(f"{local} - {r.turma.nome} ({r.professor.username})")
-                    linha.append("\\n".join(textos))
-            dados_tabela.append(linha)
+                    linha_dados.append("\n".join(textos))
+            
+            ws.append(linha_dados)
+            
+            # Estilizar dados da aula
+            for col_idx in range(1, 9):
+                cel = ws.cell(row=linha_atual, column=col_idx)
+                cel.border = borda_fina
+                if col_idx == 1:
+                    cel.font = Font(bold=True)
+                    cel.fill = preenchimento_aula
+                    cel.alignment = alinhamento_centro
+                else:
+                    cel.alignment = alinhamento_topo
+            
+            # Ajustar altura da linha baseado no conteúdo
+            max_quebras = max([str(item).count('\n') for item in linha_dados]) if any(linha_dados) else 0
+            ws.row_dimensions[linha_atual].height = 15 + (max_quebras * 15)
+            
+            linha_atual += 1
+            
+        ws.append([]) # Linha em branco entre semanas
+        linha_atual += 1
 
-        col_widths = [40] + [(landscape(A4)[0] - 80) / 7] * 7
-        tabela = Table(dados_tabela, colWidths=col_widths)
-        tabela.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('FONTSIZE', (0, 1), (-1, -1), 7),
-            ('WORDWRAP', (0, 0), (-1, -1), True),
-        ]))
-        elementos.append(tabela)
-        elementos.append(Spacer(1, 20))
+    # Ajustar largura das colunas
+    ws.column_dimensions['A'].width = 10
+    for col_letter in ['B', 'C', 'D', 'E', 'F', 'G', 'H']:
+        ws.column_dimensions[col_letter].width = 25
 
-    doc.build(elementos)
+    wb.save(response)
     return response
 
 

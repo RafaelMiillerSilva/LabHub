@@ -45,7 +45,7 @@ urlpatterns = [
 
     # Agendamentos
     path('agendamentos/', views.agendamentos, name='agendamentos'),
-    path('agendamentos/pdf/', views.exportar_pdf_mes, name='exportar_pdf_mes'),
+    path('agendamentos/excel/', views.exportar_excel_mes, name='exportar_excel_mes'),
     path('agendamentos/<int:ano>/<int:mes>/<int:dia>/', views.agendamento_detalhe, name='agendamento_detalhe'),
     path('agendamentos/<int:agendamento_id>/cancelar/', views.cancelar_reserva, name='cancelar_reserva'),
     path('agendamentos/<int:agendamento_id>/relacao/', views.relacao_agendamento, name='relacao_agendamento'),
