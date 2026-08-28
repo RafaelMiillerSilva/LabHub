@@ -364,8 +364,7 @@
                 style="display:inline-flex; align-items:center; background:#ffffff; border:1px solid var(--lh-border); border-radius:8px; padding:4px 8px;">
                 <a href="?dia={{ semana_ant.day }}&mes={{ semana_ant.month }}&ano={{ semana_ant.year }}"
                     class="lh-btn lh-btn--xs lh-btn--ghost" style="padding:4px 8px;">◀</a>
-                <span style="font-size:13px; font-weight:700; color:var(--lh-primary); padding:0 8px;">Semana de {{
-                    domingo|date:"d/m" }} a {{ sabado|date:"d/m" }}</span>
+                <span style="font-size:13px; font-weight:700; color:var(--lh-primary); padding:0 8px;">Semana de {{ domingo|date:"d/m" }} a {{ sabado|date:"d/m" }}</span>
                 <a href="?dia={{ semana_prox.day }}&mes={{ semana_prox.month }}&ano={{ semana_prox.year }}"
                     class="lh-btn lh-btn--xs lh-btn--ghost" style="padding:4px 8px;">▶</a>
             </div>
@@ -388,8 +387,7 @@
                         {% for cabecalho in dias_cabecalho %}
                         {% if cabecalho.hoje %}
                         <th class="text-center" style="background:#EBF2FF; border-bottom:2px solid #1A4A8A;">
-                            <div style="font-size:11px; text-transform:uppercase; color:#1A4A8A;">{{
-                                cabecalho.nome_curto }}</div>
+                            <div style="font-size:11px; text-transform:uppercase; color:#1A4A8A;">{{ cabecalho.nome_curto }}</div>
                             <div style="font-size:16px; font-weight:800; color:#1A4A8A;">{{ cabecalho.numero }}</div>
                         </th>
                         {% else %}
