@@ -1369,11 +1369,11 @@
 
         carregarNotificacoes();
         carregarMensagensNaoLidas();
-        // Atualiza a cada 30 segundos
+        // Atualiza a cada 3 segundos para parecer em tempo real
         setInterval(function() {
             carregarNotificacoes();
             carregarMensagensNaoLidas();
-        }, 30000);
+        }, 3000);
     })();
     </script>
     {% endif %}
