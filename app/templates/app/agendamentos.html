@@ -345,12 +345,12 @@
                 style="display:inline-flex; align-items:center; gap:8px;">
                 <select name="mes" class="lh-form-control" style="width:auto; padding:4px 8px; font-size:13px;">
                     {% for num, nome in lista_meses %}
-                    <option value="{{ num }}" {% if num==mes %}selected{% endif %}>{{ nome }}</option>
+                    <option value="{{ num }}" {% if num == mes %}selected{% endif %}>{{ nome }}</option>
                     {% endfor %}
                 </select>
                 <select name="ano" class="lh-form-control" style="width:auto; padding:4px 8px; font-size:13px;">
                     {% for a in lista_anos %}
-                    <option value="{{ a }}" {% if a==ano %}selected{% endif %}>{{ a }}</option>
+                    <option value="{{ a }}" {% if a == ano %}selected{% endif %}>{{ a }}</option>
                     {% endfor %}
                 </select>
                 <button type="submit" class="lh-btn lh-btn--sm lh-btn--primary">📊 Baixar Planilha</button>
