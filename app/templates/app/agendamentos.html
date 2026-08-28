@@ -309,123 +309,103 @@
         💡 Toque em um dia para ver as 9 aulas e agendar salas ou equipamentos.
     </p>
 
-    <!-- ===================== BLOCO: RESERVAS DO DIA ===================== -->
+    <!-- ===================== BLOCO: PDF E AGENDA SEMANAL ===================== -->
     <div class="lh-card" style="max-width:820px; margin: 0 auto 40px;">
-        <div class="lh-card-header">
-            <!-- Navegador de Datas -->
-            <div class="lh-date-navigator">
-                <div class="lh-date-group">
-                    <a href="?dia={{ dia_ant.day }}&mes={{ dia_ant.month }}&ano={{ dia_ant.year }}">◀</a>
-                    <span>{% if data_atual %}{{ data_atual|date:"d" }}{% else %}{{ hoje_dia|stringformat:"02d" }}{% endif %}</span>
-                    <a href="?dia={{ dia_prox.day }}&mes={{ dia_prox.month }}&ano={{ dia_prox.year }}">▶</a>
-                </div>
+        <div class="lh-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <h3 style="margin:0; font-size:18px; font-weight:700; color:var(--lh-text);">Agenda Semanal</h3>
+            </div>
+            <!-- Formulário de PDF -->
+            <form action="{% url 'exportar_pdf_mes' %}" method="get" style="display:inline-flex; align-items:center; gap:8px;">
+                <select name="mes" class="lh-form-control" style="width:auto; padding:4px 8px; font-size:13px;">
+                    {% for num, nome in lista_meses %}
+                    <option value="{{ num }}" {% if num == mes %}selected{% endif %}>{{ nome }}</option>
+                    {% endfor %}
+                </select>
+                <select name="ano" class="lh-form-control" style="width:auto; padding:4px 8px; font-size:13px;">
+                    {% for a in lista_anos %}
+                    <option value="{{ a }}" {% if a == ano %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="lh-btn lh-btn--sm lh-btn--primary">📄 Baixar PDF</button>
+            </form>
+        </div>
 
-                <span class="lh-date-label">mês</span>
-
-                <div class="lh-date-group">
-                    <a href="?dia={{ data_atual.day|default:hoje_dia }}&mes={{ mes_ant }}&ano={{ ano_mes_ant|default:ano }}">◀</a>
-                    <span>{% if data_atual %}{{ data_atual|date:"m" }}{% else %}{{ mes|stringformat:"02d" }}{% endif %}</span>
-                    <a href="?dia={{ data_atual.day|default:hoje_dia }}&mes={{ mes_prox }}&ano={{ ano_mes_prox|default:ano }}">▶</a>
-                </div>
-
-                <span class="lh-date-label">ano</span>
-
-                <div class="lh-date-group">
-                    <a href="?dia={{ data_atual.day|default:hoje_dia }}&mes={{ data_atual.month|default:mes }}&ano={{ ano_ant }}">◀</a>
-                    <span>{% if data_atual %}{{ data_atual|date:"Y" }}{% else %}{{ ano }}{% endif %}</span>
-                    <a href="?dia={{ data_atual.day|default:hoje_dia }}&mes={{ data_atual.month|default:mes }}&ano={{ ano_prox }}">▶</a>
-                </div>
+        <div class="lh-card-header" style="background:var(--lh-surface-subtle); border-bottom:1px solid var(--lh-border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+            <!-- Navegador de Semanas -->
+            <div style="display:inline-flex; align-items:center; background:#ffffff; border:1px solid var(--lh-border); border-radius:8px; padding:4px 8px;">
+                <a href="?dia={{ semana_ant.day }}&mes={{ semana_ant.month }}&ano={{ semana_ant.year }}" class="lh-btn lh-btn--xs lh-btn--ghost" style="padding:4px 8px;">◀</a>
+                <span style="font-size:13px; font-weight:700; color:var(--lh-primary); padding:0 8px;">Semana de {{ domingo|date:"d/m" }} a {{ sabado|date:"d/m" }}</span>
+                <a href="?dia={{ semana_prox.day }}&mes={{ semana_prox.month }}&ano={{ semana_prox.year }}" class="lh-btn lh-btn--xs lh-btn--ghost" style="padding:4px 8px;">▶</a>
             </div>
 
             <!-- Filtro: Minhas Reservas -->
             <label id="wrapMinhasReservas" style="display:inline-flex; align-items:center; gap:6px; background:var(--lh-primary-light); padding:7px 12px; border-radius:8px; margin:0; cursor:pointer; font-size:13px; font-weight:600; color:var(--lh-primary);">
                 <input type="checkbox" id="chkMinhasReservas" style="cursor:pointer; width:15px; height:15px; margin:0;">
-                Minhas reservas
+                Apenas minhas reservas
             </label>
         </div>
 
-        <div class="lh-card-body" style="padding: 0;">
-            <div class="lh-table-wrap" style="border:none; border-radius:0;">
-                <table class="lh-table" id="tabelaReservasDia">
-                    <thead>
-                        <tr>
-                            <th class="text-center" style="width:70px">Aula</th>
-                            <th>Tipo</th>
-                            <th>Reserva (Sala / Equipamentos)</th>
-                            <th>Turma</th>
-                            <th>Professor</th>
-                            <th class="text-center" style="width:90px">Relação</th>
-                            <th class="text-center" style="width:90px">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for ag in minhas_reservas %}
-                        <tr class="linha-reserva" data-usuario="{{ ag.professor.username }}">
-                            <td class="text-center">
-                                <span class="lh-badge lh-badge--primary">{{ ag.aula }}ª</span>
-                            </td>
-                            <td>
-                                {% if ag.tipo == 'SALA' %}
-                                <span class="lh-badge lh-badge--success">🏫 Sala</span>
-                                {% else %}
-                                <span class="lh-badge lh-badge--warning">💻 Equip.</span>
-                                {% endif %}
-                                {% if ag.fixo %}
-                                <span class="lh-badge lh-badge--primary" style="margin-left: 4px;">📌 Fixo</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <strong>
-                                    {% if ag.tipo == 'SALA' %}
-                                    {{ ag.sala.nome }}
-                                    {% else %}
-                                    <div style="display:flex; flex-wrap:wrap; gap:4px;">
-                                        {% for item in ag.itens.all %}
-                                        <span class="lh-badge lh-badge--primary">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
-                                        {% endfor %}
-                                    </div>
-                                    {% endif %}
-                                </strong>
-                            </td>
-                            <td><strong>{{ ag.turma.nome }}</strong></td>
-                            <td>{{ ag.professor.get_full_name|default:ag.professor.username }}</td>
-                            <td class="text-center">
-                                <a href="{% url 'relacao_agendamento' ag.id %}" class="lh-btn lh-btn--xs lh-btn--outline">📋 Abrir</a>
-                            </td>
-                            <td class="text-center">
-                                {% if ag.professor == user or is_admin %}
-                                <form action="{% url 'cancelar_reserva' ag.id %}" method="post" style="display:inline;" data-ajax="true">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="cancelar_tipo" value="hoje">
-                                    {% if ag.fixo %}
-                                    <button type="button" class="lh-btn lh-btn--xs lh-btn--outline-danger btn-cancelar-fixo"
-                                            data-ag-data="{{ ag.data|date:'d/m/Y' }}"
-                                            data-ag-aula="{{ ag.aula }}">
-                                        🗑️ Cancelar
-                                    </button>
-                                    {% else %}
-                                    <button type="submit" class="lh-btn lh-btn--xs lh-btn--outline-danger"
-                                            data-confirm="Cancelar esta reserva de {{ ag.data|date:'d/m/Y' }}, {{ ag.aula }}ª aula?">
-                                        🗑️ Cancelar
-                                    </button>
-                                    {% endif %}
-                                </form>
-                                {% else %}
-                                <span style="color:var(--lh-text-light); font-size:12px;">—</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr id="linhaVazia">
-                            <td colspan="7" class="text-center" style="padding:36px 16px; color:var(--lh-text-muted);">
-                                <span style="font-size:28px; display:block; margin-bottom:6px;">📭</span>
-                                <p style="margin:0; font-size:14px;">Nenhuma reserva encontrada para a seleção atual.</p>
-                            </td>
-                        </tr>
+        <div class="lh-card-body" style="padding:0; overflow-x:auto;">
+            <table class="lh-table" id="tabelaAgendaSemanal" style="min-width:760px; table-layout:fixed; width:100%; margin:0;">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width:65px;">Aula</th>
+                        {% for cabecalho in dias_cabecalho %}
+                        {% if cabecalho.hoje %}
+                        <th class="text-center" style="background:#EBF2FF; border-bottom:2px solid #1A4A8A;">
+                            <div style="font-size:11px; text-transform:uppercase; color:#1A4A8A;">{{ cabecalho.nome_curto }}</div>
+                            <div style="font-size:16px; font-weight:800; color:#1A4A8A;">{{ cabecalho.numero }}</div>
+                        </th>
+                        {% else %}
+                        <th class="text-center">
+                            <div style="font-size:11px; text-transform:uppercase;">{{ cabecalho.nome_curto }}</div>
+                            <div style="font-size:16px; font-weight:700; color:var(--lh-text);">{{ cabecalho.numero }}</div>
+                        </th>
+                        {% endif %}
                         {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for linha in grade_semanal %}
+                    <tr>
+                        <td class="text-center" style="vertical-align:middle;">
+                            <span class="lh-badge lh-badge--primary">{{ linha.aula }}ª</span>
+                        </td>
+                        {% for dia in linha.dias %}
+                        <td style="vertical-align:top; padding:6px;">
+                            {% if dia.reservas %}
+                                <div style="display:flex; flex-direction:column; gap:4px;">
+                                    {% for r in dia.reservas %}
+                                        <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-item" data-usuario="{{ r.professor.username }}" style="display:block; padding:7px 8px; border-radius:8px; font-size:11px; text-decoration:none !important; color:#1E293B; transition:all 0.15s ease; {% if r.professor == request.user %}border:1px solid #A5D6A7; background:#ECFDF5;{% else %}border:1px solid #E2E8F0; background:#F8FAFC;{% endif %}">
+                                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                                                <strong style="font-size:11px;">
+                                                    {% if r.tipo == 'SALA' %}
+                                                    <span style="color:#047857;">🏫 {{ r.sala.nome }}</span>
+                                                    {% else %}
+                                                    <span style="color:#B45309;">💻 Equip.</span>
+                                                    {% endif %}
+                                                </strong>
+                                                {% if r.professor == request.user %}
+                                                    <span title="Sua reserva" style="font-size:10px;">🟢</span>
+                                                {% endif %}
+                                            </div>
+                                            <div style="color:#475569; font-size:11px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.turma.nome }}</div>
+                                            <div style="font-size:10px; color:#94A3B8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.professor.get_full_name|default:r.professor.username }}</div>
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <a href="{% url 'agendamento_detalhe' ano=dia.data.year mes=dia.data.month dia=dia.data.day %}?aula={{ linha.aula }}" style="display:flex; height:100%; min-height:48px; border-radius:8px; border:1px dashed #CBD5E1; color:#94A3B8; text-decoration:none !important; align-items:center; justify-content:center; font-size:16px; transition:all 0.2s;" onmouseover="this.style.background='#F1F5F9'; this.style.borderColor='#1A4A8A'; this.style.color='#1A4A8A'" onmouseout="this.style.background='transparent'; this.style.borderColor='#CBD5E1'; this.style.color='#94A3B8'">
+                                    +
+                                </a>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -495,9 +475,8 @@
 
             var chk = document.getElementById('chkMinhasReservas');
             var wrap = document.getElementById('wrapMinhasReservas');
-            var linhas = document.querySelectorAll('.linha-reserva');
+            var reservas = document.querySelectorAll('.reserva-item');
             var currentUser = "{{ user.username }}";
-            var tbody = document.querySelector('#tabelaReservasDia tbody');
 
             if (wrap && chk) {
                 var newWrap = wrap.cloneNode(true);
@@ -506,32 +485,13 @@
                 wrap = newWrap;
 
                 chk.addEventListener('change', function() {
-                    var visiveis = 0;
-                    linhas.forEach(function(linha) {
+                    reservas.forEach(function(res) {
                         if (chk.checked) {
-                            if (linha.getAttribute('data-usuario') === currentUser) {
-                                linha.style.display = '';
-                                visiveis++;
-                            } else {
-                                linha.style.display = 'none';
-                            }
+                            res.style.display = (res.getAttribute('data-usuario') === currentUser) ? 'block' : 'none';
                         } else {
-                            linha.style.display = '';
-                            visiveis++;
+                            res.style.display = 'block';
                         }
                     });
-
-                    var msgFiltro = document.getElementById('msgFiltroVazio');
-                    if (visiveis === 0 && linhas.length > 0) {
-                        if (!msgFiltro) {
-                            var tr = document.createElement('tr');
-                            tr.id = 'msgFiltroVazio';
-                            tr.innerHTML = '<td colspan="7" class="text-center" style="padding:28px 16px; color:var(--lh-text-muted);"><span style="font-size:24px; display:block; margin-bottom:4px;">👀</span><p style="margin:0; font-size:13px;">Você não possui nenhuma reserva agendada nesta seleção.</p></td>';
-                            tbody.appendChild(tr);
-                        }
-                    } else {
-                        if (msgFiltro) msgFiltro.remove();
-                    }
                 });
             }
         }

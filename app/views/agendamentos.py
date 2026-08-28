@@ -12,8 +12,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Max, Sum
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
 
 from app.models import (
     Agendamento,
@@ -437,13 +442,40 @@ def agendamentos(request):
                 })
         semanas.append(linha)
 
-    minhas_reservas = (
-        Agendamento.objects
-        .filter(data=data_atual)
+    dias_para_domingo = data_atual.isoweekday() % 7
+    domingo = data_atual - timedelta(days=dias_para_domingo)
+    sabado = domingo + timedelta(days=6)
+
+    reservas_qs = (
+        Agendamento.objects.filter(data__range=(domingo, sabado))
         .select_related('sala', 'turma', 'professor')
         .prefetch_related('itens')
-        .order_by('aula')
     )
+
+    dias_cabecalho = []
+    for i in range(7):
+        d = domingo + timedelta(days=i)
+        dias_cabecalho.append({
+            'data': d,
+            'numero': d.day,
+            'mes_nome': MESES_PT[d.month - 1][:3],
+            'nome_curto': DIAS_SEMANA_LONGO[d.weekday()][:3],
+            'hoje': d == hoje
+        })
+
+    grade_semanal = []
+    for aula in range(1, 10):
+        linha = []
+        for i in range(7):
+            d = domingo + timedelta(days=i)
+            reservas_slot = [r for r in reservas_qs if r.data == d and r.aula == aula]
+            tem_reserva_usuario = any(r.professor == request.user for r in reservas_slot)
+            linha.append({
+                'data': d,
+                'reservas': reservas_slot,
+                'tem_reserva_usuario': tem_reserva_usuario
+            })
+        grade_semanal.append({'aula': aula, 'dias': linha})
 
     context = {
         'title': 'Agendamentos',
@@ -464,9 +496,95 @@ def agendamentos(request):
         'lista_meses': list(enumerate(MESES_PT, start=1)),
         'lista_anos': range(hoje.year - 2, hoje.year + 4),
         'is_admin': is_admin_aprovado(request.user),
-        'minhas_reservas': minhas_reservas,
+        'grade_semanal': grade_semanal,
+        'dias_cabecalho': dias_cabecalho,
+        'domingo': domingo,
+        'sabado': sabado,
     }
     return render(request, 'app/agendamentos.html', context)
+
+@login_required
+def exportar_pdf_mes(request):
+    """Gera e baixa um arquivo PDF com os agendamentos semanais do mês escolhido."""
+    if not is_usuario_aprovado(request.user):
+        return redirect('home')
+
+    hoje = date.today()
+    try:
+        ano = int(request.GET.get('ano', hoje.year))
+        mes = int(request.GET.get('mes', hoje.month))
+    except ValueError:
+        ano, mes = hoje.year, hoje.month
+
+    if not (1 <= mes <= 12):
+        mes = hoje.month
+
+    nome_mes = MESES_PT[mes - 1]
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="Agendamentos_{nome_mes}_{ano}.pdf"'
+
+    doc = SimpleDocTemplate(response, pagesize=landscape(A4), rightMargin=20, leftMargin=20, topMargin=20, bottomMargin=20)
+    elementos = []
+    estilos = getSampleStyleSheet()
+    titulo = Paragraph(f"Agendamentos - {nome_mes} de {ano}", estilos['Title'])
+    elementos.append(titulo)
+    elementos.append(Spacer(1, 20))
+
+    cal = calendar.Calendar(firstweekday=6) # Domingo = 6
+    for semana in cal.monthdatescalendar(ano, mes):
+        if not any(d.month == mes for d in semana):
+            continue
+
+        domingo = semana[0]
+        sabado = semana[-1]
+        
+        texto_semana = Paragraph(f"Semana de {domingo.strftime('%d/%m')} a {sabado.strftime('%d/%m')}", estilos['Heading2'])
+        elementos.append(texto_semana)
+        
+        reservas_semana = (
+            Agendamento.objects.filter(data__range=(domingo, sabado))
+            .select_related('sala', 'turma', 'professor')
+        )
+
+        dados_tabela = []
+        cabecalho = ['Aula'] + [f"{DIAS_SEMANA_PT[d.isoweekday()%7]} {d.day}" for d in semana]
+        dados_tabela.append(cabecalho)
+
+        for aula in range(1, 10):
+            linha = [f"{aula}ª"]
+            for d in semana:
+                reservas_slot = [r for r in reservas_semana if r.data == d and r.aula == aula]
+                if not reservas_slot:
+                    linha.append("")
+                else:
+                    textos = []
+                    for r in reservas_slot:
+                        local = r.sala.nome if r.tipo == 'SALA' else 'Equip'
+                        textos.append(f"{local} - {r.turma.nome} ({r.professor.username})")
+                    linha.append("\\n".join(textos))
+            dados_tabela.append(linha)
+
+        col_widths = [40] + [(landscape(A4)[0] - 80) / 7] * 7
+        tabela = Table(dados_tabela, colWidths=col_widths)
+        tabela.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTSIZE', (0, 1), (-1, -1), 7),
+            ('WORDWRAP', (0, 0), (-1, -1), True),
+        ]))
+        elementos.append(tabela)
+        elementos.append(Spacer(1, 20))
+
+    doc.build(elementos)
+    return response
 
 
 @login_required
