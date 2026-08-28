@@ -76,6 +76,11 @@ def _home_dashboard(request):
             })
         grade_semanal.append({'aula': aula, 'dias': linha})
 
+    dia_semana = DIAS_SEMANA_LONGO[hoje.weekday()]
+    mes_nome = MESES_PT[hoje.month - 1]
+    total_sala = Agendamento.objects.filter(data=hoje, tipo='SALA').count()
+    total_disp = Agendamento.objects.filter(data=hoje, tipo='DISPOSITIVO').count()
+
     context = {
         'dashboard': True,
         'data_atual': data_atual,
@@ -86,6 +91,10 @@ def _home_dashboard(request):
         'hoje_ano': hoje.year,
         'hoje_mes': hoje.month,
         'hoje_dia': hoje.day,
+        'dia_semana': dia_semana,
+        'mes_nome': mes_nome,
+        'total_sala': total_sala,
+        'total_disp': total_disp,
         'is_admin': is_admin,
         'solicitacoes_pendentes': Perfil.objects.filter(aprovado=False).count(),
         'dias_cabecalho': dias_cabecalho,

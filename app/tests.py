@@ -213,3 +213,28 @@ class TurmaOtimizacaoQueriesTest(TestCase):
     def test_contagem_alunos_turma(self):
         """Valida que a contagem de alunos associados à turma funciona corretamente."""
         self.assertEqual(self.turma.total_alunos, 2)
+
+
+class HomeDashboardViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='prof_dash', email='dash@teste.com', password='Password@123')
+        self.user.perfil.tipo = 'PROFESSOR'
+        self.user.perfil.aprovado = True
+        self.user.perfil.save()
+
+    def test_home_dashboard_context_e_data(self):
+        """Testa se a home para usuário aprovado inclui a data formatada, dia da semana e contadores."""
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('home'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('dia_semana', response.context)
+        self.assertIn('mes_nome', response.context)
+        self.assertIn('total_sala', response.context)
+        self.assertIn('total_disp', response.context)
+        self.assertTrue(response.context['dashboard'])
+        
+        hoje = date.today()
+        # Garante que a data e o cabeçalho não estão vazios ou com formatação truncada
+        self.assertContains(response, f"{response.context['dia_semana']}, {hoje.day} de {response.context['mes_nome']} de {hoje.year}")
+
