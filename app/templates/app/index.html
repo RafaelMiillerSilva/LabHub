@@ -2,6 +2,28 @@
 
 {% block content %}
 
+<style>
+    .reserva-base {
+        display: block;
+        padding: 7px 8px;
+        border-radius: 8px;
+        font-size: 11px;
+        text-decoration: none !important;
+        color: #1E293B;
+        transition: all 0.15s ease;
+    }
+    
+    .reserva-minha {
+        border: 1px solid #A5D6A7;
+        background: #ECFDF5;
+    }
+    
+    .reserva-outros {
+        border: 1px solid #E2E8F0;
+        background: #F8FAFC;
+    }
+</style>
+
 {% if dashboard %}
 <!-- ============================ PAINEL DO DIA ============================ -->
 
@@ -118,7 +140,7 @@
                             {% if dia.reservas %}
                                 <div style="display:flex; flex-direction:column; gap:4px;">
                                     {% for r in dia.reservas %}
-                                        <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-item" data-usuario="{{ r.professor.username }}" style="display:block; padding:7px 8px; border-radius:8px; font-size:11px; text-decoration:none !important; color:#1E293B; transition:all 0.15s ease; border:1px solid {% if r.professor == request.user %}#A5D6A7; background:#ECFDF5;{% else %}#E2E8F0; background:#F8FAFC;{% endif %}">
+                                        <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-item reserva-base {% if r.professor == request.user %}reserva-minha{% else %}reserva-outros{% endif %}" data-usuario="{{ r.professor.username }}">
                                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
                                                 <strong style="font-size:11px;">
                                                     {% if r.tipo == 'SALA' %}
@@ -376,6 +398,7 @@ document.addEventListener("DOMContentLoaded", function() {
         </div>
     </div>
 </div>
+<div id="cadastro-trigger" data-trigger="{% if form_cadastro.errors or aba_ativa == 'cadastro' or msg_sucesso_cadastro %}true{% else %}false{% endif %}" style="display:none;"></div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -403,9 +426,10 @@ document.addEventListener("DOMContentLoaded", function () {
             btnLogin.style.color = 'var(--lh-text-muted)';
         });
 
-        {% if form_cadastro.errors or aba_ativa == 'cadastro' or msg_sucesso_cadastro %}
-        btnCadastro.click();
-        {% endif %}
+        var triggerEl = document.getElementById('cadastro-trigger');
+        if (triggerEl && triggerEl.dataset.trigger === 'true') {
+            btnCadastro.click();
+        }
     }
 });
 </script>

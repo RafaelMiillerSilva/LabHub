@@ -528,6 +528,7 @@ def exportar_excel_mes(request):
 
     wb = openpyxl.Workbook()
     ws = wb.active
+    assert ws is not None
     ws.title = f"{nome_mes.capitalize()} {ano}"
 
     fonte_titulo = Font(bold=True, size=14, color="FFFFFF")
@@ -611,7 +612,7 @@ def exportar_excel_mes(request):
                     cel.alignment = alinhamento_topo
             
             # Ajustar altura da linha baseado no conteúdo
-            max_quebras = max([str(item).count('\n') for item in linha_dados]) if any(linha_dados) else 0
+            max_quebras = max([item.count('\n') for item in linha_dados]) if any(linha_dados) else 0
             ws.row_dimensions[linha_atual].height = 15 + (max_quebras * 15)
             
             linha_atual += 1
