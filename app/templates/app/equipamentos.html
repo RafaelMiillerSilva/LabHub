@@ -268,7 +268,7 @@
                     <th>Tipo / Sala</th>
                     <th>Status</th>
                     <th>Patrimônio</th>
-                    <th>Observação</th>
+                    <th>Nº de Série</th>
                     <th style="text-align: right;">Ações</th>
                 </tr>
             </thead>
@@ -309,8 +309,8 @@
                     </td>
                     <td>{{ e.numero_patrimonio|default:"—" }}</td>
                     <td>
-                        <span style="color:var(--lh-text-muted); font-style:italic; font-size:12px;">
-                            {{ e.observacao|default:"—"|truncatechars:40 }}
+                        <span style="color:var(--lh-text-muted); font-size:13px;">
+                            {{ e.numero_serie|default:"—" }}
                         </span>
                     </td>
                     <td style="text-align: right; white-space: nowrap;">
