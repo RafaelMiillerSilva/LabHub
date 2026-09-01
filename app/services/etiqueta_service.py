@@ -35,15 +35,20 @@ def gerar_etiqueta_png(equip):
     d.text((20, 16), equip.apelido or '—', fill='white', font=_obter_fonte(30, True))
     d.text((W - 200, 22), equip.get_categoria_display(), fill='white', font=_obter_fonte(18, True))
 
-    linhas = [
+    linhas = []
+    if getattr(equip, 'modelo', None):
+        linhas.append(f"Modelo: {equip.modelo}")
+    
+    linhas.extend([
         f"Identificação: {equip.identificacao_escola or '—'}",
         f"Patrimônio: {equip.numero_patrimonio or '—'}",
         f"Nº de série: {equip.numero_serie or '—'}",
-    ]
-    if equip.fixo and equip.sala:
-        linhas.append(f"Sala: {equip.sala.nome}")
+    ])
+    
     if equip.imei:
-        linhas.append(f"IMEI: {equip.imei}")
+        linhas.append(f"IMEI 1: {equip.imei}")
+    if getattr(equip, 'imei_2', None):
+        linhas.append(f"IMEI 2: {equip.imei_2}")
 
     fonte = _obter_fonte(20)
     y = 78

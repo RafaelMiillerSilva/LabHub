@@ -139,17 +139,19 @@ class EquipamentoForm(forms.ModelForm):
     class Meta:
         model = Equipamento
         fields = [
-            'categoria', 'apelido', 'identificacao_escola',
-            'numero_patrimonio', 'numero_serie', 'imei',
+            'categoria', 'modelo', 'apelido', 'identificacao_escola',
+            'numero_patrimonio', 'numero_serie', 'imei', 'imei_2',
             'fixo', 'sala', 'status', 'observacao'
         ]
         widgets = {
             'categoria': forms.Select(attrs={'class': 'form-control', 'id': 'id_categoria'}),
+            'modelo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Galaxy Tab A8, OptiPlex 3080'}),
             'apelido': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: C01, CH03'}),
             'identificacao_escola': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Identificação da escola'}),
             'numero_patrimonio': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nº de patrimônio'}),
             'numero_serie': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nº de série'}),
             'imei': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apenas tablets/smartphones', 'id': 'id_imei'}),
+            'imei_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Opcional (segundo chip)', 'id': 'id_imei_2'}),
             'fixo': forms.CheckboxInput(attrs={'id': 'id_fixo'}),
             'sala': forms.Select(attrs={'class': 'form-control', 'id': 'id_sala'}),
             'status': forms.Select(attrs={'class': 'form-control'}),

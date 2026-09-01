@@ -130,10 +130,12 @@ class Equipamento(models.Model):
     categoria = models.CharField(max_length=15, choices=CATEGORIA_CHOICES, default='NOTEBOOK')
     apelido = models.CharField(max_length=30, unique=True, default='',
                                help_text='Ex: C01, CH03')
+    modelo = models.CharField('Modelo', max_length=100, blank=True, default='')
     identificacao_escola = models.CharField('Identificação da escola', max_length=60, blank=True, default='')
     numero_patrimonio = models.CharField('Número de patrimônio', max_length=60, blank=True, default='')
     numero_serie = models.CharField('Número de série', max_length=80, blank=True, default='')
-    imei = models.CharField('IMEI', max_length=20, blank=True, null=True)
+    imei = models.CharField('IMEI 1', max_length=20, blank=True, null=True)
+    imei_2 = models.CharField('IMEI 2', max_length=20, blank=True, null=True)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='ATIVO')
     fixo = models.BooleanField('Fixo', default=False, help_text='Indica se o equipamento é fixo em uma sala')
     sala = models.ForeignKey(

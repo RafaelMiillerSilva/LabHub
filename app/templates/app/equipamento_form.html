@@ -63,9 +63,15 @@
                         </div>
                     </div>
 
-                    <div style="margin-bottom:14px;">
-                        <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Identificação da escola (Etiqueta)</label>
-                        {{ form.identificacao_escola }}
+                    <div class="row">
+                        <div class="col-sm-6" style="margin-bottom:14px;">
+                            <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Modelo (ex: Galaxy Tab A8)</label>
+                            {{ form.modelo }}
+                        </div>
+                        <div class="col-sm-6" style="margin-bottom:14px;">
+                            <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Identificação da escola (Etiqueta)</label>
+                            {{ form.identificacao_escola }}
+                        </div>
                     </div>
 
                     <div class="row">
@@ -79,9 +85,17 @@
                         </div>
                     </div>
 
-                    <div style="margin-bottom:14px;" id="grupo-imei">
-                        <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">IMEI <span style="font-weight:400; color:var(--lh-text-light); text-transform:none;">(tablets e smartphones)</span></label>
-                        {{ form.imei }}
+                    <div id="grupo-imei">
+                        <div class="row" style="margin-bottom:14px;">
+                            <div class="col-sm-6">
+                                <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">IMEI 1 <span style="font-weight:400; color:var(--lh-text-light); text-transform:none;">(tablets/smartphones)</span></label>
+                                {{ form.imei }}
+                            </div>
+                            <div class="col-sm-6">
+                                <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">IMEI 2 <span style="font-weight:400; color:var(--lh-text-light); text-transform:none;">(opcional)</span></label>
+                                {{ form.imei_2 }}
+                            </div>
+                        </div>
                     </div>
 
                     <div style="margin-bottom:16px;">

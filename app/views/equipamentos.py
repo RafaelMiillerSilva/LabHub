@@ -221,19 +221,22 @@ def exportar_equipamentos(request):
     writer = csv.writer(response, delimiter=';')
     writer.writerow([
         'Apelido',
+        'Modelo',
         'Categoria',
         'Fixo',
         'Sala',
         'Identificação Escola',
         'Nº Patrimônio',
         'Nº de Série',
-        'IMEI',
+        'IMEI 1',
+        'IMEI 2',
         'Status',
     ])
 
     for equip in lista:
         writer.writerow([
             equip.apelido or '',
+            equip.modelo or '',
             equip.get_categoria_display() if hasattr(equip, 'get_categoria_display') else equip.categoria,
             'Sim' if equip.fixo else 'Não',
             equip.sala.nome if equip.fixo and equip.sala else '',
@@ -241,6 +244,7 @@ def exportar_equipamentos(request):
             equip.numero_patrimonio or '',
             equip.numero_serie or '',
             equip.imei or '',
+            equip.imei_2 or '',
             getattr(equip, 'status', ''),
         ])
 
