@@ -67,3 +67,44 @@ def gerar_etiquetas_zip(equips):
             zf.writestr(f'etiqueta_{equip.apelido}.png', png_bytes.getvalue())
     buffer.seek(0)
     return buffer
+
+
+def gerar_etiquetas_a4_pdf(equips):
+    """
+    Gera um buffer PDF contendo as etiquetas dos equipamentos
+    organizadas em páginas A4 (até 10 por página).
+    """
+    A4_W, A4_H = 1240, 1754
+    L_W, L_H = 520, 300
+    
+    margem_x = (A4_W - (2 * L_W)) // 3
+    margem_y = (A4_H - (5 * L_H)) // 6
+
+    paginas = []
+    pagina_atual = None
+    
+    for i, equip in enumerate(equips):
+        img_etiqueta = gerar_etiqueta_png(equip)
+        
+        idx_na_pagina = i % 10
+        if idx_na_pagina == 0:
+            pagina_atual = Image.new('RGB', (A4_W, A4_H), 'white')
+            paginas.append(pagina_atual)
+            
+        linha = idx_na_pagina // 2
+        coluna = idx_na_pagina % 2
+        
+        pos_x = margem_x + coluna * (L_W + margem_x)
+        pos_y = margem_y + linha * (L_H + margem_y)
+        
+        if pagina_atual:
+            pagina_atual.paste(img_etiqueta, (pos_x, pos_y))
+        
+    buffer = io.BytesIO()
+    if paginas:
+        primeira = paginas[0]
+        demais = paginas[1:]
+        primeira.save(buffer, 'PDF', resolution=150.0, save_all=True, append_images=demais)
+        
+    buffer.seek(0)
+    return buffer

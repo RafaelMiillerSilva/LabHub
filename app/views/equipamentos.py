@@ -3,6 +3,7 @@ Views de gerenciamento de equipamentos, fotos, etiquetas e exportações.
 """
 
 import csv
+import io
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -13,7 +14,7 @@ from django.urls import reverse
 
 from app.forms import EquipamentoForm
 from app.models import Equipamento
-from app.services.etiqueta_service import gerar_etiqueta_png, gerar_etiquetas_zip
+from app.services.etiqueta_service import gerar_etiqueta_png, gerar_etiquetas_zip, gerar_etiquetas_a4_pdf
 from .common import is_admin_aprovado, is_usuario_aprovado
 
 
@@ -126,7 +127,7 @@ def foto_equipamento(request, equip_id):
         raise Http404('Equipamento sem foto.')
 
     return HttpResponse(
-        bytes(equip.foto_dados),
+        equip.foto_dados,
         content_type=equip.foto_mime or 'image/jpeg'
     )
 
@@ -168,15 +169,17 @@ def etiqueta_equipamento(request, equip_id):
     equip = get_object_or_404(Equipamento, id=equip_id)
     img = gerar_etiqueta_png(equip)
 
-    response = HttpResponse(content_type='image/png')
+    buffer = io.BytesIO()
+    img.save(buffer, 'PNG')
+    
+    response = HttpResponse(buffer.getvalue(), content_type='image/png')
     response['Content-Disposition'] = f'attachment; filename="etiqueta_{equip.apelido}.png"'
-    img.save(response, 'PNG')
     return response
 
 
 @login_required
 def etiquetas_lote(request):
-    """Baixa as etiquetas de múltiplos equipamentos em um arquivo ZIP."""
+    """Baixa as etiquetas de múltiplos equipamentos organizadas em um arquivo PDF A4."""
     if not is_admin_aprovado(request.user):
         return redirect('home')
 
@@ -190,9 +193,9 @@ def etiquetas_lote(request):
     if len(equips) == 1:
         return etiqueta_equipamento(request, equips[0].id)
 
-    buffer = gerar_etiquetas_zip(equips)
-    response = HttpResponse(buffer.getvalue(), content_type='application/zip')
-    response['Content-Disposition'] = 'attachment; filename="etiquetas.zip"'
+    buffer = gerar_etiquetas_a4_pdf(equips)
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="etiquetas.pdf"'
     return response
 
 
