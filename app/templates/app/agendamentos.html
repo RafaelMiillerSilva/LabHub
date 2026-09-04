@@ -23,14 +23,34 @@
         transition: all 0.15s ease;
     }
 
+    .reserva-fixo {
+        border: 1px solid #CBD5E1;
+        background: #F1F5F9;
+    }
+
+    .reserva-fixo:hover {
+        border-color: #94A3B8;
+        background: #E2E8F0;
+    }
+
     .reserva-minha {
         border: 1px solid #A5D6A7;
         background: #ECFDF5;
     }
 
+    .reserva-minha:hover {
+        border-color: #86EFAC;
+        background: #D1FAE5;
+    }
+
     .reserva-outros {
-        border: 1px solid #E2E8F0;
-        background: #F8FAFC;
+        border: 1px solid #FED7AA;
+        background: #FFEDD5;
+    }
+
+    .reserva-outros:hover {
+        border-color: #FDBA74;
+        background: #FEEBC8;
     }
 
     .cal-header {
@@ -369,13 +389,22 @@
                     class="lh-btn lh-btn--xs lh-btn--ghost" style="padding:4px 8px;">▶</a>
             </div>
 
-            <!-- Filtro: Minhas Reservas -->
-            <label id="wrapMinhasReservas"
-                style="display:inline-flex; align-items:center; gap:6px; background:var(--lh-primary-light); padding:7px 12px; border-radius:8px; margin:0; cursor:pointer; font-size:13px; font-weight:600; color:var(--lh-primary);">
-                <input type="checkbox" id="chkMinhasReservas"
-                    style="cursor:pointer; width:15px; height:15px; margin:0;">
-                Apenas minhas reservas
-            </label>
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <!-- Legenda de cores -->
+                <div style="display:flex; align-items:center; gap:10px; font-size:11px; font-weight:600; color:var(--lh-text-muted);">
+                    <span style="display:inline-flex; align-items:center; gap:4px;"><span style="width:12px; height:12px; border-radius:3px; background:#ECFDF5; border:1px solid #A5D6A7; display:inline-block;"></span> Minhas</span>
+                    <span style="display:inline-flex; align-items:center; gap:4px;"><span style="width:12px; height:12px; border-radius:3px; background:#FFEDD5; border:1px solid #FED7AA; display:inline-block;"></span> Outros</span>
+                    <span style="display:inline-flex; align-items:center; gap:4px;"><span style="width:12px; height:12px; border-radius:3px; background:#F1F5F9; border:1px solid #CBD5E1; display:inline-block;"></span> Fixo</span>
+                </div>
+
+                <!-- Filtro: Minhas Reservas -->
+                <label id="wrapMinhasReservas"
+                    style="display:inline-flex; align-items:center; gap:6px; background:var(--lh-primary-light); padding:7px 12px; border-radius:8px; margin:0; cursor:pointer; font-size:13px; font-weight:600; color:var(--lh-primary);">
+                    <input type="checkbox" id="chkMinhasReservas"
+                        style="cursor:pointer; width:15px; height:15px; margin:0;">
+                    Apenas minhas reservas
+                </label>
+            </div>
         </div>
 
         <div class="lh-card-body" style="padding:0; overflow-x:auto;">
@@ -412,7 +441,7 @@
                             <div style="display:flex; flex-direction:column; gap:4px;">
                                 {% for r in dia.reservas %}
                                 <a href="{% url 'relacao_agendamento' r.id %}"
-                                    class="reserva-item reserva-base {% if r.professor == request.user %}reserva-minha{% else %}reserva-outros{% endif %}"
+                                    class="reserva-item reserva-base {% if r.fixo %}reserva-fixo{% elif r.professor == request.user %}reserva-minha{% else %}reserva-outros{% endif %}"
                                     data-usuario="{{ r.professor.username }}">
                                     <div
                                         style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
@@ -423,9 +452,14 @@
                                             <span style="color:#B45309;"> Equip.</span>
                                             {% endif %}
                                         </strong>
-                                        {% if r.professor == request.user %}
-                                        <span title="Sua reserva" style="font-size:10px;">🟢</span>
-                                        {% endif %}
+                                        <div style="display:flex; align-items:center; gap:3px;">
+                                            {% if r.fixo %}
+                                            <span title="Agendamento Fixo" style="font-size:10px;">📌</span>
+                                            {% endif %}
+                                            {% if r.professor == request.user %}
+                                            <span title="Sua reserva" style="font-size:10px;">🟢</span>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                     <div
                                         style="color:#475569; font-size:11px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">

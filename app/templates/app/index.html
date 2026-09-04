@@ -13,14 +13,34 @@
         transition: all 0.15s ease;
     }
     
+    .reserva-fixo {
+        border: 1px solid #CBD5E1;
+        background: #F1F5F9;
+    }
+
+    .reserva-fixo:hover {
+        border-color: #94A3B8;
+        background: #E2E8F0;
+    }
+
     .reserva-minha {
         border: 1px solid #A5D6A7;
         background: #ECFDF5;
     }
-    
+
+    .reserva-minha:hover {
+        border-color: #86EFAC;
+        background: #D1FAE5;
+    }
+
     .reserva-outros {
-        border: 1px solid #E2E8F0;
-        background: #F8FAFC;
+        border: 1px solid #FED7AA;
+        background: #FFEDD5;
+    }
+
+    .reserva-outros:hover {
+        border-color: #FDBA74;
+        background: #FEEBC8;
     }
 </style>
 
@@ -96,7 +116,14 @@
             <a href="?dia={{ semana_prox.day }}&mes={{ semana_prox.month }}&ano={{ semana_prox.year }}" class="lh-btn lh-btn--xs lh-btn--ghost" style="padding:4px 8px;">▶</a>
         </div>
 
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <!-- Legenda de cores -->
+            <div style="display:flex; align-items:center; gap:10px; font-size:11px; font-weight:600; color:var(--lh-text-muted);">
+                <span style="display:inline-flex; align-items:center; gap:4px;"><span style="width:12px; height:12px; border-radius:3px; background:#ECFDF5; border:1px solid #A5D6A7; display:inline-block;"></span> Minhas</span>
+                <span style="display:inline-flex; align-items:center; gap:4px;"><span style="width:12px; height:12px; border-radius:3px; background:#FFEDD5; border:1px solid #FED7AA; display:inline-block;"></span> Outros</span>
+                <span style="display:inline-flex; align-items:center; gap:4px;"><span style="width:12px; height:12px; border-radius:3px; background:#F1F5F9; border:1px solid #CBD5E1; display:inline-block;"></span> Fixo</span>
+            </div>
+
             <!-- Botão Hoje -->
             <a href="?dia={{ hoje_dia }}&mes={{ hoje_mes }}&ano={{ hoje_ano }}" class="lh-btn lh-btn--sm lh-btn--outline">Ir para Hoje</a>
 
@@ -140,7 +167,7 @@
                             {% if dia.reservas %}
                                 <div style="display:flex; flex-direction:column; gap:4px;">
                                     {% for r in dia.reservas %}
-                                        <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-item reserva-base {% if r.professor == request.user %}reserva-minha{% else %}reserva-outros{% endif %}" data-usuario="{{ r.professor.username }}">
+                                        <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-item reserva-base {% if r.fixo %}reserva-fixo{% elif r.professor == request.user %}reserva-minha{% else %}reserva-outros{% endif %}" data-usuario="{{ r.professor.username }}">
                                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
                                                 <strong style="font-size:11px;">
                                                     {% if r.tipo == 'SALA' %}
@@ -149,9 +176,14 @@
                                                     <span style="color:#B45309;">💻 Equip.</span>
                                                     {% endif %}
                                                 </strong>
-                                                {% if r.professor == request.user %}
-                                                    <span title="Sua reserva" style="font-size:10px;">🟢</span>
-                                                {% endif %}
+                                                <div style="display:flex; align-items:center; gap:3px;">
+                                                    {% if r.fixo %}
+                                                        <span title="Agendamento Fixo" style="font-size:10px;">📌</span>
+                                                    {% endif %}
+                                                    {% if r.professor == request.user %}
+                                                        <span title="Sua reserva" style="font-size:10px;">🟢</span>
+                                                    {% endif %}
+                                                </div>
                                             </div>
                                             <div style="color:#475569; font-size:11px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.turma.nome }}</div>
                                             <div style="font-size:10px; color:#94A3B8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.professor.get_full_name|default:r.professor.username }}</div>
