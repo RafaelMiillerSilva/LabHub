@@ -147,6 +147,24 @@
         opacity: 0.4;
     }
 
+    .th-hoje {
+        background: var(--lh-primary-light) !important;
+        border-bottom: 2px solid var(--lh-primary) !important;
+    }
+
+    .th-hoje .th-nome-curto {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: var(--lh-primary);
+        font-weight: 700;
+    }
+
+    .th-hoje .th-numero {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--lh-primary);
+    }
+
     .cal-header {
         padding: 20px 24px;
         background: var(--lh-surface);
@@ -509,9 +527,9 @@
                         <th class="text-center" style="width:65px;">Aula</th>
                         {% for cabecalho in dias_cabecalho %}
                         {% if cabecalho.hoje %}
-                        <th class="text-center" style="background:#EBF2FF; border-bottom:2px solid #1A4A8A;">
-                            <div style="font-size:11px; text-transform:uppercase; color:#1A4A8A;">{{ cabecalho.nome_curto }}</div>
-                            <div style="font-size:16px; font-weight:800; color:#1A4A8A;">{{ cabecalho.numero }}</div>
+                        <th class="text-center th-hoje">
+                            <div class="th-nome-curto">{{ cabecalho.nome_curto }}</div>
+                            <div class="th-numero">{{ cabecalho.numero }}</div>
                         </th>
                         {% else %}
                         <th class="text-center">
