@@ -17,7 +17,11 @@
 
     <!-- Formulário de cadastro / edição -->
     <div class="col-md-4 col-sm-12">
-        <div class="lh-card" style="{% if editando %}border-top: 4px solid var(--lh-warning);{% else %}border-top: 4px solid var(--lh-primary);{% endif %}">
+        {% if editando %}
+        <div class="lh-card" style="border-top: 4px solid var(--lh-warning);">
+        {% else %}
+        <div class="lh-card" style="border-top: 4px solid var(--lh-primary);">
+        {% endif %}
             <div class="lh-card-header">
                 <h3 class="lh-card-title">
                     {% if editando %}✏️ Editar Turma{% else %}➕ Nova Turma{% endif %}

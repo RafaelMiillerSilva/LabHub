@@ -165,7 +165,8 @@
 {% block scripts %}
 <script>
     (function () {
-        var comChip = {{ categorias_com_chip|safe }};
+        var comChipStr = '{{ categorias_com_chip|join:"," }}';
+        var comChip = comChipStr ? comChipStr.split(',') : [];
         var selCat = document.getElementById('id_categoria');
         var grupoImei = document.getElementById('grupo-imei');
         function toggleImei() {

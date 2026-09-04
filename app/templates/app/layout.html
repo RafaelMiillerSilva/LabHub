@@ -166,6 +166,7 @@
         .notif-wrapper {
             position: relative;
             display: inline-block;
+            text-align: left;
         }
 
         .notif-bell {
@@ -839,6 +840,10 @@
                 float: none;
             }
 
+            .navbar-right-custom .notif-wrapper {
+                text-align: left;
+            }
+
             .notif-dropdown,
             .avatar-dropdown {
                 position: static !important;
@@ -949,7 +954,7 @@
                     <div class="navbar-right-custom">
                         <!-- Ícone de Chat -->
                         <div class="notif-wrapper">
-                            <a href="{% url 'chat_inbox' %}" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                            <a href="{% url 'chat_inbox' %}" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: flex-start;">
                                 <span class="notif-bell" id="chatIcon" title="Mensagens de Chat">
                                     💬
                                     <span class="notif-badge" id="chatBadge" style="display:none; background-color: #3B82F6;">0</span>
