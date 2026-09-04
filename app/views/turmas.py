@@ -190,21 +190,27 @@ def importar_alunos(request, turma_id):
             return redirect('turma_detalhe', turma_id=turma.id)
 
         criados = 0
-        ignorados = 0
+        duplicados = []
+        incompletos = []
         alunos_existentes = set(
             Aluno.objects.filter(turma=turma).values_list('nome', 'ra')
         )
 
-        for linha in linhas[1:]:
-            if not linha or len(linha) <= max(nome_idx, ra_idx):
+        for num_linha, linha in enumerate(linhas[1:], start=2):
+            if not linha or (len(linha) <= max(nome_idx, ra_idx)):
                 continue
-            nome = normalizar_texto(linha[nome_idx])
-            ra = normalizar_ra(linha[ra_idx])
+            nome = normalizar_texto(linha[nome_idx]) if len(linha) > nome_idx else ''
+            ra = normalizar_ra(linha[ra_idx]) if len(linha) > ra_idx else ''
             digito = normalizar_digito(linha[digito_idx]) if digito_idx is not None and len(linha) > digito_idx else ''
             uf = normalizar_uf(linha[uf_idx]) if uf_idx is not None and len(linha) > uf_idx else 'SP'
 
-            if not nome or not ra or (nome, ra) in alunos_existentes:
-                ignorados += 1
+            if not nome or not ra:
+                info = nome if nome else (f"RA {ra}" if ra else f"Linha {num_linha}")
+                incompletos.append(info)
+                continue
+
+            if (nome, ra) in alunos_existentes:
+                duplicados.append(f"{nome} (RA: {ra})")
                 continue
 
             try:
@@ -212,14 +218,32 @@ def importar_alunos(request, turma_id):
                 alunos_existentes.add((nome, ra))
                 criados += 1
             except IntegrityError:
-                ignorados += 1
+                duplicados.append(f"{nome} (RA: {ra})")
 
-        messages.success(request, f'Importação concluída: {criados} aluno(s) adicionado(s).')
-        if ignorados:
+        if criados:
+            messages.success(request, f'Importação concluída: {criados} aluno(s) adicionado(s).')
+        
+        if duplicados:
+            qtd_dup = len(duplicados)
+            amostra_dup = ", ".join(duplicados[:5])
+            mais = f" e mais {qtd_dup - 5}" if qtd_dup > 5 else ""
             messages.warning(
                 request,
-                f'{ignorados} linha(s) ignorada(s) — Aluno duplicado ou dados incompletos.'
+                f'{qtd_dup} aluno(s) duplicado(s) / já cadastrado(s) ignorado(s): {amostra_dup}{mais}.'
             )
+
+        if incompletos:
+            qtd_inc = len(incompletos)
+            amostra_inc = ", ".join(incompletos[:5])
+            mais = f" e mais {qtd_inc - 5}" if qtd_inc > 5 else ""
+            messages.warning(
+                request,
+                f'{qtd_inc} linha(s) com dados incompletos ignorada(s): {amostra_inc}{mais}.'
+            )
+
+        if not criados and not duplicados and not incompletos:
+            messages.info(request, 'Nenhum registro de aluno foi processado.')
+
         return redirect('turma_detalhe', turma_id=turma.id)
 
     return redirect('turma_detalhe', turma_id=turma.id)
