@@ -8,6 +8,8 @@ import io
 ALIAS_NOME = {'nome', 'aluno', 'nome do aluno', 'nome completo', 'nome completo do aluno'}
 ALIAS_RA = {'ra', 'ra (registro)', 'registro', 'matricula', 'matrícula',
             'numero', 'número', 'nº', 'n', 'registro do aluno'}
+ALIAS_DIGITO = {'digito', 'dígito', 'dig', 'digito ra', 'dígito ra', 'digito_ra', 'dígito_ra'}
+ALIAS_UF = {'uf', 'estado', 'uf ra', 'uf_ra'}
 
 
 def normalizar_texto(valor):
@@ -22,6 +24,21 @@ def normalizar_ra(valor):
     if isinstance(valor, float) and valor.is_integer():
         return str(int(valor))
     return str(valor).strip()
+
+
+def normalizar_digito(valor):
+    if valor is None:
+        return ''
+    if isinstance(valor, float) and valor.is_integer():
+        return str(int(valor))
+    return str(valor).strip().upper()
+
+
+def normalizar_uf(valor):
+    if valor is None:
+        return 'SP'
+    val_str = str(valor).strip().upper()
+    return val_str if val_str else 'SP'
 
 
 def detectar_separador(texto):
@@ -67,13 +84,17 @@ def ler_planilha(arquivo):
 
 def mapear_colunas(cabecalho):
     """
-    Identifica os índices das colunas 'nome' e 'ra' a partir do cabeçalho da planilha.
+    Identifica os índices das colunas 'nome', 'ra', 'digito' e 'uf' a partir do cabeçalho da planilha.
     """
-    nome_idx = ra_idx = None
+    nome_idx = ra_idx = digito_idx = uf_idx = None
     for i, valor in enumerate(cabecalho):
         v = str(valor).strip().lower()
         if nome_idx is None and v in ALIAS_NOME:
             nome_idx = i
         if ra_idx is None and v in ALIAS_RA:
             ra_idx = i
-    return nome_idx, ra_idx
+        if digito_idx is None and v in ALIAS_DIGITO:
+            digito_idx = i
+        if uf_idx is None and v in ALIAS_UF:
+            uf_idx = i
+    return nome_idx, ra_idx, digito_idx, uf_idx

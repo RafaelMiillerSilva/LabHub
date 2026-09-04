@@ -15,8 +15,10 @@ from app.models import Aluno, Turma
 from app.services.planilha_service import (
     ler_planilha,
     mapear_colunas,
+    normalizar_digito,
     normalizar_ra,
     normalizar_texto,
+    normalizar_uf,
 )
 from .common import is_admin_aprovado, is_ajax, is_usuario_aprovado
 
@@ -179,7 +181,7 @@ def importar_alunos(request, turma_id):
             messages.warning(request, 'A planilha está vazia.')
             return redirect('turma_detalhe', turma_id=turma.id)
 
-        nome_idx, ra_idx = mapear_colunas(linhas[0])
+        nome_idx, ra_idx, digito_idx, uf_idx = mapear_colunas(linhas[0])
         if nome_idx is None or ra_idx is None:
             messages.error(request, (
                 'Não encontrei as colunas "nome" e "ra" no cabeçalho da planilha. '
@@ -189,21 +191,25 @@ def importar_alunos(request, turma_id):
 
         criados = 0
         ignorados = 0
-        ras_existentes = set(Aluno.objects.values_list('ra', flat=True))
+        alunos_existentes = set(
+            Aluno.objects.filter(turma=turma).values_list('nome', 'ra')
+        )
 
         for linha in linhas[1:]:
             if not linha or len(linha) <= max(nome_idx, ra_idx):
                 continue
             nome = normalizar_texto(linha[nome_idx])
             ra = normalizar_ra(linha[ra_idx])
+            digito = normalizar_digito(linha[digito_idx]) if digito_idx is not None and len(linha) > digito_idx else ''
+            uf = normalizar_uf(linha[uf_idx]) if uf_idx is not None and len(linha) > uf_idx else 'SP'
 
-            if not nome or not ra or ra in ras_existentes:
+            if not nome or not ra or (nome, ra) in alunos_existentes:
                 ignorados += 1
                 continue
 
             try:
-                Aluno.objects.create(turma=turma, nome=nome, ra=ra)
-                ras_existentes.add(ra)
+                Aluno.objects.create(turma=turma, nome=nome, ra=ra, digito=digito, uf=uf)
+                alunos_existentes.add((nome, ra))
                 criados += 1
             except IntegrityError:
                 ignorados += 1
@@ -212,7 +218,7 @@ def importar_alunos(request, turma_id):
         if ignorados:
             messages.warning(
                 request,
-                f'{ignorados} linha(s) ignorada(s) — RA duplicado ou dados incompletos.'
+                f'{ignorados} linha(s) ignorada(s) — Aluno duplicado ou dados incompletos.'
             )
         return redirect('turma_detalhe', turma_id=turma.id)
 
@@ -229,7 +235,7 @@ def modelo_planilha_alunos(request):
     response['Content-Disposition'] = 'attachment; filename="modelo_alunos.csv"'
     response.write('\ufeff')
     writer = csv.writer(response, delimiter=';')
-    writer.writerow(['nome', 'ra'])
-    writer.writerow(['João da Silva', '12345'])
-    writer.writerow(['Maria Souza', '12346'])
+    writer.writerow(['nome', 'ra', 'digito', 'uf'])
+    writer.writerow(['João da Silva', '12345678', '9', 'SP'])
+    writer.writerow(['Maria Souza', '87654321', 'X', 'SP'])
     return response

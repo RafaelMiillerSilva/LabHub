@@ -221,7 +221,7 @@ class TurmaForm(forms.ModelForm):
 class AlunoForm(forms.ModelForm):
     class Meta:
         model = Aluno
-        fields = ['nome', 'ra']
+        fields = ['nome', 'ra', 'digito', 'uf']
         widgets = {
             'nome': forms.TextInput(attrs={
                 'class': 'form-control', 'placeholder': 'Nome completo do aluno'
@@ -229,7 +229,15 @@ class AlunoForm(forms.ModelForm):
             'ra': forms.TextInput(attrs={
                 'class': 'form-control', 'placeholder': 'Nº de registro (RA)'
             }),
+            'digito': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'Dígito (ex: X)'
+            }),
+            'uf': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'UF (ex: SP)', 'maxlength': '2'
+            }),
         }
         labels = {
             'ra': 'RA (registro)',
+            'digito': 'Dígito',
+            'uf': 'UF',
         }

@@ -47,9 +47,19 @@
                         <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Nome do Aluno</label>
                         {{ form.nome }}
                     </div>
-                    <div style="margin-bottom:18px;">
-                        <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">RA (Registro Acadêmico)</label>
-                        {{ form.ra }}
+                    <div class="row" style="margin-left:-5px; margin-right:-5px;">
+                        <div class="col-xs-6" style="padding-left:5px; padding-right:5px; margin-bottom:14px;">
+                            <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">RA</label>
+                            {{ form.ra }}
+                        </div>
+                        <div class="col-xs-3" style="padding-left:5px; padding-right:5px; margin-bottom:14px;">
+                            <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">Dígito</label>
+                            {{ form.digito }}
+                        </div>
+                        <div class="col-xs-3" style="padding-left:5px; padding-right:5px; margin-bottom:14px;">
+                            <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted); margin-bottom:6px;">UF</label>
+                            {{ form.uf }}
+                        </div>
                     </div>
                     <button type="submit" class="lh-btn lh-btn--primary lh-btn--block lh-btn--lg">
                         ✅ Cadastrar Aluno
@@ -103,6 +113,8 @@
                                 <th style="width: 40px; text-align:center;">#</th>
                                 <th>Nome do Aluno</th>
                                 <th>RA</th>
+                                <th>Dígito</th>
+                                <th>UF</th>
                                 <th class="text-center">Ações</th>
                             </tr>
                         </thead>
@@ -112,6 +124,8 @@
                                 <td class="text-center" style="color:var(--lh-text-light); font-weight:600;">{{ forloop.counter }}</td>
                                 <td><strong>{{ aluno.nome }}</strong></td>
                                 <td style="color:var(--lh-text-muted);">{{ aluno.ra }}</td>
+                                <td style="color:var(--lh-text-muted);">{{ aluno.digito|default:"-" }}</td>
+                                <td style="color:var(--lh-text-muted);">{{ aluno.uf|default:"SP" }}</td>
                                 <td class="text-center">
                                     <form action="{% url 'aluno_excluir' aluno.id %}" method="post" style="display:inline;" data-ajax="true">
                                         {% csrf_token %}
@@ -124,7 +138,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center" style="padding:40px 16px; color:var(--lh-text-muted);">
+                                <td colspan="6" class="text-center" style="padding:40px 16px; color:var(--lh-text-muted);">
                                     <span style="font-size:32px; display:block; margin-bottom:8px;">🎓</span>
                                     <p style="margin:0; font-size:14px;">Nenhum aluno nesta turma ainda. Cadastre individualmente ou importe uma planilha ao lado.</p>
                                 </td>

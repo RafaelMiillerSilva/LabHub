@@ -207,7 +207,9 @@ class Turma(models.Model):
 class Aluno(models.Model):
     turma = models.ForeignKey(Turma, on_delete=models.CASCADE, related_name='alunos')
     nome = models.CharField(max_length=120)
-    ra = models.CharField(max_length=30, unique=True, verbose_name='RA (registro)')
+    ra = models.CharField(max_length=30, verbose_name='RA (registro)')
+    digito = models.CharField(max_length=5, blank=True, default='', verbose_name='Dígito')
+    uf = models.CharField(max_length=2, blank=True, default='SP', verbose_name='UF')
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -219,8 +221,17 @@ class Aluno(models.Model):
             models.Index(fields=['ra']),
         ]
 
+    @property
+    def ra_formatado(self):
+        res = self.ra
+        if self.digito:
+            res += f"-{self.digito}"
+        if self.uf:
+            res += f"/{self.uf}"
+        return res
+
     def __str__(self):
-        return f"{self.nome} - RA {self.ra}"
+        return f"{self.nome} - RA {self.ra_formatado}"
 
 
 # ---------------------------------------------------------------------------
