@@ -53,6 +53,100 @@
         background: #FEEBC8;
     }
 
+    .slot-vazio {
+        display: flex;
+        height: 100%;
+        min-height: 48px;
+        border-radius: 8px;
+        border: 1px dashed var(--lh-border);
+        color: var(--lh-text-light);
+        text-decoration: none !important;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        transition: all 0.2s;
+    }
+
+    .slot-vazio:hover {
+        background: var(--lh-primary-light);
+        border-color: var(--lh-primary);
+        color: var(--lh-primary);
+    }
+
+    [data-theme="dark"] .reserva-base {
+        color: #F8FAFC;
+    }
+
+    [data-theme="dark"] .reserva-fixo {
+        border-color: #334155;
+        background: #1E293B;
+        color: #F1F5F9;
+    }
+
+    [data-theme="dark"] .reserva-fixo:hover {
+        border-color: #475569;
+        background: #28364B;
+    }
+
+    [data-theme="dark"] .reserva-minha {
+        border-color: #059669;
+        background: rgba(16, 185, 129, 0.16);
+        color: #ECFDF5;
+    }
+
+    [data-theme="dark"] .reserva-minha:hover {
+        border-color: #10B981;
+        background: rgba(16, 185, 129, 0.26);
+    }
+
+    [data-theme="dark"] .reserva-outros {
+        border-color: #D97706;
+        background: rgba(249, 115, 22, 0.16);
+        color: #FFF7ED;
+    }
+
+    [data-theme="dark"] .reserva-outros:hover {
+        border-color: #F59E0B;
+        background: rgba(249, 115, 22, 0.26);
+    }
+
+    [data-theme="dark"] .cal-nav .btn-default {
+        background: var(--lh-surface-subtle);
+        border-color: var(--lh-border);
+        color: var(--lh-text);
+    }
+
+    [data-theme="dark"] .cal-ano > .btn,
+    [data-theme="dark"] .cal-mes > .btn {
+        background: var(--lh-primary-light) !important;
+        color: var(--lh-primary) !important;
+    }
+
+    [data-theme="dark"] .cal-table {
+        background: var(--lh-surface);
+    }
+
+    [data-theme="dark"] .cal-table th {
+        background: var(--lh-surface-subtle);
+        color: var(--lh-text-muted);
+        border-bottom-color: var(--lh-border);
+    }
+
+    [data-theme="dark"] .cal-table td {
+        border-bottom-color: var(--lh-border-subtle);
+    }
+
+    [data-theme="dark"] .cal-dia {
+        background: var(--lh-surface);
+        border-color: var(--lh-border);
+        color: var(--lh-text);
+    }
+
+    [data-theme="dark"] .cal-dia.passado {
+        background: var(--lh-surface-subtle);
+        opacity: 0.4;
+    }
+
     .cal-header {
         padding: 20px 24px;
         background: var(--lh-surface);
@@ -381,7 +475,7 @@
             style="background:var(--lh-surface-subtle); border-bottom:1px solid var(--lh-border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
             <!-- Navegador de Semanas -->
             <div
-                style="display:inline-flex; align-items:center; background:#ffffff; border:1px solid var(--lh-border); border-radius:8px; padding:4px 8px;">
+                style="display:inline-flex; align-items:center; background:var(--lh-surface); border:1px solid var(--lh-border); border-radius:8px; padding:4px 8px;">
                 <a href="?dia={{ semana_ant.day }}&mes={{ semana_ant.month }}&ano={{ semana_ant.year }}"
                     class="lh-btn lh-btn--xs lh-btn--ghost" style="padding:4px 8px;">◀</a>
                 <span style="font-size:13px; font-weight:700; color:var(--lh-primary); padding:0 8px;">Semana de {{ domingo|date:"d/m" }} a {{ sabado|date:"d/m" }}</span>
@@ -472,9 +566,7 @@
                             </div>
                             {% else %}
                             <a href="{% url 'agendamento_detalhe' ano=dia.data.year mes=dia.data.month dia=dia.data.day %}?aula={{ linha.aula }}"
-                                style="display:flex; height:100%; min-height:48px; border-radius:8px; border:1px dashed #CBD5E1; color:#94A3B8; text-decoration:none !important; align-items:center; justify-content:center; font-size:16px; transition:all 0.2s;"
-                                onmouseover="this.style.background='#F1F5F9'; this.style.borderColor='#1A4A8A'; this.style.color='#1A4A8A'"
-                                onmouseout="this.style.background='transparent'; this.style.borderColor='#CBD5E1'; this.style.color='#94A3B8'">
+                                class="slot-vazio">
                                 +
                             </a>
                             {% endif %}

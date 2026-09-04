@@ -4,6 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ title }} - LabHub</title>
+    <script>
+        (function() {
+            var saved = localStorage.getItem('labhub_theme');
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var theme = saved ? saved : (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     {% load static %}
     <!-- Fontes & CSS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -913,6 +921,160 @@
             border-top: 1px solid var(--lh-border-subtle);
             background: var(--lh-surface-subtle);
         }
+
+        /* ── Dark Mode Tokens & Component Overrides ── */
+        [data-theme="dark"] {
+            --lh-primary: #3B82F6;
+            --lh-primary-hover: #60A5FA;
+            --lh-primary-light: rgba(59, 130, 246, 0.18);
+            --lh-primary-border: #1E40AF;
+            --lh-gradient-primary: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+            --lh-gradient-hero: linear-gradient(135deg, #0B1120 0%, #0F172A 50%, #1E293B 100%);
+            --lh-success: #10B981;
+            --lh-success-dark: #34D399;
+            --lh-success-light: rgba(16, 185, 129, 0.18);
+            --lh-warning: #F59E0B;
+            --lh-warning-dark: #FBBF24;
+            --lh-warning-light: rgba(245, 158, 11, 0.18);
+            --lh-danger: #EF4444;
+            --lh-danger-dark: #F87171;
+            --lh-danger-light: rgba(239, 68, 68, 0.18);
+            --lh-info: #38BDF8;
+            --lh-info-light: rgba(56, 189, 248, 0.18);
+            --lh-bg: #0B0F19;
+            --lh-surface: #131B2E;
+            --lh-surface-subtle: #1E293B;
+            --lh-border: #223049;
+            --lh-border-subtle: #1A2438;
+            --lh-text: #F8FAFC;
+            --lh-text-muted: #94A3B8;
+            --lh-text-light: #64748B;
+            --lh-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+            --lh-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+            --lh-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.65);
+        }
+
+        .theme-toggle-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            outline: none;
+            font-size: 17px;
+            padding: 8px 12px;
+            line-height: 1;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--lh-radius-sm);
+            color: var(--lh-text-muted);
+        }
+
+        .theme-toggle-btn:hover {
+            background-color: var(--lh-primary-light);
+            color: var(--lh-primary);
+            transform: scale(1.1);
+        }
+
+        .theme-toggle-btn:active {
+            transform: scale(0.95);
+        }
+
+        [data-theme="dark"] .navbar-custom {
+            background-color: rgba(19, 27, 46, 0.92);
+            border-color: rgba(34, 48, 73, 0.8) !important;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.45);
+        }
+
+        [data-theme="dark"] .navbar-collapse {
+            background-color: #131B2E !important;
+            border-color: var(--lh-border) !important;
+        }
+
+        [data-theme="dark"] .notif-dropdown,
+        [data-theme="dark"] .avatar-dropdown {
+            background: rgba(19, 27, 46, 0.98) !important;
+            border-color: var(--lh-border) !important;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
+        }
+
+        [data-theme="dark"] .notif-header {
+            background: var(--lh-surface-subtle);
+            border-bottom-color: var(--lh-border-subtle);
+        }
+
+        [data-theme="dark"] .notif-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        [data-theme="dark"] .notif-item.nao-lida {
+            background: rgba(59, 130, 246, 0.12);
+        }
+
+        [data-theme="dark"] .avatar-dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        [data-theme="dark"] .avatar-dropdown-divider {
+            border-top-color: var(--lh-border);
+        }
+
+        [data-theme="dark"] .avatar-trigger {
+            background: var(--lh-surface-subtle);
+        }
+
+        [data-theme="dark"] .modal-content {
+            background-color: var(--lh-surface) !important;
+            color: var(--lh-text) !important;
+            border-color: var(--lh-border) !important;
+        }
+
+        [data-theme="dark"] .modal-footer {
+            background-color: var(--lh-surface-subtle) !important;
+            border-color: var(--lh-border-subtle) !important;
+        }
+
+        [data-theme="dark"] .lh-table tr:hover td {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        [data-theme="dark"] footer {
+            background-color: var(--lh-surface);
+            border-top-color: var(--lh-border) !important;
+        }
+
+        [data-theme="dark"] .lh-btn--outline {
+            background: transparent;
+            color: var(--lh-primary) !important;
+            border-color: var(--lh-primary);
+        }
+
+        [data-theme="dark"] .lh-btn--outline:hover {
+            background: var(--lh-primary-light);
+        }
+
+        [data-theme="dark"] .lh-btn--outline-danger {
+            background: transparent;
+            color: var(--lh-danger) !important;
+            border-color: var(--lh-danger);
+        }
+
+        [data-theme="dark"] .lh-btn--outline-danger:hover {
+            background: var(--lh-danger-light);
+        }
+
+        [data-theme="dark"] .form-control,
+        [data-theme="dark"] input[type="text"],
+        [data-theme="dark"] input[type="email"],
+        [data-theme="dark"] input[type="password"],
+        [data-theme="dark"] input[type="number"],
+        [data-theme="dark"] input[type="date"],
+        [data-theme="dark"] select,
+        [data-theme="dark"] textarea {
+            background-color: var(--lh-surface);
+            color: var(--lh-text);
+            border-color: var(--lh-border);
+        }
     </style>
     {% block styles %}{% endblock %}
 </head>
@@ -952,6 +1114,13 @@
 
                     {% if user.is_authenticated and user.perfil.aprovado %}
                     <div class="navbar-right-custom">
+                        <!-- Alternador de Tema -->
+                        <div class="notif-wrapper">
+                            <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro">
+                                <span class="theme-icon">🌙</span>
+                            </button>
+                        </div>
+
                         <!-- Ícone de Chat -->
                         <div class="notif-wrapper">
                             <a href="{% url 'chat_inbox' %}" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: flex-start;">
@@ -993,6 +1162,9 @@
                                 <a href="{% url 'minha_conta' %}" class="avatar-dropdown-item">
                                     👤 Você
                                 </a>
+                                <button type="button" class="avatar-dropdown-item" id="themeToggleDropdown" style="width:100%; text-align:left; cursor:pointer; background:none; border:none; display:flex; align-items:center; gap:10px;">
+                                    <span class="theme-dropdown-icon">🌙</span> <span class="theme-dropdown-text">Modo Escuro</span>
+                                </button>
                                 <div class="avatar-dropdown-divider"></div>
                                 <form method="post" action="{% url 'logout' %}" style="margin:0;">
                                     {% csrf_token %}
@@ -1004,7 +1176,12 @@
                         </div>
                     </div>
                     {% else %}
-                    <div class="navbar-right-custom">
+                    <div class="navbar-right-custom" style="display:flex; align-items:center; gap:8px;">
+                        <div class="notif-wrapper">
+                            <button type="button" class="theme-toggle-btn" id="themeToggleBtnPublic" title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro">
+                                <span class="theme-icon">🌙</span>
+                            </button>
+                        </div>
                         <button type="button" class="navbar-login-btn" data-toggle="modal" data-target="#authModal">
                             Acessar o Sistema →
                         </button>
@@ -1398,6 +1575,58 @@
     });
     </script>
     {% endif %}
+    <script>
+    // ── Gerenciador Global de Tema Claro / Escuro ──
+    (function () {
+        function updateThemeUI(theme) {
+            var isDark = (theme === 'dark');
+            var icons = document.querySelectorAll('.theme-icon');
+            icons.forEach(function (icon) {
+                icon.textContent = isDark ? '☀️' : '🌙';
+            });
+            var dropIcon = document.querySelector('.theme-dropdown-icon');
+            var dropText = document.querySelector('.theme-dropdown-text');
+            if (dropIcon) dropIcon.textContent = isDark ? '☀️' : '🌙';
+            if (dropText) dropText.textContent = isDark ? 'Modo Claro' : 'Modo Escuro';
+        }
+
+        function setTheme(theme, save) {
+            document.documentElement.setAttribute('data-theme', theme);
+            if (save) {
+                localStorage.setItem('labhub_theme', theme);
+            }
+            updateThemeUI(theme);
+        }
+
+        window.setLabHubTheme = setTheme;
+        window.toggleLabHubTheme = function () {
+            var current = document.documentElement.getAttribute('data-theme') || 'light';
+            var next = (current === 'dark') ? 'light' : 'dark';
+            setTheme(next, true);
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var current = document.documentElement.getAttribute('data-theme') || 'light';
+            updateThemeUI(current);
+
+            document.body.addEventListener('click', function (e) {
+                var btn = e.target.closest('.theme-toggle-btn, #themeToggleDropdown');
+                if (btn) {
+                    e.preventDefault();
+                    window.toggleLabHubTheme();
+                }
+            });
+
+            if (window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+                    if (!localStorage.getItem('labhub_theme')) {
+                        setTheme(e.matches ? 'dark' : 'light', false);
+                    }
+                });
+            }
+        });
+    })();
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
