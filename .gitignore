@@ -11,6 +11,8 @@ ENV/
 
 # Django temporários, mídia e banco de dados local
 db.sqlite3
+dados_migracao.json
+*.dump
 media/
 *.log
 local_settings.py

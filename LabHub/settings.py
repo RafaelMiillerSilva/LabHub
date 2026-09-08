@@ -22,7 +22,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-labhub-dev-key-troque
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
 
-allowed_hosts_str = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,*')
+allowed_hosts_str = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost')
 ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_str.split(',') if h.strip()]
 
 # Application references
@@ -119,3 +119,11 @@ csrf_origins_str = os.environ.get(
     'https://*.ngrok-free.app'
 )
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in csrf_origins_str.split(',') if o.strip()]
+
+# Configurações de segurança para produção
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'SAMEORIGIN'

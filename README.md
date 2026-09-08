@@ -112,11 +112,16 @@ pip install -r requirements.txt
 Crie o arquivo `.env` a partir do modelo de exemplo:
 ```bash
 cp .env.example .env
-nano .env
 ```
-Edite as variáveis com os dados do seu domínio:
+
+Para gerar uma chave secreta exclusiva e segura, no terminal Bash do PythonAnywhere, rode:
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(50))"
+```
+
+Abra o arquivo `.env` no PythonAnywhere (`nano .env` ou pelo editor de arquivos da aba "Files"):
 ```env
-SECRET_KEY=sua-chave-secreta-aleatoria-aqui
+SECRET_KEY=<cole_a_chave_gerada_aqui>
 DEBUG=False
 ALLOWED_HOSTS=minhaescola.pythonanywhere.com,localhost,127.0.0.1
 CSRF_TRUSTED_ORIGINS=https://minhaescola.pythonanywhere.com
