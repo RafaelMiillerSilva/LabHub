@@ -40,10 +40,9 @@ O **LabHub** foi concebido para resolver essas dores com simplicidade:
 - Importação em massa de alunos via arquivos **Excel (.xlsx)** ou **CSV**.
 - Diagnóstico inteligente na importação, indicando exatamente quais alunos são duplicados ou possuem dados incompletos.
 
-### 🏷️ 5. Etiquetas Térmicas com Código de Barras e QR Code
+### 🏷️ 5. Etiquetas
 - Geração de etiquetas prontas para impressoras térmicas (ex: Zebra, Elgin) e impressoras convencionais.
 - Impressão individual ou em lote para etiquetagem física ágil dos aparelhos.
-- Leitura facilitada por leitores ópticos de código de barras ou câmeras de smartphone.
 
 ### 💬 6. Comunicação e Chat em Tempo Real
 - Chat interno privativo entre professores e a equipe gestora.
