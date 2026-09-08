@@ -17,7 +17,7 @@ if env_file.exists():
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', '5b956442-e92b-452c-a9aa-dc46e0e29526')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-labhub-dev-key-troque-em-producao')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
@@ -116,6 +116,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 csrf_origins_str = os.environ.get(
     'CSRF_TRUSTED_ORIGINS',
-    'https://*.ngrok-free.app,https://grionsistema.pythonanywhere.com'
+    'https://*.ngrok-free.app'
 )
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in csrf_origins_str.split(',') if o.strip()]
