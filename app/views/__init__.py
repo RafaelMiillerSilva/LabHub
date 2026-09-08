@@ -3,7 +3,7 @@ Pacote de views modular do LabHub.
 Re-exporta todas as views para garantir compatibilidade com URLs e outros módulos.
 """
 
-from .paginas import home, about, contact
+from .paginas import home, about
 from .auth import (
     esqueci_senha,
     redefinir_senha_admin,
@@ -68,7 +68,6 @@ from .perfil import (
 __all__ = [
     'home',
     'about',
-    'contact',
     'esqueci_senha',
     'redefinir_senha_admin',
     'cancelar_redefinicao_senha_admin',

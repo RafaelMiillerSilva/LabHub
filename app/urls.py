@@ -10,7 +10,6 @@ urlpatterns = [
     # Páginas principais
     path('', views.home, name='home'),
     path('about/', views.about, name='about'),
-    path('contact/', views.contact, name='contact'),
 
     # Painel administrativo e auditoria
     path('painel/', views.painel, name='painel'),

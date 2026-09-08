@@ -23,8 +23,20 @@ def _home_dashboard(request):
 
     try:
         ano = int(request.GET.get('ano', hoje.year))
+    except (TypeError, ValueError):
+        ano = hoje.year
+
+    try:
         mes = int(request.GET.get('mes', hoje.month))
+    except (TypeError, ValueError):
+        mes = hoje.month
+
+    try:
         dia = int(request.GET.get('dia', hoje.day))
+    except (TypeError, ValueError):
+        dia = hoje.day
+
+    try:
         data_atual = date(ano, mes, dia)
     except ValueError:
         try:
@@ -174,7 +186,3 @@ def about(request):
     """Página Sobre."""
     return render(request, 'app/about.html', {'title': 'Sobre o LabHub'})
 
-
-def contact(request):
-    """Página de Contato."""
-    return render(request, 'app/contact.html', {'title': 'Contato'})

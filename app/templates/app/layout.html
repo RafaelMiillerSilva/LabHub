@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ title }} - LabHub</title>
     <script>
-        (function() {
+        (function () {
             var saved = localStorage.getItem('labhub_theme');
             var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             var theme = saved ? saved : (prefersDark ? 'dark' : 'light');
@@ -61,7 +62,8 @@
             --lh-shadow-lg: 0 10px 30px rgba(15, 23, 42, 0.08);
         }
 
-        html, body {
+        html,
+        body {
             height: 100%;
             margin: 0;
             padding: 0;
@@ -123,7 +125,7 @@
             display: inline-block;
         }
 
-        .navbar-custom .navbar-nav > li > a {
+        .navbar-custom .navbar-nav>li>a {
             color: var(--lh-text-muted) !important;
             font-weight: 600;
             font-size: 14px;
@@ -133,8 +135,8 @@
             border-radius: var(--lh-radius-sm);
         }
 
-        .navbar-custom .navbar-nav > li > a:hover,
-        .navbar-custom .navbar-nav > li > a:focus {
+        .navbar-custom .navbar-nav>li>a:hover,
+        .navbar-custom .navbar-nav>li>a:focus {
             color: var(--lh-primary) !important;
             background-color: var(--lh-primary-light) !important;
         }
@@ -437,6 +439,7 @@
                 opacity: 0;
                 transform: translateY(-6px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -833,7 +836,7 @@
                 overflow-y: auto;
             }
 
-            .navbar-custom .navbar-nav > li > a {
+            .navbar-custom .navbar-nav>li>a {
                 padding: 12px 14px;
                 font-size: 15px;
                 margin: 2px 0;
@@ -887,7 +890,8 @@
         }
 
         /* ── Rodapé Moderno ── */
-        .footer, .push {
+        .footer,
+        .push {
             height: 60px;
         }
 
@@ -1111,24 +1115,26 @@
                         {% endif %}
 
                         <li><a href="{% url 'about' %}">Sobre</a></li>
-                        <li><a href="{% url 'contact' %}">Contato</a></li>
                     </ul>
 
                     {% if user.is_authenticated and user.perfil.aprovado %}
                     <div class="navbar-right-custom">
                         <!-- Alternador de Tema -->
                         <div class="notif-wrapper">
-                            <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro">
+                            <button type="button" class="theme-toggle-btn" id="themeToggleBtn"
+                                title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro">
                                 <span class="theme-icon">🌙</span>
                             </button>
                         </div>
 
                         <!-- Ícone de Chat -->
                         <div class="notif-wrapper">
-                            <a href="{% url 'chat_inbox' %}" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: flex-start;">
+                            <a href="{% url 'chat_inbox' %}"
+                                style="text-decoration: none; display: inline-flex; align-items: center; justify-content: flex-start;">
                                 <span class="notif-bell" id="chatIcon" title="Mensagens de Chat">
                                     💬
-                                    <span class="notif-badge" id="chatBadge" style="display:none; background-color: #3B82F6;">0</span>
+                                    <span class="notif-badge" id="chatBadge"
+                                        style="display:none; background-color: #3B82F6;">0</span>
                                 </span>
                             </a>
                         </div>
@@ -1158,14 +1164,17 @@
                                 {% else %}
                                 <div class="avatar-iniciais">{{ user.perfil.iniciais }}</div>
                                 {% endif %}
-                                <span style="font-size:14px; font-weight:600; color:var(--lh-text);">{{ user.username }}</span>
+                                <span style="font-size:14px; font-weight:600; color:var(--lh-text);">{{ user.username
+                                    }}</span>
                             </div>
                             <div class="avatar-dropdown" id="avatarDropdown">
                                 <a href="{% url 'minha_conta' %}" class="avatar-dropdown-item">
                                     👤 Você
                                 </a>
-                                <button type="button" class="avatar-dropdown-item" id="themeToggleDropdown" style="width:100%; text-align:left; cursor:pointer; background:none; border:none; display:flex; align-items:center; gap:10px;">
-                                    <span class="theme-dropdown-icon">🌙</span> <span class="theme-dropdown-text">Modo Escuro</span>
+                                <button type="button" class="avatar-dropdown-item" id="themeToggleDropdown"
+                                    style="width:100%; text-align:left; cursor:pointer; background:none; border:none; display:flex; align-items:center; gap:10px;">
+                                    <span class="theme-dropdown-icon">🌙</span> <span class="theme-dropdown-text">Modo
+                                        Escuro</span>
                                 </button>
                                 <div class="avatar-dropdown-divider"></div>
                                 <form method="post" action="{% url 'logout' %}" style="margin:0;">
@@ -1180,7 +1189,8 @@
                     {% else %}
                     <div class="navbar-right-custom" style="display:flex; align-items:center; gap:8px;">
                         <div class="notif-wrapper">
-                            <button type="button" class="theme-toggle-btn" id="themeToggleBtnPublic" title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro">
+                            <button type="button" class="theme-toggle-btn" id="themeToggleBtnPublic"
+                                title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro">
                                 <span class="theme-icon">🌙</span>
                             </button>
                         </div>
@@ -1202,7 +1212,7 @@
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2026 - LabHub · Sistema Inteligente de Gestão Escolar</p>
+            <p>&copy; 2026 - LabHub </p>
         </div>
     </footer>
 
@@ -1211,14 +1221,16 @@
         <div class="modal-dialog modal-sm" role="document">
             <div class="modal-content">
                 <div class="modal-header" style="background: var(--lh-gradient-primary); color:#fff;">
-                    <h4 class="modal-title" id="confirmModalTitulo" style="margin:0; font-weight:700; font-size:16px;">Confirmar Ação</h4>
+                    <h4 class="modal-title" id="confirmModalTitulo" style="margin:0; font-weight:700; font-size:16px;">
+                        Confirmar Ação</h4>
                 </div>
                 <div class="modal-body">
                     <p id="confirmModalTexto" style="margin:0; font-size:14px; color:var(--lh-text);">Tem certeza?</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="lh-btn lh-btn--ghost lh-btn--sm" data-dismiss="modal">Cancelar</button>
-                    <button type="button" class="lh-btn lh-btn--primary lh-btn--sm" id="confirmModalOk">Confirmar</button>
+                    <button type="button" class="lh-btn lh-btn--primary lh-btn--sm"
+                        id="confirmModalOk">Confirmar</button>
                 </div>
             </div>
         </div>
@@ -1229,19 +1241,26 @@
     <div class="modal fade" id="authModal" tabindex="-1" role="dialog" aria-labelledby="authModalLabel">
         <div class="modal-dialog" style="max-width:440px;" role="document">
             <div class="modal-content">
-                <div class="modal-header" style="background:var(--lh-gradient-primary); color:#ffffff; display:flex; justify-content:space-between; align-items:center;">
-                    <h4 class="modal-title" id="authModalLabel" style="margin:0; font-weight:800; font-size:18px;">LabHub · Acesso</h4>
-                    <button type="button" class="close" data-dismiss="modal" style="color:#fff; opacity:0.9; font-size:24px; line-height:1;">&times;</button>
+                <div class="modal-header"
+                    style="background:var(--lh-gradient-primary); color:#ffffff; display:flex; justify-content:space-between; align-items:center;">
+                    <h4 class="modal-title" id="authModalLabel" style="margin:0; font-weight:800; font-size:18px;">
+                        LabHub · Acesso</h4>
+                    <button type="button" class="close" data-dismiss="modal"
+                        style="color:#fff; opacity:0.9; font-size:24px; line-height:1;">&times;</button>
                 </div>
                 <div class="modal-body" style="padding:24px;">
                     <form action="{% url 'home' %}" method="post">
                         {% csrf_token %}
                         <div style="margin-bottom:16px;">
-                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">E-mail ou Usuário</label>
-                            <input type="text" name="username" class="form-control" required placeholder="seu.email@escola.com">
+                            <label
+                                style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">E-mail
+                                ou Usuário</label>
+                            <input type="text" name="username" class="form-control" required
+                                placeholder="seu.email@escola.com">
                         </div>
                         <div style="margin-bottom:18px;">
-                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Senha</label>
+                            <label
+                                style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Senha</label>
                             <input type="password" name="password" class="form-control" required placeholder="••••••••">
                         </div>
                         <input type="hidden" name="next" value="/" />
@@ -1249,9 +1268,13 @@
                             Entrar no Sistema
                         </button>
                     </form>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; font-size:13px;">
-                        <a href="{% url 'esqueci_senha' %}" style="color:var(--lh-primary); font-weight:600; text-decoration:none;">Esqueci minha senha</a>
-                        <a href="{% url 'home' %}#cadastro" style="color:var(--lh-text-muted); text-decoration:none;">Criar conta</a>
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; font-size:13px;">
+                        <a href="{% url 'esqueci_senha' %}"
+                            style="color:var(--lh-primary); font-weight:600; text-decoration:none;">Esqueci minha
+                            senha</a>
+                        <a href="{% url 'home' %}#cadastro"
+                            style="color:var(--lh-text-muted); text-decoration:none;">Criar conta</a>
                     </div>
                 </div>
             </div>
@@ -1260,7 +1283,9 @@
     {% endif %}
 
     <!-- Avisos globais das ações reativas (Flash / Toast) -->
-    <div id="labhub-flash" style="position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:1095; width:90%; max-width:480px; pointer-events:none;"></div>
+    <div id="labhub-flash"
+        style="position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:1095; width:90%; max-width:480px; pointer-events:none;">
+    </div>
 
     <script src="{% static 'app/scripts/jquery-1.10.2.js' %}"></script>
     <script src="{% static 'app/scripts/bootstrap.js' %}"></script>
@@ -1286,7 +1311,7 @@
             div.style.alignItems = 'center';
             div.style.gap = '10px';
             div.innerHTML = '<span>' + icon + '</span><span style="flex:1;">' + msg + '</span><button type="button" class="close" data-dismiss="alert" style="position:static; margin-left:auto;">&times;</button>';
-            
+
             document.getElementById('labhub-flash').appendChild(div);
             setTimeout(function () {
                 $(div).fadeOut(400, function () { div.remove(); });
@@ -1327,7 +1352,7 @@
                         var trA = form.closest('tr');
                         if (trA) trA.parentNode.replaceChild(window.LabHubElemento(res.html), trA);
                     } else if (res.acao === 'recarregar_pagina') {
-                        setTimeout(function() { window.location.reload(); }, 600);
+                        setTimeout(function () { window.location.reload(); }, 600);
                     }
                 })
                 .catch(function () {
@@ -1406,159 +1431,159 @@
 
     {% if user.is_authenticated and user.perfil.aprovado %}
     <script>
-    (function () {
-        var bell = document.getElementById('notifBell');
-        var dropdown = document.getElementById('notifDropdown');
-        var badge = document.getElementById('notifBadge');
-        var lista = document.getElementById('notifLista');
-        var limpar = document.getElementById('notifLimpar');
-        var avatarTrigger = document.getElementById('avatarTrigger');
-        var avatarDropdown = document.getElementById('avatarDropdown');
+        (function () {
+            var bell = document.getElementById('notifBell');
+            var dropdown = document.getElementById('notifDropdown');
+            var badge = document.getElementById('notifBadge');
+            var lista = document.getElementById('notifLista');
+            var limpar = document.getElementById('notifLimpar');
+            var avatarTrigger = document.getElementById('avatarTrigger');
+            var avatarDropdown = document.getElementById('avatarDropdown');
 
-        function getCSRFToken() {
-            var name = 'csrftoken';
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var c = cookies[i].trim();
-                if (c.indexOf(name + '=') === 0) {
-                    return c.substring(name.length + 1);
+            function getCSRFToken() {
+                var name = 'csrftoken';
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var c = cookies[i].trim();
+                    if (c.indexOf(name + '=') === 0) {
+                        return c.substring(name.length + 1);
+                    }
                 }
-            }
-            var el = document.querySelector('[name=csrfmiddlewaretoken]');
-            return el ? el.value : '';
-        }
-
-        function renderNotificacoes(data) {
-            if (data.nao_lidas > 0) {
-                badge.textContent = data.nao_lidas > 99 ? '99+' : data.nao_lidas;
-                badge.style.display = 'inline-block';
-            } else {
-                badge.style.display = 'none';
+                var el = document.querySelector('[name=csrfmiddlewaretoken]');
+                return el ? el.value : '';
             }
 
-            if (!data.notificacoes || data.notificacoes.length === 0) {
-                lista.innerHTML = '<div class="notif-vazio">📭 Nenhuma notificação</div>';
-                return;
-            }
-
-            var html = '';
-            data.notificacoes.forEach(function (n) {
-                html += '<div class="notif-item' + (n.lida ? '' : ' nao-lida') + '">';
-                html += '  <div class="notif-remetente">🖥️ Sistema</div>';
-                html += '  <div class="notif-msg">' + escapeHtml(n.mensagem) + '</div>';
-                html += '  <div class="notif-tempo">' + escapeHtml(n.criada_em) + '</div>';
-                html += '</div>';
-            });
-            lista.innerHTML = html;
-        }
-
-        function escapeHtml(str) {
-            var div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
-        function carregarNotificacoes() {
-            fetch('{% url "listar_notificacoes" %}', {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data.ok) renderNotificacoes(data);
-            })
-            .catch(function () {});
-        }
-
-        function postAjax(url, callback) {
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': getCSRFToken(),
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: '',
-            })
-            .then(function (r) { return r.json(); })
-            .then(function (data) { if (callback) callback(data); })
-            .catch(function () {});
-        }
-
-        if (bell && dropdown) {
-            bell.addEventListener('click', function (e) {
-                e.stopPropagation();
-                if (avatarDropdown) avatarDropdown.classList.remove('open');
-                var isOpen = dropdown.classList.contains('open');
-                dropdown.classList.toggle('open');
-
-                if (!isOpen) {
+            function renderNotificacoes(data) {
+                if (data.nao_lidas > 0) {
+                    badge.textContent = data.nao_lidas > 99 ? '99+' : data.nao_lidas;
+                    badge.style.display = 'inline-block';
+                } else {
                     badge.style.display = 'none';
-                    postAjax('{% url "marcar_lidas" %}', function () {
+                }
+
+                if (!data.notificacoes || data.notificacoes.length === 0) {
+                    lista.innerHTML = '<div class="notif-vazio">📭 Nenhuma notificação</div>';
+                    return;
+                }
+
+                var html = '';
+                data.notificacoes.forEach(function (n) {
+                    html += '<div class="notif-item' + (n.lida ? '' : ' nao-lida') + '">';
+                    html += '  <div class="notif-remetente">🖥️ Sistema</div>';
+                    html += '  <div class="notif-msg">' + escapeHtml(n.mensagem) + '</div>';
+                    html += '  <div class="notif-tempo">' + escapeHtml(n.criada_em) + '</div>';
+                    html += '</div>';
+                });
+                lista.innerHTML = html;
+            }
+
+            function escapeHtml(str) {
+                var div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            function carregarNotificacoes() {
+                fetch('{% url "listar_notificacoes" %}', {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.ok) renderNotificacoes(data);
+                    })
+                    .catch(function () { });
+            }
+
+            function postAjax(url, callback) {
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCSRFToken(),
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: '',
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) { if (callback) callback(data); })
+                    .catch(function () { });
+            }
+
+            if (bell && dropdown) {
+                bell.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    if (avatarDropdown) avatarDropdown.classList.remove('open');
+                    var isOpen = dropdown.classList.contains('open');
+                    dropdown.classList.toggle('open');
+
+                    if (!isOpen) {
+                        badge.style.display = 'none';
+                        postAjax('{% url "marcar_lidas" %}', function () {
+                            carregarNotificacoes();
+                        });
+                    }
+                });
+
+                dropdown.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+            }
+
+            if (limpar) {
+                limpar.addEventListener('click', function () {
+                    postAjax('{% url "limpar_notificacoes" %}', function () {
                         carregarNotificacoes();
                     });
-                }
-            });
-
-            dropdown.addEventListener('click', function (e) {
-                e.stopPropagation();
-            });
-        }
-
-        if (limpar) {
-            limpar.addEventListener('click', function () {
-                postAjax('{% url "limpar_notificacoes" %}', function () {
-                    carregarNotificacoes();
                 });
-            });
-        }
-
-        if (avatarTrigger && avatarDropdown) {
-            avatarTrigger.addEventListener('click', function (e) {
-                e.stopPropagation();
-                if (dropdown) dropdown.classList.remove('open');
-                avatarDropdown.classList.toggle('open');
-            });
-
-            avatarDropdown.addEventListener('click', function (e) {
-                e.stopPropagation();
-            });
-        }
-
-        document.addEventListener('click', function (e) {
-            if (dropdown && !dropdown.contains(e.target) && e.target !== bell) {
-                dropdown.classList.remove('open');
             }
-            if (avatarDropdown && !avatarDropdown.contains(e.target) && (!avatarTrigger || !avatarTrigger.contains(e.target))) {
-                avatarDropdown.classList.remove('open');
-            }
-        });
 
-        function carregarMensagensNaoLidas() {
-            var chatBadge = document.getElementById('chatBadge');
-            if (!chatBadge) return;
-            fetch('{% url "api_chat_nao_lidas" %}', {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data.total > 0) {
-                    chatBadge.textContent = data.total > 99 ? '99+' : data.total;
-                    chatBadge.style.display = 'inline-block';
-                } else {
-                    chatBadge.style.display = 'none';
+            if (avatarTrigger && avatarDropdown) {
+                avatarTrigger.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    if (dropdown) dropdown.classList.remove('open');
+                    avatarDropdown.classList.toggle('open');
+                });
+
+                avatarDropdown.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+            }
+
+            document.addEventListener('click', function (e) {
+                if (dropdown && !dropdown.contains(e.target) && e.target !== bell) {
+                    dropdown.classList.remove('open');
                 }
-            })
-            .catch(function () {});
-        }
+                if (avatarDropdown && !avatarDropdown.contains(e.target) && (!avatarTrigger || !avatarTrigger.contains(e.target))) {
+                    avatarDropdown.classList.remove('open');
+                }
+            });
 
-        carregarNotificacoes();
-        carregarMensagensNaoLidas();
-        // Atualiza a cada 3 segundos para parecer em tempo real
-        setInterval(function() {
+            function carregarMensagensNaoLidas() {
+                var chatBadge = document.getElementById('chatBadge');
+                if (!chatBadge) return;
+                fetch('{% url "api_chat_nao_lidas" %}', {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.total > 0) {
+                            chatBadge.textContent = data.total > 99 ? '99+' : data.total;
+                            chatBadge.style.display = 'inline-block';
+                        } else {
+                            chatBadge.style.display = 'none';
+                        }
+                    })
+                    .catch(function () { });
+            }
+
             carregarNotificacoes();
             carregarMensagensNaoLidas();
-        }, 3000);
-    })();
+            // Atualiza a cada 3 segundos para parecer em tempo real
+            setInterval(function () {
+                carregarNotificacoes();
+                carregarMensagensNaoLidas();
+            }, 3000);
+        })();
     </script>
     {% endif %}
 
@@ -1569,66 +1594,67 @@
         {% endfor %}
     </div>
     <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var messageNodes = document.querySelectorAll('#django-messages-data .django-message-item');
-        messageNodes.forEach(function (node) {
-            window.LabHubFlash(node.getAttribute('data-message'), node.getAttribute('data-tags'));
+        document.addEventListener('DOMContentLoaded', function () {
+            var messageNodes = document.querySelectorAll('#django-messages-data .django-message-item');
+            messageNodes.forEach(function (node) {
+                window.LabHubFlash(node.getAttribute('data-message'), node.getAttribute('data-tags'));
+            });
         });
-    });
     </script>
     {% endif %}
     <script>
-    // ── Gerenciador Global de Tema Claro / Escuro ──
-    (function () {
-        function updateThemeUI(theme) {
-            var isDark = (theme === 'dark');
-            var icons = document.querySelectorAll('.theme-icon');
-            icons.forEach(function (icon) {
-                icon.textContent = isDark ? '☀️' : '🌙';
-            });
-            var dropIcon = document.querySelector('.theme-dropdown-icon');
-            var dropText = document.querySelector('.theme-dropdown-text');
-            if (dropIcon) dropIcon.textContent = isDark ? '☀️' : '🌙';
-            if (dropText) dropText.textContent = isDark ? 'Modo Claro' : 'Modo Escuro';
-        }
-
-        function setTheme(theme, save) {
-            document.documentElement.setAttribute('data-theme', theme);
-            if (save) {
-                localStorage.setItem('labhub_theme', theme);
+        // ── Gerenciador Global de Tema Claro / Escuro ──
+        (function () {
+            function updateThemeUI(theme) {
+                var isDark = (theme === 'dark');
+                var icons = document.querySelectorAll('.theme-icon');
+                icons.forEach(function (icon) {
+                    icon.textContent = isDark ? '☀️' : '🌙';
+                });
+                var dropIcon = document.querySelector('.theme-dropdown-icon');
+                var dropText = document.querySelector('.theme-dropdown-text');
+                if (dropIcon) dropIcon.textContent = isDark ? '☀️' : '🌙';
+                if (dropText) dropText.textContent = isDark ? 'Modo Claro' : 'Modo Escuro';
             }
-            updateThemeUI(theme);
-        }
 
-        window.setLabHubTheme = setTheme;
-        window.toggleLabHubTheme = function () {
-            var current = document.documentElement.getAttribute('data-theme') || 'light';
-            var next = (current === 'dark') ? 'light' : 'dark';
-            setTheme(next, true);
-        };
-
-        document.addEventListener('DOMContentLoaded', function () {
-            var current = document.documentElement.getAttribute('data-theme') || 'light';
-            updateThemeUI(current);
-
-            document.body.addEventListener('click', function (e) {
-                var btn = e.target.closest('.theme-toggle-btn, #themeToggleDropdown');
-                if (btn) {
-                    e.preventDefault();
-                    window.toggleLabHubTheme();
+            function setTheme(theme, save) {
+                document.documentElement.setAttribute('data-theme', theme);
+                if (save) {
+                    localStorage.setItem('labhub_theme', theme);
                 }
-            });
+                updateThemeUI(theme);
+            }
 
-            if (window.matchMedia) {
-                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
-                    if (!localStorage.getItem('labhub_theme')) {
-                        setTheme(e.matches ? 'dark' : 'light', false);
+            window.setLabHubTheme = setTheme;
+            window.toggleLabHubTheme = function () {
+                var current = document.documentElement.getAttribute('data-theme') || 'light';
+                var next = (current === 'dark') ? 'light' : 'dark';
+                setTheme(next, true);
+            };
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var current = document.documentElement.getAttribute('data-theme') || 'light';
+                updateThemeUI(current);
+
+                document.body.addEventListener('click', function (e) {
+                    var btn = e.target.closest('.theme-toggle-btn, #themeToggleDropdown');
+                    if (btn) {
+                        e.preventDefault();
+                        window.toggleLabHubTheme();
                     }
                 });
-            }
-        });
-    })();
+
+                if (window.matchMedia) {
+                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+                        if (!localStorage.getItem('labhub_theme')) {
+                            setTheme(e.matches ? 'dark' : 'light', false);
+                        }
+                    });
+                }
+            });
+        })();
     </script>
     {% block scripts %}{% endblock %}
 </body>
+
 </html>
