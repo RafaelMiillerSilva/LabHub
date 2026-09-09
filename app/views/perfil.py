@@ -2,13 +2,16 @@
 Views de perfil/conta do usuário.
 """
 
+import re
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse, Http404
 from django.shortcuts import render, redirect
 
 from app.models import Perfil
+from app.validators import custom_username_validator
 from .common import is_usuario_aprovado
 
 
@@ -25,22 +28,28 @@ def minha_conta(request):
         acao = request.POST.get('acao', '')
 
         if acao == 'dados':
-            novo_username = request.POST.get('username', '').strip()
+            novo_username = re.sub(r'\s+', ' ', request.POST.get('username', '').strip())
             novo_email = request.POST.get('email', '').strip()
 
             erros = []
             if not novo_username:
                 erros.append('O nome de usuário não pode ficar vazio.')
-            elif novo_username != request.user.username:
+            else:
+                try:
+                    custom_username_validator(novo_username)
+                except ValidationError as e:
+                    erros.extend(e.messages)
+
+            if not erros and novo_username != request.user.username:
                 from django.contrib.auth.models import User
-                if User.objects.filter(username=novo_username).exists():
+                if User.objects.filter(username__iexact=novo_username).exclude(pk=request.user.pk).exists():
                     erros.append('Este nome de usuário já está em uso.')
 
             if not novo_email:
                 erros.append('O email não pode ficar vazio.')
             elif novo_email != request.user.email:
                 from django.contrib.auth.models import User
-                if User.objects.filter(email=novo_email).exists():
+                if User.objects.filter(email__iexact=novo_email).exclude(pk=request.user.pk).exists():
                     erros.append('Este email já está em uso.')
 
             if erros:

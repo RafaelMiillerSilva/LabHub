@@ -238,3 +238,89 @@ class HomeDashboardViewTest(TestCase):
         # Garante que a data e o cabeçalho não estão vazios ou com formatação truncada
         self.assertContains(response, f"{response.context['dia_semana']}, {hoje.day} de {response.context['mes_nome']} de {hoje.year}")
 
+
+class UsuarioEspacosTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+    def test_cadastro_com_espacos_no_username(self):
+        """Testa que é permitido cadastrar usuário com espaços no nome de usuário."""
+        form = CadastroForm(data={
+            'username': 'Professor Carlos Silva',
+            'email': 'carlos.silva@exemplo.com',
+            'tipo': 'PROFESSOR',
+            'password': 'SenhaForte@123',
+            'password_confirm': 'SenhaForte@123',
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+        user = form.save()
+        self.assertEqual(user.username, 'Professor Carlos Silva')
+
+    def test_cadastro_com_multiplos_espacos_e_trim(self):
+        """Testa normalização de múltiplos espaços e remoção de espaços nas bordas."""
+        form = CadastroForm(data={
+            'username': '  Ana   Paula   Alves  ',
+            'email': 'ana.alves@exemplo.com',
+            'tipo': 'PROFESSOR',
+            'password': 'SenhaForte@123',
+            'password_confirm': 'SenhaForte@123',
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+        user = form.save()
+        self.assertEqual(user.username, 'Ana Paula Alves')
+
+    def test_cadastro_rejeita_apenas_espacos(self):
+        """Testa rejeição de username formado apenas por espaços."""
+        form = CadastroForm(data={
+            'username': '     ',
+            'email': 'espacos@exemplo.com',
+            'tipo': 'PROFESSOR',
+            'password': 'SenhaForte@123',
+            'password_confirm': 'SenhaForte@123',
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('username', form.errors)
+
+    def test_cadastro_rejeita_caracteres_invalidos(self):
+        """Testa que caracteres não permitidos como $ ou # são rejeitados."""
+        form = CadastroForm(data={
+            'username': 'Carlos$Silva',
+            'email': 'carlos2@exemplo.com',
+            'tipo': 'PROFESSOR',
+            'password': 'SenhaForte@123',
+            'password_confirm': 'SenhaForte@123',
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('username', form.errors)
+
+    def test_autenticacao_com_username_com_espacos(self):
+        """Testa login com username contendo espaços através do EmailBackend."""
+        user = User.objects.create_user(
+            username='Mariana dos Santos',
+            email='mariana@exemplo.com',
+            password='SenhaSegura@123'
+        )
+        backend = EmailBackend()
+        autenticado = backend.authenticate(None, username='Mariana dos Santos', password='SenhaSegura@123')
+        self.assertEqual(autenticado, user)
+
+    def test_minha_conta_atualizar_username_com_espacos(self):
+        """Testa atualização de username com espaços pela página Minha Conta."""
+        user = User.objects.create_user(
+            username='user_antigo',
+            email='antigo@exemplo.com',
+            password='SenhaSegura@123'
+        )
+        user.perfil.aprovado = True
+        user.perfil.save()
+
+        self.client.force_login(user)
+        response = self.client.post(reverse('minha_conta'), {
+            'acao': 'dados',
+            'username': 'Nome Atualizado Com Espacos',
+            'email': 'antigo@exemplo.com',
+        })
+        self.assertEqual(response.status_code, 302)
+        user.refresh_from_db()
+        self.assertEqual(user.username, 'Nome Atualizado Com Espacos')
+

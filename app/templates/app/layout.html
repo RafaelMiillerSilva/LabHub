@@ -855,6 +855,21 @@
 
             .navbar-right-custom .notif-wrapper {
                 text-align: left;
+                display: flex;
+                justify-content: flex-start;
+                align-items: center;
+                width: 100%;
+            }
+
+            .navbar-right-custom .theme-toggle-btn {
+                margin-left: 0;
+                margin-right: auto;
+            }
+
+            .navbar-login-btn {
+                width: 100%;
+                text-align: center;
+                box-sizing: border-box;
             }
 
             .notif-dropdown,
@@ -1186,7 +1201,7 @@
                         </div>
                     </div>
                     {% else %}
-                    <div class="navbar-right-custom" style="display:flex; align-items:center; gap:8px;">
+                    <div class="navbar-right-custom">
                         <div class="notif-wrapper">
                             <button type="button" class="theme-toggle-btn" id="themeToggleBtnPublic"
                                 title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro">

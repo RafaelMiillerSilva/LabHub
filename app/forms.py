@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 from .models import Aluno, Equipamento, Sala, Turma
+from .validators import custom_username_validator
 
 
 def _processar_imagem(arquivo, max_lado=800, qualidade=80):
@@ -42,6 +43,11 @@ class BootstrapAuthenticationForm(AuthenticationForm):
         })
     )
 
+    def clean_username(self):
+        import re
+        username = self.cleaned_data.get('username', '').strip()
+        return re.sub(r'\s+', ' ', username)
+
 
 class CadastroForm(forms.ModelForm):
     """Formulário de cadastro com validação de unicidade de email e força de senha."""
@@ -53,6 +59,12 @@ class CadastroForm(forms.ModelForm):
     tipo = forms.ChoiceField(
         choices=CHOICES_TIPO,
         widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    username = forms.CharField(
+        label="Nome de Usuário",
+        max_length=150,
+        validators=[custom_username_validator],
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome de Usuário'})
     )
     password = forms.CharField(
         label=_("Senha"),
@@ -67,9 +79,19 @@ class CadastroForm(forms.ModelForm):
         model = User
         fields = ['username', 'email']
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome de Usuário'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'E-mail'}),
         }
+
+    def clean_username(self):
+        import re
+        username = self.cleaned_data.get('username', '').strip()
+        username = re.sub(r'\s+', ' ', username)
+        if not username:
+            raise ValidationError('O nome de usuário é obrigatório.')
+        custom_username_validator(username)
+        if User.objects.filter(username__iexact=username).exists():
+            raise ValidationError('Este nome de usuário já está em uso por outro usuário.')
+        return username
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip()
