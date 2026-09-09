@@ -3,7 +3,7 @@ Testes unitários e de integração para o LabHub.
 Cobre regras de equipamentos, autenticação por email, segurança de senhas e concorrência de agendamentos.
 """
 
-from datetime import date
+from datetime import date, timedelta
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -419,4 +419,162 @@ class ChatReativoTest(TestCase):
         self.assertTrue(data_busca['sucesso'])
         self.assertEqual(len(data_busca['mensagens']), 1)
         self.assertEqual(data_busca['mensagens'][0]['texto'], 'Olá Coordenador!')
+
+
+class AgendamentoFixoCancelamentoEdicaoTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.prof1 = User.objects.create_user(username='prof1', email='prof1@teste.com', password='Password@123')
+        self.prof1.perfil.tipo = 'PROFESSOR'
+        self.prof1.perfil.aprovado = True
+        self.prof1.perfil.save()
+
+        self.prof2 = User.objects.create_user(username='prof2', email='prof2@teste.com', password='Password@123')
+        self.prof2.perfil.tipo = 'PROFESSOR'
+        self.prof2.perfil.aprovado = True
+        self.prof2.perfil.save()
+
+        self.admin = User.objects.create_user(username='admin', email='admin@teste.com', password='Password@123', is_staff=True)
+        self.admin.perfil.tipo = 'ADMINISTRADOR'
+        self.admin.perfil.aprovado = True
+        self.admin.perfil.save()
+
+        self.turma1 = Turma.objects.create(nome='Turma A', turno='MANHA')
+        self.turma2 = Turma.objects.create(nome='Turma B', turno='MANHA')
+        self.sala1 = Sala.objects.create(nome='Laboratório 1', capacidade=30, ativo=True)
+        self.sala2 = Sala.objects.create(nome='Laboratório 2', capacidade=30, ativo=True)
+
+    def test_cancelar_agendamento_simples_e_permissoes(self):
+        """Valida que professor cancela sua reserva, admin pode cancelar, e outro professor não pode."""
+        ag = Agendamento.objects.create(
+            data=date.today() + timedelta(days=1),
+            aula=1,
+            tipo='SALA',
+            professor=self.prof1,
+            turma=self.turma1,
+            sala=self.sala1
+        )
+
+        # Prof2 tenta cancelar a reserva de Prof1 -> Deve falhar
+        self.client.force_login(self.prof2)
+        resp = self.client.post(reverse('cancelar_reserva', args=[ag.id]))
+        self.assertTrue(Agendamento.objects.filter(id=ag.id).exists())
+
+        # Prof1 cancela sua própria reserva -> Deve excluir
+        self.client.force_login(self.prof1)
+        resp = self.client.post(reverse('cancelar_reserva', args=[ag.id]))
+        self.assertFalse(Agendamento.objects.filter(id=ag.id).exists())
+
+    def test_cancelar_agendamento_fixo_apenas_hoje(self):
+        """Ao cancelar fixo com cancelar_tipo='hoje', apenas aquela reserva específica é removida."""
+        grupo_id = 'test-grupo-fixo-uuid'
+        d1 = date.today() + timedelta(days=1)
+        d2 = date.today() + timedelta(days=8)
+        d3 = date.today() + timedelta(days=15)
+
+        ag1 = Agendamento.objects.create(data=d1, aula=2, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1, fixo=True, fixo_grupo_id=grupo_id)
+        ag2 = Agendamento.objects.create(data=d2, aula=2, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1, fixo=True, fixo_grupo_id=grupo_id)
+        ag3 = Agendamento.objects.create(data=d3, aula=2, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1, fixo=True, fixo_grupo_id=grupo_id)
+
+        self.client.force_login(self.prof1)
+        self.client.post(reverse('cancelar_reserva', args=[ag1.id]), {'cancelar_tipo': 'hoje'})
+
+        self.assertFalse(Agendamento.objects.filter(id=ag1.id).exists())
+        self.assertTrue(Agendamento.objects.filter(id=ag2.id).exists())
+        self.assertTrue(Agendamento.objects.filter(id=ag3.id).exists())
+
+    def test_cancelar_agendamento_fixo_todos_futuros(self):
+        """Ao cancelar fixo com cancelar_tipo='todos', remove todas as ocorrências a partir daquela data."""
+        grupo_id = 'test-grupo-todos-uuid'
+        d1 = date.today() + timedelta(days=1)
+        d2 = date.today() + timedelta(days=8)
+        d3 = date.today() + timedelta(days=15)
+
+        ag1 = Agendamento.objects.create(data=d1, aula=3, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1, fixo=True, fixo_grupo_id=grupo_id)
+        ag2 = Agendamento.objects.create(data=d2, aula=3, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1, fixo=True, fixo_grupo_id=grupo_id)
+        ag3 = Agendamento.objects.create(data=d3, aula=3, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1, fixo=True, fixo_grupo_id=grupo_id)
+
+        self.client.force_login(self.prof1)
+        self.client.post(reverse('cancelar_reserva', args=[ag2.id]), {'cancelar_tipo': 'todos'})
+
+        # d1 anterior a d2 deve permanecer, d2 e d3 devem ser removidos
+        self.assertTrue(Agendamento.objects.filter(id=ag1.id).exists())
+        self.assertFalse(Agendamento.objects.filter(id=ag2.id).exists())
+        self.assertFalse(Agendamento.objects.filter(id=ag3.id).exists())
+
+    def test_editar_agendamento_fixo_apenas_este(self):
+        """Editar com editar_tipo='apenas_este' altera somente o agendamento atual."""
+        grupo_id = 'test-editar-grupo-uuid'
+        d1 = date.today() + timedelta(days=2)
+        d2 = date.today() + timedelta(days=9)
+
+        ag1 = Agendamento.objects.create(data=d1, aula=4, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1, fixo=True, fixo_grupo_id=grupo_id, observacao='Obs inicial')
+        ag2 = Agendamento.objects.create(data=d2, aula=4, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1, fixo=True, fixo_grupo_id=grupo_id, observacao='Obs inicial')
+
+        self.client.force_login(self.prof1)
+        resp = self.client.post(reverse('relacao_agendamento', args=[ag1.id]), {
+            'acao': 'editar',
+            'editar_tipo': 'apenas_este',
+            'turma': self.turma1.id,
+            'sala': self.sala1.id,
+            'observacao': 'Obs alterada só hoje',
+        })
+        self.assertEqual(resp.status_code, 302)
+
+        ag1.refresh_from_db()
+        ag2.refresh_from_db()
+        self.assertEqual(ag1.observacao, 'Obs alterada só hoje')
+        self.assertEqual(ag2.observacao, 'Obs inicial')
+
+    def test_editar_agendamento_fixo_todos_futuros(self):
+        """Editar com editar_tipo='todos' propaga as mudanças para os futuros da série fixa."""
+        grupo_id = 'test-propagar-uuid'
+        d1 = date.today() + timedelta(days=3)
+        d2 = date.today() + timedelta(days=10)
+
+        ag1 = Agendamento.objects.create(data=d1, aula=5, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1, fixo=True, fixo_grupo_id=grupo_id, observacao='Antiga')
+        ag2 = Agendamento.objects.create(data=d2, aula=5, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1, fixo=True, fixo_grupo_id=grupo_id, observacao='Antiga')
+
+        self.client.force_login(self.prof1)
+        resp = self.client.post(reverse('relacao_agendamento', args=[ag1.id]), {
+            'acao': 'editar',
+            'editar_tipo': 'todos',
+            'turma': self.turma2.id,
+            'sala': self.sala2.id,
+            'observacao': 'Obs propagada para toda a série',
+        })
+        self.assertEqual(resp.status_code, 302)
+
+        ag1.refresh_from_db()
+        ag2.refresh_from_db()
+        self.assertEqual(ag1.observacao, 'Obs propagada para toda a série')
+        self.assertEqual(ag2.observacao, 'Obs propagada para toda a série')
+        self.assertEqual(ag1.turma, self.turma2)
+        self.assertEqual(ag2.turma, self.turma2)
+        self.assertEqual(ag1.sala, self.sala2)
+        self.assertEqual(ag2.sala, self.sala2)
+
+    def test_icone_lixeira_agenda_semanal_visibilidade(self):
+        """Na agenda semanal, admin vê ícone de lixeira em todos os agendamentos e professor só nos seus."""
+        d = date.today()
+        ag_prof1 = Agendamento.objects.create(data=d, aula=1, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1)
+        ag_prof2 = Agendamento.objects.create(data=d, aula=2, tipo='SALA', professor=self.prof2, turma=self.turma2, sala=self.sala2)
+
+        # Prof1 acessa agendamentos
+        self.client.force_login(self.prof1)
+        resp_prof1 = self.client.get(reverse('agendamentos'))
+        self.assertEqual(resp_prof1.status_code, 200)
+        content1 = resp_prof1.content.decode('utf-8')
+        # Prof1 deve ver o botão de cancelar no ag_prof1, mas NÃO no ag_prof2
+        self.assertIn(f'data-id="{ag_prof1.id}"', content1)
+        self.assertNotIn(f'data-id="{ag_prof2.id}"', content1)
+
+        # Admin acessa agendamentos -> Deve ver botões de cancelar para ambos
+        self.client.force_login(self.admin)
+        resp_admin = self.client.get(reverse('agendamentos'))
+        self.assertEqual(resp_admin.status_code, 200)
+        content_admin = resp_admin.content.decode('utf-8')
+        self.assertIn(f'data-id="{ag_prof1.id}"', content_admin)
+        self.assertIn(f'data-id="{ag_prof2.id}"', content_admin)
+
 

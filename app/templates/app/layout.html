@@ -1250,6 +1250,26 @@
         </div>
     </div>
 
+    <!-- Modal Cancelar Agendamento Fixo Global -->
+    <div class="modal fade" id="modalCancelarFixo" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background:var(--lh-gradient-primary); color:#ffffff;">
+                    <h4 class="modal-title" style="font-weight:700; margin:0; font-size:16px;">📌 Agendamento Fixo</h4>
+                </div>
+                <div class="modal-body">
+                    <p style="font-weight:600; margin-bottom:6px; color:var(--lh-text);">Este é um agendamento fixo semanal.</p>
+                    <p style="color:var(--lh-text-muted); font-size:13px; margin:0;">Deseja cancelar apenas esta data ou todos os agendamentos futuros desta série?</p>
+                </div>
+                <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:6px; flex-wrap:wrap;">
+                    <button type="button" class="lh-btn lh-btn--ghost lh-btn--sm" data-dismiss="modal">Voltar</button>
+                    <button type="button" class="lh-btn lh-btn--primary lh-btn--sm" id="btnCancelarHoje">Apenas esta aula</button>
+                    <button type="button" class="lh-btn lh-btn--danger lh-btn--sm" id="btnCancelarTodos">Cancelar todos futuros</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {% if not user.is_authenticated %}
     <!-- Modal de autenticação global para visitantes -->
     <div class="modal fade" id="authModal" tabindex="-1" role="dialog" aria-labelledby="authModalLabel">
@@ -1403,17 +1423,37 @@
 
             // ── Modal de cancelamento de agendamento fixo ──
             var formFixoPendente = null;
+            window._callbackCancelarFixo = null;
+
+            window.abrirModalCancelarFixo = function (callbackOuForm) {
+                if (typeof callbackOuForm === 'function') {
+                    window._callbackCancelarFixo = callbackOuForm;
+                    formFixoPendente = null;
+                } else if (callbackOuForm) {
+                    formFixoPendente = callbackOuForm;
+                    window._callbackCancelarFixo = null;
+                }
+                $('#modalCancelarFixo').modal('show');
+            };
 
             $(document).on('click', '.btn-cancelar-fixo', function (e) {
                 e.preventDefault();
                 formFixoPendente = this.closest('form');
+                window._callbackCancelarFixo = null;
                 $('#modalCancelarFixo').modal('show');
             });
 
             $(document).on('click', '#btnCancelarHoje', function () {
                 $('#modalCancelarFixo').modal('hide');
+                if (window._callbackCancelarFixo) {
+                    var cb = window._callbackCancelarFixo;
+                    window._callbackCancelarFixo = null;
+                    cb('hoje');
+                    return;
+                }
                 if (!formFixoPendente) return;
-                formFixoPendente.querySelector('[name=cancelar_tipo]').value = 'hoje';
+                var inputTipo = formFixoPendente.querySelector('[name=cancelar_tipo]');
+                if (inputTipo) inputTipo.value = 'hoje';
                 if (formFixoPendente.getAttribute('data-ajax') === 'true' && typeof window.LabHubAjaxSubmit === 'function') {
                     window.LabHubAjaxSubmit(formFixoPendente);
                 } else {
@@ -1424,8 +1464,15 @@
 
             $(document).on('click', '#btnCancelarTodos', function () {
                 $('#modalCancelarFixo').modal('hide');
+                if (window._callbackCancelarFixo) {
+                    var cb = window._callbackCancelarFixo;
+                    window._callbackCancelarFixo = null;
+                    cb('todos');
+                    return;
+                }
                 if (!formFixoPendente) return;
-                formFixoPendente.querySelector('[name=cancelar_tipo]').value = 'todos';
+                var inputTipo = formFixoPendente.querySelector('[name=cancelar_tipo]');
+                if (inputTipo) inputTipo.value = 'todos';
                 if (formFixoPendente.getAttribute('data-ajax') === 'true' && typeof window.LabHubAjaxSubmit === 'function') {
                     window.LabHubAjaxSubmit(formFixoPendente);
                 } else {

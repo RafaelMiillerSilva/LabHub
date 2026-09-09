@@ -15,12 +15,52 @@
 
     .reserva-base {
         display: block;
-        padding: 7px 8px;
+        position: relative;
+        padding: 6px 8px;
         border-radius: 8px;
         font-size: 11px;
         text-decoration: none !important;
         color: #1E293B;
         transition: all 0.15s ease;
+        overflow: hidden;
+    }
+
+    .reserva-link {
+        display: block;
+        text-decoration: none !important;
+        color: inherit;
+    }
+
+    .reserva-com-acoes .reserva-link {
+        padding-right: 18px;
+    }
+
+    .btn-cancelar-grid {
+        position: absolute;
+        bottom: 3px;
+        right: 3px;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(220, 38, 38, 0.35);
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 10px;
+        line-height: 1;
+        opacity: 0.65;
+        transition: all 0.15s ease;
+        z-index: 5;
+    }
+
+    .btn-cancelar-grid:hover {
+        opacity: 1;
+        transform: scale(1.15);
+        background: #FEE2E2;
+        border-color: #DC2626;
     }
 
     .reserva-fixo {
@@ -108,6 +148,16 @@
     [data-theme="dark"] .reserva-outros:hover {
         border-color: #F59E0B;
         background: rgba(249, 115, 22, 0.26);
+    }
+
+    [data-theme="dark"] .btn-cancelar-grid {
+        background: rgba(30, 41, 59, 0.9);
+        border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    [data-theme="dark"] .btn-cancelar-grid:hover {
+        background: rgba(220, 38, 38, 0.35);
+        border-color: #EF4444;
     }
 
     [data-theme="dark"] .cal-nav .btn-default {
@@ -466,7 +516,7 @@
     </p>
 
     <!-- ===================== BLOCO: PDF E AGENDA SEMANAL ===================== -->
-    <div class="lh-card" style="max-width:820px; margin: 0 auto 40px;">
+    <div class="lh-card" style="max-width:1200px; width:100%; margin: 0 auto 40px;">
         <div class="lh-card-header"
             style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
             <div style="display:flex; align-items:center; gap:12px;">
@@ -521,18 +571,18 @@
 
         <div class="lh-card-body" style="padding:0; overflow-x:auto;">
             <table class="lh-table" id="tabelaAgendaSemanal"
-                style="min-width:760px; table-layout:fixed; width:100%; margin:0;">
+                style="min-width:960px; table-layout:fixed; width:100%; margin:0;">
                 <thead>
                     <tr>
-                        <th class="text-center" style="width:65px;">Aula</th>
+                        <th class="text-center" style="width:55px;">Aula</th>
                         {% for cabecalho in dias_cabecalho %}
                         {% if cabecalho.hoje %}
-                        <th class="text-center th-hoje">
+                        <th class="text-center th-hoje" style="width:calc((100% - 55px) / 7);">
                             <div class="th-nome-curto">{{ cabecalho.nome_curto }}</div>
                             <div class="th-numero">{{ cabecalho.numero }}</div>
                         </th>
                         {% else %}
-                        <th class="text-center">
+                        <th class="text-center" style="width:calc((100% - 55px) / 7);">
                             <div style="font-size:11px; text-transform:uppercase;">{{ cabecalho.nome_curto }}</div>
                             <div style="font-size:16px; font-weight:700; color:var(--lh-text);">{{ cabecalho.numero }}
                             </div>
@@ -552,34 +602,44 @@
                             {% if dia.reservas %}
                             <div style="display:flex; flex-direction:column; gap:4px;">
                                 {% for r in dia.reservas %}
-                                <a href="{% url 'relacao_agendamento' r.id %}"
-                                    class="reserva-item reserva-base {% if r.fixo %}reserva-fixo{% elif r.professor == request.user %}reserva-minha{% else %}reserva-outros{% endif %}"
+                                <div class="reserva-item reserva-base {% if r.fixo %}reserva-fixo{% elif r.professor == request.user %}reserva-minha{% else %}reserva-outros{% endif %}{% if is_admin or r.professor == request.user %} reserva-com-acoes{% endif %}"
                                     data-usuario="{{ r.professor.username }}">
-                                    <div
-                                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
-                                        <strong style="font-size:11px;">
-                                            {% if r.tipo == 'SALA' %}
-                                            <span style="color:#047857;"> {{ r.sala.nome }}</span>
-                                            {% else %}
-                                            <span style="color:#B45309;"> Equip.</span>
-                                            {% endif %}
-                                        </strong>
-                                        <div style="display:flex; align-items:center; gap:3px;">
-                                            {% if r.fixo %}
-                                            <span title="Agendamento Fixo" style="font-size:10px;">📌</span>
-                                            {% endif %}
-                                            {% if r.professor == request.user %}
-                                            <span title="Sua reserva" style="font-size:10px;">🟢</span>
-                                            {% endif %}
+                                    <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-link">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; gap:4px; min-width:0;">
+                                            <strong style="font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0;">
+                                                {% if r.tipo == 'SALA' %}
+                                                <span style="color:#047857;" title="{{ r.sala.nome }}">{{ r.sala.nome }}</span>
+                                                {% else %}
+                                                <span style="color:#B45309;" title="Equipamentos">Equip.</span>
+                                                {% endif %}
+                                            </strong>
+                                            <div style="display:flex; align-items:center; gap:2px; flex-shrink:0;">
+                                                {% if r.fixo %}
+                                                <span title="Agendamento Fixo" style="font-size:10px;">📌</span>
+                                                {% endif %}
+                                                {% if r.professor == request.user %}
+                                                <span title="Sua reserva" style="font-size:10px;">🟢</span>
+                                                {% endif %}
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div
-                                        style="color:#475569; font-size:11px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                        {{ r.turma.nome }}</div>
-                                    <div
-                                        style="font-size:10px; color:#94A3B8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                        {{ r.professor.get_full_name|default:r.professor.username }}</div>
-                                </a>
+                                        <div style="color:var(--lh-text); font-size:11px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ r.turma.nome }}">
+                                            {{ r.turma.nome }}
+                                        </div>
+                                        <div style="font-size:10px; color:var(--lh-text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ r.professor.get_full_name|default:r.professor.username }}">
+                                            {{ r.professor.get_full_name|default:r.professor.username }}
+                                        </div>
+                                    </a>
+                                    {% if is_admin or r.professor == request.user %}
+                                    <button type="button"
+                                        class="btn-cancelar-grid"
+                                        data-id="{{ r.id }}"
+                                        data-fixo="{% if r.fixo %}true{% else %}false{% endif %}"
+                                        title="Cancelar este agendamento"
+                                        aria-label="Cancelar agendamento">
+                                        🗑️
+                                    </button>
+                                    {% endif %}
+                                </div>
                                 {% endfor %}
                             </div>
                             {% else %}
@@ -627,30 +687,6 @@
         </div>
     </div>
 
-    <!-- ===================== POPUP CANCELAR AGENDAMENTO FIXO ===================== -->
-    <div class="modal fade" id="modalCancelarFixo" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-sm" role="document">
-            <div class="modal-content">
-                <div class="modal-header" style="background:var(--lh-gradient-primary); color:#ffffff;">
-                    <h4 class="modal-title" style="font-weight:700; margin:0;">📌 Agendamento Fixo</h4>
-                </div>
-                <div class="modal-body">
-                    <p style="font-weight:600; margin-bottom:6px; color:var(--lh-text);">Este é um agendamento fixo
-                        semanal.</p>
-                    <p style="color:var(--lh-text-muted); font-size:14px; margin:0;">Deseja cancelar apenas hoje ou
-                        todos os futuros?</p>
-                </div>
-                <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:6px; flex-wrap:wrap;">
-                    <button type="button" class="lh-btn lh-btn--ghost lh-btn--sm" data-dismiss="modal">Voltar</button>
-                    <button type="button" class="lh-btn lh-btn--danger lh-btn--sm" id="btnCancelarTodos">Cancelar
-                        todos</button>
-                    <button type="button" class="lh-btn lh-btn--primary lh-btn--sm" id="btnCancelarHoje">Apenas
-                        hoje</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>
 
 {% endblock %}
@@ -690,6 +726,58 @@
                     });
                 });
             }
+
+            $(document).off('click', '.btn-cancelar-grid').on('click', '.btn-cancelar-grid', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var btn = this;
+                var agendamentoId = btn.getAttribute('data-id');
+                var isFixo = btn.getAttribute('data-fixo') === 'true';
+
+                function dispararCancelamento(tipo) {
+                    var formData = new FormData();
+                    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                    if (tipo) {
+                        formData.append('cancelar_tipo', tipo);
+                    }
+                    fetch('/agendamentos/' + agendamentoId + '/cancelar/', {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: formData
+                    })
+                    .then(function (r) { return r.json(); })
+                    .then(function (res) {
+                        window.LabHubFlash(res.message, res.ok ? 'success' : 'warning');
+                        if (res.ok) {
+                            var card = btn.closest('.reserva-item');
+                            if (card) {
+                                $(card).fadeOut(250, function () {
+                                    window.location.reload();
+                                });
+                            } else {
+                                window.location.reload();
+                            }
+                        }
+                    })
+                    .catch(function () {
+                        window.LabHubFlash('Não foi possível cancelar o agendamento.', 'danger');
+                    });
+                }
+
+                if (isFixo) {
+                    window.abrirModalCancelarFixo(function (tipo) {
+                        dispararCancelamento(tipo);
+                    });
+                } else {
+                    $('#confirmModalTexto').text('Deseja realmente cancelar este agendamento?');
+                    $('#confirmModalOk').removeClass('lh-btn--primary lh-btn--danger lh-btn--success').addClass('lh-btn--danger');
+                    $('#confirmModalOk').off('click').one('click', function () {
+                        $('#confirmModal').modal('hide');
+                        dispararCancelamento('hoje');
+                    });
+                    $('#confirmModal').modal('show');
+                }
+            });
         }
 
         function isNavLink(link) {

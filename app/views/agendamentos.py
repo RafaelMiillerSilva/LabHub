@@ -763,12 +763,21 @@ def cancelar_reserva(request, agendamento_id):
             prof = ag.professor
             cancelar_tipo = request.POST.get('cancelar_tipo', 'hoje')
 
-            if cancelar_tipo == 'todos' and ag.fixo and ag.fixo_grupo_id:
+            if cancelar_tipo == 'todos' and ag.fixo:
                 # Cancelar todos os futuros do grupo fixo
-                removidos = Agendamento.objects.filter(
-                    fixo_grupo_id=ag.fixo_grupo_id,
-                    data__gte=date.today(),
-                ).delete()[0]
+                if ag.fixo_grupo_id:
+                    removidos = Agendamento.objects.filter(
+                        fixo_grupo_id=ag.fixo_grupo_id,
+                        data__gte=ag.data,
+                    ).delete()[0]
+                else:
+                    removidos = Agendamento.objects.filter(
+                        professor=ag.professor,
+                        turma=ag.turma,
+                        aula=ag.aula,
+                        fixo=True,
+                        data__gte=ag.data,
+                    ).delete()[0]
                 msg = f'{removidos} reserva(s) fixa(s) cancelada(s).'
             else:
                 ag.delete()
@@ -784,10 +793,16 @@ def cancelar_reserva(request, agendamento_id):
 
             # Enviar notificação ao professor caso o admin cancele
             if request.user != prof:
-                Notificacao.objects.create(
-                    destinatario=prof,
-                    mensagem=f'Sua reserva do dia {ag.data.strftime("%d/%m/%Y")} ({ag.aula}ª aula) foi cancelada pelo administrador {request.user.get_full_name() or request.user.username}.'
-                )
+                if cancelar_tipo == 'todos' and ag.fixo:
+                    Notificacao.objects.create(
+                        destinatario=prof,
+                        mensagem=f'Suas reservas fixas a partir do dia {ag.data.strftime("%d/%m/%Y")} ({ag.aula}ª aula) foram canceladas pelo administrador {request.user.get_full_name() or request.user.username}.'
+                    )
+                else:
+                    Notificacao.objects.create(
+                        destinatario=prof,
+                        mensagem=f'Sua reserva do dia {ag.data.strftime("%d/%m/%Y")} ({ag.aula}ª aula) foi cancelada pelo administrador {request.user.get_full_name() or request.user.username}.'
+                    )
 
             if is_ajax(request):
                 restantes = Agendamento.objects.filter(
@@ -905,18 +920,26 @@ def relacao_agendamento(request, agendamento_id):
         acao = request.POST.get('acao', 'relacao')
 
         if acao == 'editar':
-            ag.observacao = request.POST.get('observacao', '').strip()
+            editar_tipo = request.POST.get('editar_tipo', 'apenas_este')
+            nova_obs = request.POST.get('observacao', '').strip()
+            ag.observacao = nova_obs
 
             turma = Turma.objects.filter(id=request.POST.get('turma')).first()
+            turma_alterada = False
             if turma and turma != ag.turma:
                 ag.relacoes.all().delete()
                 ag.turma = turma
+                turma_alterada = True
 
+            prof_alterado = False
             if is_admin:
                 prof = User.objects.filter(id=request.POST.get('professor')).first()
-                if prof:
+                if prof and prof != ag.professor:
                     ag.professor = prof
+                    prof_alterado = True
 
+            sala_alterada = False
+            nova_sala_id = None
             if ag.tipo == 'SALA':
                 nova = request.POST.get('sala', '')
                 if nova.isdigit() and int(nova) != ag.sala_id:
@@ -930,6 +953,8 @@ def relacao_agendamento(request, agendamento_id):
                         messages.warning(request, 'A sala escolhida já está ocupada nessa aula; mantida a anterior.')
                     else:
                         ag.sala_id = nova_id
+                        sala_alterada = True
+                        nova_sala_id = nova_id
 
             ag.save()
 
@@ -940,6 +965,48 @@ def relacao_agendamento(request, agendamento_id):
                     messages.warning(request, 'A reserva ficou sem equipamentos e foi removida.')
                     return redirect('agendamentos')
 
+            if ag.fixo and editar_tipo == 'todos':
+                if ag.fixo_grupo_id:
+                    futuros = Agendamento.objects.filter(
+                        fixo_grupo_id=ag.fixo_grupo_id,
+                        data__gte=ag.data,
+                    ).exclude(id=ag.id)
+                else:
+                    futuros = Agendamento.objects.filter(
+                        professor=ag.professor,
+                        turma=ag.turma,
+                        aula=ag.aula,
+                        fixo=True,
+                        data__gte=ag.data,
+                    ).exclude(id=ag.id)
+
+                for f in futuros:
+                    f.observacao = nova_obs
+                    if turma_alterada and turma:
+                        f.turma = turma
+                        f.relacoes.all().delete()
+                    if prof_alterado:
+                        f.professor = ag.professor
+                    if sala_alterada and nova_sala_id and ag.tipo == 'SALA':
+                        ocupada_futuro = (
+                            Agendamento.objects
+                            .filter(data=f.data, aula=f.aula, tipo='SALA', sala_id=nova_sala_id)
+                            .exclude(id=f.id).exists()
+                        )
+                        if not ocupada_futuro:
+                            f.sala_id = nova_sala_id
+                    f.save()
+
+                    if ag.tipo == 'DISPOSITIVO':
+                        _aplicar_edicao_dispositivo(request, f)
+                        if not f.itens.exists():
+                            f.delete()
+
+                total_atualizados = futuros.count() + 1
+                messages.success(request, f'{total_atualizados} reservas da série fixa foram atualizadas com sucesso!')
+            else:
+                messages.success(request, 'Reserva atualizada com sucesso!')
+
             registrar_acao(
                 usuario=request.user,
                 acao='ALTEROU_AGENDAMENTO',
@@ -948,7 +1015,6 @@ def relacao_agendamento(request, agendamento_id):
                 tipo_solicitado=ag.professor.perfil.tipo if hasattr(ag.professor, 'perfil') else '',
             )
 
-            messages.success(request, 'Reserva atualizada com sucesso!')
             return redirect('relacao_agendamento', agendamento_id=ag.id)
 
         for aluno in alunos:

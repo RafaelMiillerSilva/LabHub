@@ -60,9 +60,10 @@
         <h3 class="lh-card-title">⚙️ Gerenciar Reserva</h3>
     </div>
     <div class="lh-card-body">
-        <form method="post" style="margin-bottom:0;">
+        <form method="post" id="formEditarReserva" style="margin-bottom:0;">
             {% csrf_token %}
             <input type="hidden" name="acao" value="editar">
+            <input type="hidden" name="editar_tipo" id="editarTipoInput" value="apenas_este">
 
             <div class="row">
                 {% if is_admin %}
@@ -134,7 +135,11 @@
             </div>
 
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                {% if ag.fixo %}
+                <button type="button" id="btnSalvarEditarFixo" class="lh-btn lh-btn--warning">💾 Salvar Alterações</button>
+                {% else %}
                 <button type="submit" class="lh-btn lh-btn--warning">💾 Salvar Alterações</button>
+                {% endif %}
             </div>
         </form>
 
@@ -142,13 +147,42 @@
 
         <form action="{% url 'cancelar_reserva' ag.id %}" method="post" style="display:inline;">
             {% csrf_token %}
+            {% if ag.fixo %}
+            <input type="hidden" name="cancelar_tipo" value="hoje">
+            <button type="button" class="lh-btn lh-btn--danger lh-btn--sm btn-cancelar-fixo">
+                🗑️ Cancelar Reserva
+            </button>
+            {% else %}
             <button type="submit" class="lh-btn lh-btn--danger lh-btn--sm"
                     data-confirm="Tem certeza que deseja cancelar esta reserva? Esta ação não pode ser desfeita.">
                 🗑️ Cancelar Reserva
             </button>
+            {% endif %}
         </form>
     </div>
 </div>
+
+{% if ag.fixo %}
+<!-- Modal Editar Agendamento Fixo -->
+<div class="modal fade" id="modalEditarFixo" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:var(--lh-gradient-primary); color:#ffffff;">
+                <h4 class="modal-title" style="font-weight:700; margin:0; font-size:16px;">📌 Agendamento Fixo</h4>
+            </div>
+            <div class="modal-body">
+                <p style="font-weight:600; margin-bottom:6px; color:var(--lh-text);">Este é um agendamento fixo semanal.</p>
+                <p style="color:var(--lh-text-muted); font-size:13px; margin:0;">Deseja aplicar estas alterações apenas a esta data ou a todos os agendamentos futuros da série?</p>
+            </div>
+            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:6px; flex-wrap:wrap;">
+                <button type="button" class="lh-btn lh-btn--ghost lh-btn--sm" data-dismiss="modal">Voltar</button>
+                <button type="button" class="lh-btn lh-btn--primary lh-btn--sm" id="btnEditarApenasEste">Apenas esta aula</button>
+                <button type="button" class="lh-btn lh-btn--warning lh-btn--sm" id="btnEditarTodosFuturos">Todos os futuros</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endif %}
 
 <form method="post">
@@ -208,4 +242,42 @@
     {% endif %}
 </form>
 
+{% endblock %}
+
+{% block scripts %}
+{% if ag.fixo and pode_editar %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var btn = document.getElementById('btnSalvarEditarFixo');
+        var form = document.getElementById('formEditarReserva');
+        var inputTipo = document.getElementById('editarTipoInput');
+        var modal = $('#modalEditarFixo');
+
+        if (btn && form) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                modal.modal('show');
+            });
+        }
+
+        var btnApenasEste = document.getElementById('btnEditarApenasEste');
+        if (btnApenasEste) {
+            btnApenasEste.addEventListener('click', function() {
+                modal.modal('hide');
+                inputTipo.value = 'apenas_este';
+                form.submit();
+            });
+        }
+
+        var btnTodosFuturos = document.getElementById('btnEditarTodosFuturos');
+        if (btnTodosFuturos) {
+            btnTodosFuturos.addEventListener('click', function() {
+                modal.modal('hide');
+                inputTipo.value = 'todos';
+                form.submit();
+            });
+        }
+    });
+</script>
+{% endif %}
 {% endblock %}
