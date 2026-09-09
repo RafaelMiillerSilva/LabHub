@@ -8,7 +8,7 @@ from django.contrib.auth import login
 from django.shortcuts import redirect, render
 
 from app.forms import BootstrapAuthenticationForm, CadastroForm
-from app.models import Agendamento, Perfil
+from app.models import Agendamento, Perfil, Sala
 from .common import (
     DIAS_SEMANA_LONGO,
     MESES_PT,
@@ -18,99 +18,198 @@ from .common import (
 
 
 def _home_dashboard(request):
-    """View do painel/dashboard dentro de app/index.html (Visão Semanal)."""
+    """View do painel/dashboard diário dentro de app/index.html."""
     hoje = date.today()
 
-    try:
-        ano = int(request.GET.get('ano', hoje.year))
-    except (TypeError, ValueError):
-        ano = hoje.year
-
-    try:
-        mes = int(request.GET.get('mes', hoje.month))
-    except (TypeError, ValueError):
-        mes = hoje.month
-
-    try:
-        dia = int(request.GET.get('dia', hoje.day))
-    except (TypeError, ValueError):
-        dia = hoje.day
-
-    try:
-        data_atual = date(ano, mes, dia)
-    except ValueError:
+    data_param = request.GET.get('data')
+    if data_param:
         try:
-            data_atual = date(ano, mes, 1)
+            data_atual = date.fromisoformat(data_param)
         except ValueError:
             data_atual = hoje
+    else:
+        try:
+            ano = int(request.GET.get('ano', hoje.year))
+            mes = int(request.GET.get('mes', hoje.month))
+            dia = int(request.GET.get('dia', hoje.day))
+            data_atual = date(ano, mes, dia)
+        except (TypeError, ValueError):
+            data_atual = hoje
 
-    # Encontrar o domingo da semana atual
-    dias_para_domingo = data_atual.isoweekday() % 7
-    domingo = data_atual - timedelta(days=dias_para_domingo)
-    sabado = domingo + timedelta(days=6)
-
-    semana_ant = domingo - timedelta(days=7)
-    semana_prox = domingo + timedelta(days=7)
+    dia_ant = data_atual - timedelta(days=1)
+    dia_prox = data_atual + timedelta(days=1)
+    is_hoje = (data_atual == hoje)
 
     is_admin = request.user.is_staff or is_admin_aprovado(request.user)
 
-    reservas_qs = (
-        Agendamento.objects.filter(data__range=(domingo, sabado))
+    salas = list(Sala.objects.filter(ativo=True).order_by('nome'))
+
+    reservas_dia = list(
+        Agendamento.objects.filter(data=data_atual)
         .select_related('sala', 'turma', 'professor')
         .prefetch_related('itens')
     )
 
-    dias_cabecalho = []
-    for i in range(7):
-        d = domingo + timedelta(days=i)
-        dias_cabecalho.append({
-            'data': d,
-            'numero': d.day,
-            'mes_nome': MESES_PT[d.month - 1][:3],
-            'nome_curto': DIAS_SEMANA_LONGO[d.weekday()][:3],
-            'hoje': d == hoje
+    # Mapear reservas de salas por (aula, sala_id)
+    reservas_sala = {}
+    for r in reservas_dia:
+        if r.tipo == 'SALA' and r.sala_id:
+            reservas_sala[(r.aula, r.sala_id)] = r
+
+    # Mapear reservas de dispositivos por aula
+    reservas_disp = {aula: [] for aula in range(1, 10)}
+    for r in reservas_dia:
+        if r.tipo == 'DISPOSITIVO':
+            reservas_disp[r.aula].append(r)
+
+    # Identificar células a pular por causa de rowspan=2 (aulas seguidas iguais)
+    skip_salas = {s.id: set() for s in salas}
+    skip_disp = set()
+
+    grade_diaria = []
+
+    for aula in range(1, 10):
+        colunas_salas = []
+        for s in salas:
+            if aula in skip_salas[s.id]:
+                colunas_salas.append({
+                    'sala': s,
+                    'skip': True,
+                })
+            else:
+                r = reservas_sala.get((aula, s.id))
+                if r is None:
+                    colunas_salas.append({
+                        'sala': s,
+                        'reserva': None,
+                        'rowspan': 1,
+                        'skip': False,
+                        'dupla': False,
+                        'aula': aula,
+                    })
+                else:
+                    # Verificar se a próxima aula (aula + 1) é idêntica para agrupar em 2 linhas
+                    r_prox = reservas_sala.get((aula + 1, s.id)) if aula < 9 else None
+                    if (
+                        r_prox is not None
+                        and r_prox.professor_id == r.professor_id
+                        and r_prox.turma_id == r.turma_id
+                    ):
+                        colunas_salas.append({
+                            'sala': s,
+                            'reserva': r,
+                            'reserva_segunda': r_prox,
+                            'rowspan': 2,
+                            'skip': False,
+                            'dupla': True,
+                            'aula': aula,
+                            'aula_fim': aula + 1,
+                        })
+                        skip_salas[s.id].add(aula + 1)
+                    else:
+                        colunas_salas.append({
+                            'sala': s,
+                            'reserva': r,
+                            'rowspan': 1,
+                            'skip': False,
+                            'dupla': False,
+                            'aula': aula,
+                        })
+
+        # Coluna de Equipamentos
+        if aula in skip_disp:
+            coluna_equip = {'skip': True}
+        else:
+            disp_list = reservas_disp.get(aula, [])
+            if len(disp_list) == 1 and aula < 9:
+                r = disp_list[0]
+                disp_prox = reservas_disp.get(aula + 1, [])
+                if len(disp_prox) == 1:
+                    r_prox = disp_prox[0]
+                    if (
+                        r_prox.professor_id == r.professor_id
+                        and r_prox.turma_id == r.turma_id
+                    ):
+                        # Conferir se itens de equipamentos são iguais
+                        itens_r = sorted([(it.categoria, it.quantidade) for it in r.itens.all()])
+                        itens_prox = sorted([(it.categoria, it.quantidade) for it in r_prox.itens.all()])
+                        if itens_r == itens_prox:
+                            coluna_equip = {
+                                'reservas': [r],
+                                'reserva_segunda': r_prox,
+                                'rowspan': 2,
+                                'skip': False,
+                                'dupla': True,
+                                'aula': aula,
+                                'aula_fim': aula + 1,
+                            }
+                            skip_disp.add(aula + 1)
+                        else:
+                            coluna_equip = {
+                                'reservas': disp_list,
+                                'rowspan': 1,
+                                'skip': False,
+                                'dupla': False,
+                                'aula': aula,
+                            }
+                    else:
+                        coluna_equip = {
+                            'reservas': disp_list,
+                            'rowspan': 1,
+                            'skip': False,
+                            'dupla': False,
+                            'aula': aula,
+                        }
+                else:
+                    coluna_equip = {
+                        'reservas': disp_list,
+                        'rowspan': 1,
+                        'skip': False,
+                        'dupla': False,
+                        'aula': aula,
+                    }
+            else:
+                coluna_equip = {
+                    'reservas': disp_list,
+                    'rowspan': 1,
+                    'skip': False,
+                    'dupla': False,
+                    'aula': aula,
+                }
+
+        grade_diaria.append({
+            'aula': aula,
+            'colunas_salas': colunas_salas,
+            'coluna_equip': coluna_equip,
         })
 
-    grade_semanal = []
-    for aula in range(1, 10):
-        linha = []
-        for i in range(7):
-            d = domingo + timedelta(days=i)
-            # Reservas no slot
-            reservas_slot = [r for r in reservas_qs if r.data == d and r.aula == aula]
-            
-            tem_reserva_usuario = any(r.professor == request.user for r in reservas_slot)
-            
-            linha.append({
-                'data': d,
-                'reservas': reservas_slot,
-                'tem_reserva_usuario': tem_reserva_usuario
-            })
-        grade_semanal.append({'aula': aula, 'dias': linha})
+    dia_semana_hoje = DIAS_SEMANA_LONGO[hoje.weekday()]
+    mes_nome_hoje = MESES_PT[hoje.month - 1]
+    data_dia_semana = DIAS_SEMANA_LONGO[data_atual.weekday()]
+    data_mes_nome = MESES_PT[data_atual.month - 1]
 
-    dia_semana = DIAS_SEMANA_LONGO[hoje.weekday()]
-    mes_nome = MESES_PT[hoje.month - 1]
     total_sala = Agendamento.objects.filter(data=hoje, tipo='SALA').count()
     total_disp = Agendamento.objects.filter(data=hoje, tipo='DISPOSITIVO').count()
 
     context = {
         'dashboard': True,
         'data_atual': data_atual,
-        'semana_ant': semana_ant,
-        'semana_prox': semana_prox,
-        'domingo': domingo,
-        'sabado': sabado,
+        'dia_ant': dia_ant,
+        'dia_prox': dia_prox,
+        'is_hoje': is_hoje,
         'hoje_ano': hoje.year,
         'hoje_mes': hoje.month,
         'hoje_dia': hoje.day,
-        'dia_semana': dia_semana,
-        'mes_nome': mes_nome,
+        'dia_semana': dia_semana_hoje,
+        'mes_nome': mes_nome_hoje,
+        'data_dia_semana': data_dia_semana,
+        'data_mes_nome': data_mes_nome,
         'total_sala': total_sala,
         'total_disp': total_disp,
         'is_admin': is_admin,
         'solicitacoes_pendentes': Perfil.objects.filter(aprovado=False).count(),
-        'dias_cabecalho': dias_cabecalho,
-        'grade_semanal': grade_semanal,
+        'salas': salas,
+        'grade_diaria': grade_diaria,
     }
     return render(request, 'app/index.html', context)
 

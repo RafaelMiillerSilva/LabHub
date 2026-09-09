@@ -5,12 +5,56 @@
 <style>
     .reserva-base {
         display: block;
-        padding: 7px 8px;
+        padding: 8px 10px;
         border-radius: 8px;
         font-size: 11px;
-        text-decoration: none !important;
         color: #1E293B;
         transition: all 0.15s ease;
+        position: relative;
+    }
+
+    .reserva-link {
+        display: block;
+        text-decoration: none !important;
+        color: inherit;
+    }
+
+    .btn-cancelar-card {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(220, 38, 38, 0.35);
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 11px;
+        line-height: 1;
+        opacity: 0.7;
+        transition: all 0.15s ease;
+        z-index: 5;
+    }
+
+    .btn-cancelar-card:hover {
+        opacity: 1;
+        transform: scale(1.15);
+        background: #FEE2E2;
+        border-color: #DC2626;
+    }
+
+    [data-theme="dark"] .btn-cancelar-card {
+        background: rgba(30, 41, 59, 0.95);
+        border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    [data-theme="dark"] .btn-cancelar-card:hover {
+        background: rgba(220, 38, 38, 0.35);
+        border-color: #EF4444;
     }
     
     .reserva-fixo {
@@ -46,14 +90,14 @@
     .slot-vazio {
         display: flex;
         height: 100%;
-        min-height: 48px;
+        min-height: 52px;
         border-radius: 8px;
         border: 1px dashed var(--lh-border);
         color: var(--lh-text-light);
         text-decoration: none !important;
         align-items: center;
         justify-content: center;
-        font-size: 16px;
+        font-size: 18px;
         transition: all 0.2s;
     }
 
@@ -100,22 +144,45 @@
         background: rgba(249, 115, 22, 0.26);
     }
 
-    .th-hoje {
-        background: var(--lh-primary-light) !important;
-        border-bottom: 2px solid var(--lh-primary) !important;
+    .slot-celula-diaria {
+        vertical-align: top;
+        padding: 6px;
     }
 
-    .th-hoje .th-nome-curto {
-        font-size: 11px;
-        text-transform: uppercase;
-        color: var(--lh-primary);
-        font-weight: 700;
+    .slot-dupla-sala {
+        background: rgba(59, 130, 246, 0.03);
+        border-left: 3px solid var(--lh-primary);
     }
 
-    .th-hoje .th-numero {
-        font-size: 16px;
-        font-weight: 800;
-        color: var(--lh-primary);
+    .slot-dupla-equip {
+        background: rgba(245, 158, 11, 0.03);
+        border-left: 3px solid var(--lh-warning);
+    }
+
+    .card-painel-diario {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .card-painel-diario--equip {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .card-painel-diario--simples {
+        min-height: 68px;
+    }
+
+    .card-painel-diario--duplo {
+        min-height: 104px;
+    }
+
+    .reserva-link-com-acoes {
+        padding-right: 24px;
     }
 </style>
 
@@ -181,14 +248,29 @@
     {% endif %}
 </div>
 
-<!-- ============================ AGENDA SEMANAL ============================ -->
+<!-- ============================ PAINEL DIÁRIO ============================ -->
 <div class="lh-card">
-    <div class="lh-card-header" style="background:var(--lh-surface); border-bottom:1px solid var(--lh-border);">
-        <!-- Navegador de Semanas -->
-        <div style="display:inline-flex; align-items:center; background:var(--lh-surface-subtle); border:1px solid var(--lh-border); border-radius:8px; padding:4px 8px;">
-            <a href="?dia={{ semana_ant.day }}&mes={{ semana_ant.month }}&ano={{ semana_ant.year }}" class="lh-btn lh-btn--xs lh-btn--ghost" style="padding:4px 8px;">◀</a>
-            <span style="font-size:13px; font-weight:700; color:var(--lh-primary); padding:0 8px;">Semana de {{ domingo|date:"d/m" }} a {{ sabado|date:"d/m" }}</span>
-            <a href="?dia={{ semana_prox.day }}&mes={{ semana_prox.month }}&ano={{ semana_prox.year }}" class="lh-btn lh-btn--xs lh-btn--ghost" style="padding:4px 8px;">▶</a>
+    <div class="lh-card-header" style="background:var(--lh-surface); border-bottom:1px solid var(--lh-border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+        <!-- Navegador de Dias -->
+        <div style="display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <div style="display:inline-flex; align-items:center; background:var(--lh-surface-subtle); border:1px solid var(--lh-border); border-radius:8px; padding:4px 8px;">
+                <a href="?ano={{ dia_ant.year }}&mes={{ dia_ant.month }}&dia={{ dia_ant.day }}" class="lh-btn lh-btn--xs lh-btn--ghost" style="padding:4px 8px;" title="Dia anterior">◀</a>
+                <span style="font-size:14px; font-weight:700; color:var(--lh-primary); padding:0 10px;">
+                    {{ data_dia_semana }}, {{ data_atual|date:"d" }} de {{ data_mes_nome }} de {{ data_atual|date:"Y" }}
+                </span>
+                <a href="?ano={{ dia_prox.year }}&mes={{ dia_prox.month }}&dia={{ dia_prox.day }}" class="lh-btn lh-btn--xs lh-btn--ghost" style="padding:4px 8px;" title="Próximo dia">▶</a>
+            </div>
+
+            {% if not is_hoje %}
+            <a href="?ano={{ hoje_ano }}&mes={{ hoje_mes }}&dia={{ hoje_dia }}" class="lh-btn lh-btn--sm lh-btn--outline">
+                📅 Voltar para Hoje
+            </a>
+            {% else %}
+            <span class="lh-badge lh-badge--success" style="font-size:12px; padding:6px 12px;">Hoje</span>
+            {% endif %}
+
+            <input type="date" id="inputDataPainel" value="{{ data_atual|date:'Y-m-d' }}" class="form-control"
+                style="width:auto; padding:5px 10px; font-size:13px; display:inline-block; cursor:pointer;" title="Escolher data específica">
         </div>
 
         <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
@@ -199,9 +281,6 @@
                 <span style="display:inline-flex; align-items:center; gap:4px;"><span style="width:12px; height:12px; border-radius:3px; background:#F1F5F9; border:1px solid #CBD5E1; display:inline-block;"></span> Fixo</span>
             </div>
 
-            <!-- Botão Hoje -->
-            <a href="?dia={{ hoje_dia }}&mes={{ hoje_mes }}&ano={{ hoje_ano }}" class="lh-btn lh-btn--sm lh-btn--outline">Ir para Hoje</a>
-
             <!-- Filtro: Minhas Reservas -->
             <label id="wrapMinhasReservas" style="display:inline-flex; align-items:center; gap:6px; background:var(--lh-primary-light); padding:7px 12px; border-radius:8px; margin:0; cursor:pointer; font-size:13px; font-weight:600; color:var(--lh-primary);">
                 <input type="checkbox" id="chkMinhasReservas" style="cursor:pointer; width:15px; height:15px; margin:0;">
@@ -211,67 +290,155 @@
     </div>
 
     <div class="lh-card-body" style="padding:0;">
-        <div class="lh-table-wrap" style="border:none; border-radius:0;">
-            <table class="lh-table" id="tabelaAgendaSemanal" style="min-width:760px; table-layout:fixed;">
+        <div class="lh-table-wrap" style="border:none; border-radius:0; overflow-x:auto;">
+            <table class="lh-table" id="tabelaPainelDiario" style="min-width:900px; table-layout:fixed; width:100%; margin:0;">
                 <thead>
                     <tr>
-                        <th class="text-center" style="width:65px;">Aula</th>
-                        {% for cabecalho in dias_cabecalho %}
-                        {% if cabecalho.hoje %}
-                        <th class="text-center th-hoje">
-                            <div class="th-nome-curto">{{ cabecalho.nome_curto }}</div>
-                            <div class="th-numero">{{ cabecalho.numero }}</div>
+                        <th class="text-center" style="width:70px; background:var(--lh-surface-subtle); border-right:1px solid var(--lh-border);">Aula</th>
+                        {% for s in salas %}
+                        <th class="text-center" style="min-width:180px;">
+                            <span style="color:#047857;">🏫</span> {{ s.nome }}
                         </th>
-                        {% else %}
-                        <th class="text-center">
-                            <div style="font-size:11px; text-transform:uppercase;">{{ cabecalho.nome_curto }}</div>
-                            <div style="font-size:16px; font-weight:700; color:var(--lh-text);">{{ cabecalho.numero }}</div>
-                        </th>
-                        {% endif %}
                         {% endfor %}
+                        <th class="text-center" style="min-width:210px;">
+                            <span style="color:#B45309;">💻</span> Equipamentos Móveis
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for linha in grade_semanal %}
+                    {% for linha in grade_diaria %}
                     <tr>
-                        <td class="text-center" style="vertical-align:middle;">
-                            <span class="lh-badge lh-badge--primary">{{ linha.aula }}ª</span>
+                        <td class="text-center" style="vertical-align:middle; background:var(--lh-surface-subtle); border-right:1px solid var(--lh-border);">
+                            <span class="lh-badge lh-badge--primary" style="font-size:12px; font-weight:700;">{{ linha.aula }}ª</span>
                         </td>
-                        {% for dia in linha.dias %}
-                        <td style="vertical-align:top; padding:6px;">
-                            {% if dia.reservas %}
-                                <div style="display:flex; flex-direction:column; gap:4px;">
-                                    {% for r in dia.reservas %}
-                                        <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-item reserva-base {% if r.fixo %}reserva-fixo{% elif r.professor == request.user %}reserva-minha{% else %}reserva-outros{% endif %}" data-usuario="{{ r.professor.username }}">
-                                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
-                                                <strong style="font-size:11px;">
-                                                    {% if r.tipo == 'SALA' %}
-                                                    <span style="color:#047857;">🏫 {{ r.sala.nome }}</span>
-                                                    {% else %}
-                                                    <span style="color:#B45309;">💻 Equip.</span>
-                                                    {% endif %}
-                                                </strong>
-                                                <div style="display:flex; align-items:center; gap:3px;">
-                                                    {% if r.fixo %}
-                                                        <span title="Agendamento Fixo" style="font-size:10px;">📌</span>
-                                                    {% endif %}
-                                                    {% if r.professor == request.user %}
-                                                        <span title="Sua reserva" style="font-size:10px;">🟢</span>
-                                                    {% endif %}
-                                                </div>
+
+                        <!-- Colunas dos Laboratórios / Salas -->
+                        {% for col in linha.colunas_salas %}
+                        {% if not col.skip %}
+                        <td rowspan="{{ col.rowspan }}" class="slot-celula-diaria {% if col.dupla %}slot-dupla-sala{% endif %}">
+                            {% if col.reserva %}
+                                {% with r=col.reserva r2=col.reserva_segunda %}
+                                <div class="reserva-item reserva-base card-painel-diario {% if col.dupla %}card-painel-diario--duplo{% else %}card-painel-diario--simples{% endif %} {% if r.fixo %}reserva-fixo{% elif r.professor == request.user %}reserva-minha{% else %}reserva-outros{% endif %}"
+                                     data-usuario="{{ r.professor.username }}">
+                                    <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-link {% if is_admin or r.professor == request.user %}reserva-link-com-acoes{% endif %}" style="flex:1;">
+                                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; gap:4px;">
+                                            <strong style="font-size:12px; font-weight:700; color:var(--lh-text);">{{ r.turma.nome }}</strong>
+                                            <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
+                                                {% if col.dupla %}
+                                                <span class="lh-badge lh-badge--primary" style="font-size:9px; padding:2px 5px;" title="Aula Dupla ({{ col.aula }}ª e {{ col.aula_fim }}ª aula)">⏱️ 2 aulas</span>
+                                                {% endif %}
+                                                {% if r.fixo %}
+                                                <span title="Agendamento Fixo" style="font-size:11px;">📌</span>
+                                                {% endif %}
+                                                {% if r.professor == request.user %}
+                                                <span title="Sua reserva" style="font-size:10px;">🟢</span>
+                                                {% endif %}
                                             </div>
-                                            <div style="color:#475569; font-size:11px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.turma.nome }}</div>
-                                            <div style="font-size:10px; color:#94A3B8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.professor.get_full_name|default:r.professor.username }}</div>
-                                        </a>
-                                    {% endfor %}
+                                        </div>
+
+                                        <div style="font-size:11px; color:var(--lh-text-muted); margin-bottom:3px; display:flex; align-items:center; gap:4px;">
+                                            <span>👤</span> <span>{{ r.professor.get_full_name|default:r.professor.username }}</span>
+                                        </div>
+
+                                        {% if r.observacao %}
+                                        <div style="font-size:10px; color:var(--lh-text-light); font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ r.observacao }}">
+                                            💬 {{ r.observacao }}
+                                        </div>
+                                        {% endif %}
+                                    </a>
+
+                                    {% if is_admin or r.professor == request.user %}
+                                    <button type="button" class="btn-cancelar-card"
+                                            data-id="{{ r.id }}"
+                                            {% if r2 %}data-id-segunda="{{ r2.id }}"{% endif %}
+                                            data-fixo="{% if r.fixo %}true{% else %}false{% endif %}"
+                                            title="Cancelar agendamento"
+                                            aria-label="Cancelar agendamento">
+                                        🗑️
+                                    </button>
+                                    {% endif %}
                                 </div>
+                                {% endwith %}
                             {% else %}
-                                <a href="{% url 'agendamento_detalhe' ano=dia.data.year mes=dia.data.month dia=dia.data.day %}?aula={{ linha.aula }}" class="slot-vazio">
+                                <a href="{% url 'agendamento_detalhe' data_atual.year data_atual.month data_atual.day %}?aula={{ linha.aula }}" class="slot-vazio" title="Agendar aula {{ linha.aula }} no {{ col.sala.nome }}">
                                     +
                                 </a>
                             {% endif %}
                         </td>
+                        {% endif %}
                         {% endfor %}
+
+                        <!-- Coluna de Equipamentos Móveis -->
+                        {% with col_eq=linha.coluna_equip %}
+                        {% if not col_eq.skip %}
+                        <td rowspan="{{ col_eq.rowspan }}" class="slot-celula-diaria {% if col_eq.dupla %}slot-dupla-equip{% endif %}">
+                            {% if col_eq.reservas %}
+                                <div style="display:flex; flex-direction:column; gap:6px; height:100%;">
+                                    {% for r in col_eq.reservas %}
+                                    {% with r2=col_eq.reserva_segunda %}
+                                    <div class="reserva-item reserva-base card-painel-diario--equip {% if col_eq.dupla %}card-painel-diario--duplo{% else %}card-painel-diario--simples{% endif %} {% if r.fixo %}reserva-fixo{% elif r.professor == request.user %}reserva-minha{% else %}reserva-outros{% endif %}"
+                                         data-usuario="{{ r.professor.username }}">
+                                        <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-link {% if is_admin or r.professor == request.user %}reserva-link-com-acoes{% endif %}" style="flex:1;">
+                                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; gap:4px;">
+                                                <strong style="font-size:12px; font-weight:700; color:var(--lh-text);">{{ r.turma.nome }}</strong>
+                                                <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
+                                                    {% if col_eq.dupla %}
+                                                    <span class="lh-badge lh-badge--warning" style="font-size:9px; padding:2px 5px;" title="Aula Dupla ({{ col_eq.aula }}ª e {{ col_eq.aula_fim }}ª aula)">⏱️ 2 aulas</span>
+                                                    {% endif %}
+                                                    {% if r.fixo %}
+                                                    <span title="Agendamento Fixo" style="font-size:11px;">📌</span>
+                                                    {% endif %}
+                                                    {% if r.professor == request.user %}
+                                                    <span title="Sua reserva" style="font-size:10px;">🟢</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <!-- Quantidades de equipamentos detalhadas -->
+                                            <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+                                                {% for item in r.itens.all %}
+                                                <span class="lh-badge lh-badge--primary" style="font-size:10px; padding:2px 6px;">
+                                                    💻 {{ item.get_categoria_display }}: <strong>{{ item.quantidade }}</strong>
+                                                </span>
+                                                {% empty %}
+                                                <span style="font-size:10px; color:var(--lh-text-muted);">Equipamentos</span>
+                                                {% endfor %}
+                                            </div>
+
+                                            <div style="font-size:11px; color:var(--lh-text-muted); margin-bottom:2px; display:flex; align-items:center; gap:4px;">
+                                                <span>👤</span> <span>{{ r.professor.get_full_name|default:r.professor.username }}</span>
+                                            </div>
+
+                                            {% if r.observacao %}
+                                            <div style="font-size:10px; color:var(--lh-text-light); font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ r.observacao }}">
+                                                💬 {{ r.observacao }}
+                                            </div>
+                                            {% endif %}
+                                        </a>
+
+                                        {% if is_admin or r.professor == request.user %}
+                                        <button type="button" class="btn-cancelar-card"
+                                                data-id="{{ r.id }}"
+                                                {% if r2 %}data-id-segunda="{{ r2.id }}"{% endif %}
+                                                data-fixo="{% if r.fixo %}true{% else %}false{% endif %}"
+                                                title="Cancelar agendamento"
+                                                aria-label="Cancelar agendamento">
+                                            🗑️
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                    {% endwith %}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <a href="{% url 'agendamento_detalhe' data_atual.year data_atual.month data_atual.day %}?aula={{ linha.aula }}" class="slot-vazio" title="Agendar equipamentos na {{ linha.aula }}ª aula">
+                                    +
+                                </a>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                        {% endwith %}
+
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -283,28 +450,94 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     function bindEvents() {
-        const wrap = document.getElementById('wrapMinhasReservas');
-        let chk = document.getElementById('chkMinhasReservas');
-        const reservas = document.querySelectorAll('.reserva-item');
-        const currentUser = "{{ user.username }}";
+        var inputData = document.getElementById('inputDataPainel');
+        if (inputData) {
+            inputData.addEventListener('change', function () {
+                if (this.value) {
+                    window.location.href = '?data=' + this.value;
+                }
+            });
+        }
 
-        if (wrap && chk) {
+        var chk = document.getElementById('chkMinhasReservas');
+        if (chk) {
             chk.addEventListener('change', function() {
-                reservas.forEach(res => {
-                    if (this.checked) {
-                        res.style.display = (res.getAttribute('data-usuario') === currentUser) ? 'block' : 'none';
+                var reservas = document.querySelectorAll('.reserva-item');
+                var currentUser = "{{ user.username }}";
+                reservas.forEach(function(res) {
+                    if (chk.checked) {
+                        res.style.opacity = (res.getAttribute('data-usuario') === currentUser) ? '1' : '0.15';
+                        res.style.filter = (res.getAttribute('data-usuario') === currentUser) ? 'none' : 'grayscale(100%)';
                     } else {
-                        res.style.display = 'block';
+                        res.style.opacity = '1';
+                        res.style.filter = 'none';
                     }
                 });
             });
         }
+
+        $(document).off('click', '.btn-cancelar-card').on('click', '.btn-cancelar-card', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var btn = this;
+            var agendamentoId = btn.getAttribute('data-id');
+            var agendamentoSegundaId = btn.getAttribute('data-id-segunda');
+            var isFixo = btn.getAttribute('data-fixo') === 'true';
+
+            function executarExclusao(id, tipo) {
+                var formData = new FormData();
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                if (tipo) {
+                    formData.append('cancelar_tipo', tipo);
+                }
+                return fetch('/agendamentos/' + id + '/cancelar/', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData
+                }).then(function (r) { return r.json(); });
+            }
+
+            function dispararCancelamento(tipo) {
+                executarExclusao(agendamentoId, tipo)
+                    .then(function (res) {
+                        if (agendamentoSegundaId && res.ok && (!isFixo || tipo === 'hoje')) {
+                            return executarExclusao(agendamentoSegundaId, tipo);
+                        }
+                        return res;
+                    })
+                    .then(function (res) {
+                        window.LabHubFlash(res.message || 'Reserva cancelada com sucesso.', res.ok ? 'success' : 'warning');
+                        if (res.ok) {
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 350);
+                        }
+                    })
+                    .catch(function () {
+                        window.LabHubFlash('Erro ao cancelar o agendamento.', 'danger');
+                    });
+            }
+
+            if (isFixo) {
+                window.abrirModalCancelarFixo(function (tipo) {
+                    dispararCancelamento(tipo);
+                });
+            } else {
+                $('#confirmModalTexto').text('Deseja realmente cancelar este agendamento?');
+                $('#confirmModalOk').removeClass('lh-btn--primary lh-btn--danger lh-btn--success').addClass('lh-btn--danger');
+                $('#confirmModalOk').off('click').one('click', function () {
+                    $('#confirmModal').modal('hide');
+                    dispararCancelamento('hoje');
+                });
+                $('#confirmModal').modal('show');
+            }
+        });
     }
 
     const containerSelector = '.body-content';
 
     document.body.addEventListener('click', function(e) {
-        const link = e.target.closest('.lh-card-header a[href*="dia="]');
+        const link = e.target.closest('.lh-card-header a[href*="dia="], .lh-card-header a[href*="data="]');
         if (!link) return;
 
         e.preventDefault();

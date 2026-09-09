@@ -12,7 +12,7 @@ from django.urls import reverse
 
 from app.backends import EmailBackend
 from app.forms import CadastroForm, EquipamentoForm
-from app.models import Agendamento, Aluno, Equipamento, Sala, Turma
+from app.models import Agendamento, Aluno, Equipamento, ItemDispositivo, Sala, Turma
 
 
 class EquipamentoFixoTest(TestCase):
@@ -576,5 +576,138 @@ class AgendamentoFixoCancelamentoEdicaoTest(TestCase):
         content_admin = resp_admin.content.decode('utf-8')
         self.assertIn(f'data-id="{ag_prof1.id}"', content_admin)
         self.assertIn(f'data-id="{ag_prof2.id}"', content_admin)
+
+
+class PainelDiarioHomeTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.prof1 = User.objects.create_user(username='prof1', email='prof1@teste.com', password='Password@123')
+        self.prof1.perfil.tipo = 'PROFESSOR'
+        self.prof1.perfil.aprovado = True
+        self.prof1.perfil.save()
+
+        self.prof2 = User.objects.create_user(username='prof2', email='prof2@teste.com', password='Password@123')
+        self.prof2.perfil.tipo = 'PROFESSOR'
+        self.prof2.perfil.aprovado = True
+        self.prof2.perfil.save()
+
+        self.admin = User.objects.create_user(username='admin', email='admin@teste.com', password='Password@123', is_staff=True)
+        self.admin.perfil.tipo = 'ADMINISTRADOR'
+        self.admin.perfil.aprovado = True
+        self.admin.perfil.save()
+
+        self.turma1 = Turma.objects.create(nome='3º Ano A', turno='MANHA')
+        self.turma2 = Turma.objects.create(nome='2º Ano B', turno='TARDE')
+        self.sala1 = Sala.objects.create(nome='Laboratório 1', capacidade=30, ativo=True)
+        self.sala2 = Sala.objects.create(nome='Laboratório 2', capacidade=30, ativo=True)
+
+    def test_painel_diario_renderizacao_basica(self):
+        """Home deve carregar com a grade_diaria contendo 9 aulas, salas ativas e coluna de equipamentos."""
+        self.client.force_login(self.prof1)
+        resp = self.client.get(reverse('home'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.context['dashboard'])
+        self.assertTrue(resp.context['is_hoje'])
+        self.assertEqual(len(resp.context['grade_diaria']), 9)
+        self.assertEqual(len(resp.context['salas']), 2)
+
+        # Checar estrutura da linha de aula
+        linha1 = resp.context['grade_diaria'][0]
+        self.assertEqual(linha1['aula'], 1)
+        self.assertEqual(len(linha1['colunas_salas']), 2)
+        self.assertIn('coluna_equip', linha1)
+
+    def test_painel_diario_navegacao_data(self):
+        """Navegação via ?data=YYYY-MM-DD deve carregar o painel para a data indicada."""
+        self.client.force_login(self.prof1)
+        resp = self.client.get(reverse('home') + '?data=2026-09-15')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['data_atual'], date(2026, 9, 15))
+        self.assertEqual(resp.context['dia_ant'], date(2026, 9, 14))
+        self.assertEqual(resp.context['dia_prox'], date(2026, 9, 16))
+        self.assertFalse(resp.context['is_hoje'])
+
+    def test_painel_diario_agrupamento_duas_aulas_sala(self):
+        """Duas aulas seguidas com mesmo professor, turma e sala devem ter rowspan=2 e a segunda linha skip=True."""
+        hoje = date.today()
+        ag1 = Agendamento.objects.create(
+            data=hoje, aula=1, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1
+        )
+        ag2 = Agendamento.objects.create(
+            data=hoje, aula=2, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1
+        )
+
+        self.client.force_login(self.prof1)
+        resp = self.client.get(reverse('home'))
+        self.assertEqual(resp.status_code, 200)
+
+        linha1 = resp.context['grade_diaria'][0]
+        col_sala1_l1 = next(c for c in linha1['colunas_salas'] if c['sala'].id == self.sala1.id)
+        self.assertTrue(col_sala1_l1['dupla'])
+        self.assertEqual(col_sala1_l1['rowspan'], 2)
+        self.assertFalse(col_sala1_l1['skip'])
+        self.assertEqual(col_sala1_l1['reserva'], ag1)
+        self.assertEqual(col_sala1_l1['reserva_segunda'], ag2)
+
+        linha2 = resp.context['grade_diaria'][1]
+        col_sala1_l2 = next(c for c in linha2['colunas_salas'] if c['sala'].id == self.sala1.id)
+        self.assertTrue(col_sala1_l2['skip'])
+
+        content = resp.content.decode('utf-8')
+        self.assertIn('2 aulas', content)
+        self.assertIn(f'data-id-segunda="{ag2.id}"', content)
+
+    def test_painel_diario_agrupamento_duas_aulas_equipamentos(self):
+        """Duas aulas seguidas com mesmos itens de equipamentos, professor e turma devem ter rowspan=2 na coluna de equipamentos."""
+        hoje = date.today()
+        ag1 = Agendamento.objects.create(
+            data=hoje, aula=3, tipo='DISPOSITIVO', professor=self.prof1, turma=self.turma1
+        )
+        ItemDispositivo.objects.create(agendamento=ag1, categoria='NOTEBOOK', quantidade=10)
+
+        ag2 = Agendamento.objects.create(
+            data=hoje, aula=4, tipo='DISPOSITIVO', professor=self.prof1, turma=self.turma1
+        )
+        ItemDispositivo.objects.create(agendamento=ag2, categoria='NOTEBOOK', quantidade=10)
+
+        self.client.force_login(self.prof1)
+        resp = self.client.get(reverse('home'))
+        self.assertEqual(resp.status_code, 200)
+
+        linha3 = resp.context['grade_diaria'][2]
+        self.assertTrue(linha3['coluna_equip']['dupla'])
+        self.assertEqual(linha3['coluna_equip']['rowspan'], 2)
+        self.assertFalse(linha3['coluna_equip']['skip'])
+
+        linha4 = resp.context['grade_diaria'][3]
+        self.assertTrue(linha4['coluna_equip']['skip'])
+
+        content = resp.content.decode('utf-8')
+        self.assertIn('Notebook: <strong>10</strong>', content)
+
+    def test_painel_diario_lixeira_cancelamento_permissoes(self):
+        """Admin deve ver botão de cancelar em todas as reservas do painel; professor vê apenas nas suas."""
+        hoje = date.today()
+        ag_prof1 = Agendamento.objects.create(
+            data=hoje, aula=1, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1
+        )
+        ag_prof2 = Agendamento.objects.create(
+            data=hoje, aula=1, tipo='SALA', professor=self.prof2, turma=self.turma2, sala=self.sala2
+        )
+
+        # Prof1 acessa o painel diário na home
+        self.client.force_login(self.prof1)
+        resp_prof1 = self.client.get(reverse('home'))
+        content_prof1 = resp_prof1.content.decode('utf-8')
+        self.assertIn(f'data-id="{ag_prof1.id}"', content_prof1)
+        self.assertNotIn(f'data-id="{ag_prof2.id}"', content_prof1)
+
+        # Admin acessa o painel diário na home
+        self.client.force_login(self.admin)
+        resp_admin = self.client.get(reverse('home'))
+        content_admin = resp_admin.content.decode('utf-8')
+        self.assertIn(f'data-id="{ag_prof1.id}"', content_admin)
+        self.assertIn(f'data-id="{ag_prof2.id}"', content_admin)
+
 
 
