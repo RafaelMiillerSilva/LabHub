@@ -5,12 +5,14 @@
 <style>
     .reserva-base {
         display: block;
-        padding: 8px 10px;
-        border-radius: 8px;
-        font-size: 11px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-family: var(--lh-font-modern, 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif);
         color: #1E293B;
         transition: all 0.15s ease;
         position: relative;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
 
     .reserva-link {
@@ -21,21 +23,21 @@
 
     .btn-cancelar-card {
         position: absolute;
-        bottom: 5px;
-        right: 5px;
-        width: 22px;
-        height: 22px;
+        bottom: 6px;
+        right: 6px;
+        width: 26px;
+        height: 26px;
         padding: 0;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         background: rgba(255, 255, 255, 0.95);
         border: 1px solid rgba(220, 38, 38, 0.35);
-        border-radius: 5px;
+        border-radius: 6px;
         cursor: pointer;
-        font-size: 11px;
+        font-size: 13px;
         line-height: 1;
-        opacity: 0.7;
+        opacity: 0.75;
         transition: all 0.15s ease;
         z-index: 5;
     }
@@ -174,15 +176,63 @@
     }
 
     .card-painel-diario--simples {
-        min-height: 68px;
+        min-height: 82px;
     }
 
     .card-painel-diario--duplo {
-        min-height: 104px;
+        min-height: 128px;
     }
 
     .reserva-link-com-acoes {
-        padding-right: 24px;
+        padding-right: 30px;
+    }
+
+    .card-turma-nome {
+        font-size: 14.5px;
+        font-weight: 700;
+        letter-spacing: -0.2px;
+        line-height: 1.3;
+        color: var(--lh-text);
+        font-family: var(--lh-font-modern, 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif);
+    }
+
+    .card-badge-dupla {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 7px;
+        border-radius: 6px;
+        font-family: var(--lh-font-modern, 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif);
+    }
+
+    .card-badge-equip {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-family: var(--lh-font-modern, 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif);
+    }
+
+    .card-professor-info {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--lh-text-muted);
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        line-height: 1.3;
+        font-family: var(--lh-font-modern, 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif);
+    }
+
+    .card-observacao-info {
+        font-size: 12px;
+        color: var(--lh-text-light);
+        font-style: italic;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.35;
+        font-family: var(--lh-font-modern, 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif);
     }
 </style>
 
@@ -321,27 +371,27 @@
                                 <div class="reserva-item reserva-base card-painel-diario {% if col.dupla %}card-painel-diario--duplo{% else %}card-painel-diario--simples{% endif %} {% if r.fixo %}reserva-fixo{% elif r.professor == request.user %}reserva-minha{% else %}reserva-outros{% endif %}"
                                      data-usuario="{{ r.professor.username }}">
                                     <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-link {% if is_admin or r.professor == request.user %}reserva-link-com-acoes{% endif %}" style="flex:1;">
-                                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; gap:4px;">
-                                            <strong style="font-size:12px; font-weight:700; color:var(--lh-text);">{{ r.turma.nome }}</strong>
-                                            <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
+                                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:5px; gap:6px;">
+                                            <strong class="card-turma-nome">{{ r.turma.nome }}</strong>
+                                            <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
                                                 {% if col.dupla %}
-                                                <span class="lh-badge lh-badge--primary" style="font-size:9px; padding:2px 5px;" title="Aula Dupla ({{ col.aula }}ª e {{ col.aula_fim }}ª aula)">⏱️ 2 aulas</span>
+                                                <span class="lh-badge lh-badge--primary card-badge-dupla" title="Aula Dupla ({{ col.aula }}ª e {{ col.aula_fim }}ª aula)">⏱️ 2 aulas</span>
                                                 {% endif %}
                                                 {% if r.fixo %}
-                                                <span title="Agendamento Fixo" style="font-size:11px;">📌</span>
+                                                <span title="Agendamento Fixo" style="font-size:13px;">📌</span>
                                                 {% endif %}
                                                 {% if r.professor == request.user %}
-                                                <span title="Sua reserva" style="font-size:10px;">🟢</span>
+                                                <span title="Sua reserva" style="font-size:12px;">🟢</span>
                                                 {% endif %}
                                             </div>
                                         </div>
 
-                                        <div style="font-size:11px; color:var(--lh-text-muted); margin-bottom:3px; display:flex; align-items:center; gap:4px;">
-                                            <span>👤</span> <span>{{ r.professor.get_full_name|default:r.professor.username }}</span>
+                                        <div class="card-professor-info">
+                                            <span style="font-size:14px;">👤</span> <span>{{ r.professor.get_full_name|default:r.professor.username }}</span>
                                         </div>
 
                                         {% if r.observacao %}
-                                        <div style="font-size:10px; color:var(--lh-text-light); font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ r.observacao }}">
+                                        <div class="card-observacao-info" title="{{ r.observacao }}">
                                             💬 {{ r.observacao }}
                                         </div>
                                         {% endif %}
@@ -379,38 +429,38 @@
                                     <div class="reserva-item reserva-base card-painel-diario--equip {% if col_eq.dupla %}card-painel-diario--duplo{% else %}card-painel-diario--simples{% endif %} {% if r.fixo %}reserva-fixo{% elif r.professor == request.user %}reserva-minha{% else %}reserva-outros{% endif %}"
                                          data-usuario="{{ r.professor.username }}">
                                         <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-link {% if is_admin or r.professor == request.user %}reserva-link-com-acoes{% endif %}" style="flex:1;">
-                                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; gap:4px;">
-                                                <strong style="font-size:12px; font-weight:700; color:var(--lh-text);">{{ r.turma.nome }}</strong>
-                                                <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
+                                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:5px; gap:6px;">
+                                                <strong class="card-turma-nome">{{ r.turma.nome }}</strong>
+                                                <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
                                                     {% if col_eq.dupla %}
-                                                    <span class="lh-badge lh-badge--warning" style="font-size:9px; padding:2px 5px;" title="Aula Dupla ({{ col_eq.aula }}ª e {{ col_eq.aula_fim }}ª aula)">⏱️ 2 aulas</span>
+                                                    <span class="lh-badge lh-badge--warning card-badge-dupla" title="Aula Dupla ({{ col_eq.aula }}ª e {{ col_eq.aula_fim }}ª aula)">⏱️ 2 aulas</span>
                                                     {% endif %}
                                                     {% if r.fixo %}
-                                                    <span title="Agendamento Fixo" style="font-size:11px;">📌</span>
+                                                    <span title="Agendamento Fixo" style="font-size:13px;">📌</span>
                                                     {% endif %}
                                                     {% if r.professor == request.user %}
-                                                    <span title="Sua reserva" style="font-size:10px;">🟢</span>
+                                                    <span title="Sua reserva" style="font-size:12px;">🟢</span>
                                                     {% endif %}
                                                 </div>
                                             </div>
 
                                             <!-- Quantidades de equipamentos detalhadas -->
-                                            <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+                                            <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:5px;">
                                                 {% for item in r.itens.all %}
-                                                <span class="lh-badge lh-badge--primary" style="font-size:10px; padding:2px 6px;">
+                                                <span class="lh-badge lh-badge--primary card-badge-equip">
                                                     💻 {{ item.get_categoria_display }}: <strong>{{ item.quantidade }}</strong>
                                                 </span>
                                                 {% empty %}
-                                                <span style="font-size:10px; color:var(--lh-text-muted);">Equipamentos</span>
+                                                <span style="font-size:12px; color:var(--lh-text-muted);">Equipamentos</span>
                                                 {% endfor %}
                                             </div>
 
-                                            <div style="font-size:11px; color:var(--lh-text-muted); margin-bottom:2px; display:flex; align-items:center; gap:4px;">
-                                                <span>👤</span> <span>{{ r.professor.get_full_name|default:r.professor.username }}</span>
+                                            <div class="card-professor-info">
+                                                <span style="font-size:14px;">👤</span> <span>{{ r.professor.get_full_name|default:r.professor.username }}</span>
                                             </div>
 
                                             {% if r.observacao %}
-                                            <div style="font-size:10px; color:var(--lh-text-light); font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ r.observacao }}">
+                                            <div class="card-observacao-info" title="{{ r.observacao }}">
                                                 💬 {{ r.observacao }}
                                             </div>
                                             {% endif %}
