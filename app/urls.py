@@ -57,6 +57,7 @@ urlpatterns = [
     # Chat
     path('chat/', views.chat_inbox, name='chat_inbox'),
     path('chat/<int:usuario_id>/', views.chat_conversa, name='chat_conversa'),
+    path('chat/api/contatos/', views.api_chat_contatos, name='api_chat_contatos'),
     path('chat/api/enviar/<int:usuario_id>/', views.api_chat_enviar, name='api_chat_enviar'),
     path('chat/api/buscar/<int:usuario_id>/', views.api_chat_buscar, name='api_chat_buscar'),
     path('chat/api/nao-lidas/', views.api_chat_nao_lidas, name='api_chat_nao_lidas'),

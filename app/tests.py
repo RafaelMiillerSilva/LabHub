@@ -324,3 +324,99 @@ class UsuarioEspacosTest(TestCase):
         user.refresh_from_db()
         self.assertEqual(user.username, 'Nome Atualizado Com Espacos')
 
+
+class ChatReativoTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user1 = User.objects.create_user(
+            username='professor1',
+            email='p1@escola.com',
+            password='SenhaSegura@123'
+        )
+        self.user1.perfil.tipo = 'PROFESSOR'
+        self.user1.perfil.aprovado = True
+        self.user1.perfil.save()
+
+        self.user2 = User.objects.create_user(
+            username='coordenador',
+            email='coord@escola.com',
+            password='SenhaSegura@123'
+        )
+        self.user2.perfil.tipo = 'ADMINISTRADOR'
+        self.user2.perfil.aprovado = True
+        self.user2.perfil.save()
+
+    def test_chat_inbox_html(self):
+        """Testa que a view chat_inbox renderiza HTML com a lista de contatos."""
+        self.client.force_login(self.user1)
+        response = self.client.get(reverse('chat_inbox'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'coordenador')
+        self.assertContains(response, 'chatApp')
+
+    def test_chat_inbox_ajax_retorna_json(self):
+        """Testa que chat_inbox com header AJAX devolve JSON com contatos."""
+        self.client.force_login(self.user1)
+        response = self.client.get(reverse('chat_inbox'), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['sucesso'])
+        self.assertTrue(len(data['contatos']) >= 1)
+        self.assertEqual(data['contatos'][0]['username'], 'coordenador')
+
+    def test_chat_conversa_html(self):
+        """Testa que chat_conversa acessado diretamente via GET renderiza a conversa ativa."""
+        self.client.force_login(self.user1)
+        response = self.client.get(reverse('chat_conversa', args=[self.user2.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'coordenador')
+        self.assertEqual(response.context['contato_ativo'], self.user2)
+
+    def test_chat_conversa_ajax_retorna_json(self):
+        """Testa que chat_conversa via AJAX devolve JSON para carga reativa sem refresh."""
+        self.client.force_login(self.user1)
+        response = self.client.get(
+            reverse('chat_conversa', args=[self.user2.id]),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['sucesso'])
+        self.assertEqual(data['contato']['id'], self.user2.id)
+        self.assertEqual(data['contato']['username'], 'coordenador')
+        self.assertIn('mensagens', data)
+
+    def test_api_chat_contatos_json(self):
+        """Testa endpoint api_chat_contatos para atualização em segundo plano."""
+        self.client.force_login(self.user1)
+        response = self.client.get(reverse('api_chat_contatos'), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['sucesso'])
+        self.assertEqual(data['contatos'][0]['id'], self.user2.id)
+
+    def test_api_chat_enviar_e_buscar(self):
+        """Testa envio de mensagem e busca via API AJAX."""
+        self.client.force_login(self.user1)
+        import json
+        response = self.client.post(
+            reverse('api_chat_enviar', args=[self.user2.id]),
+            data=json.dumps({'texto': 'Olá Coordenador!'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['sucesso'])
+        self.assertEqual(data['mensagem']['texto'], 'Olá Coordenador!')
+
+        # Agora user2 busca mensagens novas
+        self.client.force_login(self.user2)
+        response_busca = self.client.get(
+            reverse('api_chat_buscar', args=[self.user1.id]) + '?ultimo_id=0'
+        )
+        self.assertEqual(response_busca.status_code, 200)
+        data_busca = response_busca.json()
+        self.assertTrue(data_busca['sucesso'])
+        self.assertEqual(len(data_busca['mensagens']), 1)
+        self.assertEqual(data_busca['mensagens'][0]['texto'], 'Olá Coordenador!')
+
