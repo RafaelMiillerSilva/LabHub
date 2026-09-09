@@ -347,7 +347,10 @@
                         <th class="text-center" style="width:70px; background:var(--lh-surface-subtle); border-right:1px solid var(--lh-border);">Aula</th>
                         {% for s in salas %}
                         <th class="text-center" style="min-width:180px;">
-                            <span style="color:#047857;">🏫</span> {{ s.nome }}
+                            <div style="font-size:14px; font-weight:700;"><span style="color:#047857;">🏫</span> {{ s.nome }}</div>
+                            <div style="font-size:12px; font-weight:600; color:var(--lh-text-muted); margin-top:2px;">
+                                👥 {{ s.capacidade }} alunos
+                            </div>
                         </th>
                         {% endfor %}
                         <th class="text-center" style="min-width:210px;">
@@ -384,6 +387,19 @@
                                                 <span title="Sua reserva" style="font-size:12px;">🟢</span>
                                                 {% endif %}
                                             </div>
+                                        </div>
+
+                                        <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap;">
+                                            {% with total_alunos=r.turma.alunos.all|length %}
+                                            <span class="lh-badge lh-badge--primary" style="font-size:11px; font-weight:600; padding:2px 7px; border-radius:5px;" title="Quantidade de alunos da turma">
+                                                👥 {{ total_alunos }} aluno{{ total_alunos|pluralize:"s" }}
+                                            </span>
+                                            {% endwith %}
+                                            {% if col.sala.capacidade %}
+                                            <span style="font-size:11px; color:var(--lh-text-muted); font-weight:500;" title="Capacidade máxima da sala">
+                                                / máx. {{ col.sala.capacidade }}
+                                            </span>
+                                            {% endif %}
                                         </div>
 
                                         <div class="card-professor-info">
@@ -442,6 +458,14 @@
                                                     <span title="Sua reserva" style="font-size:12px;">🟢</span>
                                                     {% endif %}
                                                 </div>
+                                            </div>
+
+                                            <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap;">
+                                                {% with total_alunos=r.turma.alunos.all|length %}
+                                                <span class="lh-badge lh-badge--primary" style="font-size:11px; font-weight:600; padding:2px 7px; border-radius:5px;" title="Quantidade de alunos da turma">
+                                                    👥 {{ total_alunos }} aluno{{ total_alunos|pluralize:"s" }}
+                                                </span>
+                                                {% endwith %}
                                             </div>
 
                                             <!-- Quantidades de equipamentos detalhadas -->

@@ -287,7 +287,8 @@
                                 {% if s.ocupado %}
                                 <div class="aula-item aula-vermelho">
                                     <span class="lh-badge lh-badge--danger" style="float:right;">Ocupada</span>
-                                    <span class="nome-sala">{{ s.sala.nome }}</span><br>
+                                    <span class="nome-sala">{{ s.sala.nome }}</span>
+                                    {% if s.sala.capacidade %}<span class="info-sala" style="margin-left:6px;">(👥 {{ s.sala.capacidade }} alunos)</span>{% endif %}<br>
                                     <span class="info-sala">{{ s.turma }} — {{ s.professor }}</span>
                                     <div style="margin-top: 8px;">
                                         <a href="{% url 'relacao_agendamento' s.ag_id %}" class="lh-btn lh-btn--xs lh-btn--outline">📋 Ver Relação</a>
@@ -299,6 +300,7 @@
                                     <input type="checkbox" class="aula-check" name="reserva" value="{{ aula.numero }}:{{ s.sala.id }}">
                                     <span class="nome-sala">{{ s.sala.nome }}</span>
                                     {% if s.sala.localizacao %}<span class="info-sala"> — {{ s.sala.localizacao }}</span>{% endif %}
+                                    {% if s.sala.capacidade %}<span class="info-sala" style="margin-left:6px;">(👥 {{ s.sala.capacidade }} alunos)</span>{% endif %}
                                 </label>
                                 {% endif %}
                                 {% endfor %}
