@@ -265,6 +265,63 @@
                 {% csrf_token %}
                 <input type="hidden" name="tipo" value="sala">
 
+                <!-- 1. Informações do Agendamento (ANTES das aulas) -->
+                <div class="lh-card" style="margin-bottom: 20px;">
+                    <div class="lh-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <h3 class="lh-card-title" style="margin:0;">📝 1. Informações do Agendamento de Sala</h3>
+                        <span style="font-size:12px; color:var(--lh-text-muted);">Defina a turma antes de escolher as salas</span>
+                    </div>
+                    <div class="lh-card-body">
+                        {% if is_admin %}
+                        <div class="form-group" style="max-width:480px; margin-bottom:16px;">
+                            <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Agendar em nome de</label>
+                            <select name="professor" class="form-control">
+                                {% for p in professores %}
+                                <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+
+                        <div class="form-group" style="max-width:480px; margin-bottom:16px;">
+                            <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Turma do agendamento</label>
+                            <select name="turma" id="select-turma-sala" class="form-control select-turma-com-qtd" required>
+                                <option value="" data-alunos="0">— selecione a turma —</option>
+                                {% for t in turmas %}
+                                <option value="{{ t.id }}" data-alunos="{{ t.num_alunos }}">{{ t.nome }} ({{ t.get_turno_display }}) — {{ t.num_alunos }} aluno{{ t.num_alunos|pluralize:"s" }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="info-alunos-box" style="display:none; margin-top:8px;">
+                                <div class="lh-badge lh-badge--primary" style="font-size:13px; font-weight:600; padding:6px 12px; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+                                    <span>👥</span>
+                                    <span>Esta turma possui <strong class="qtd-alunos-val">0</strong> <span class="qtd-alunos-plural">alunos</span> cadastrados.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Observação (opcional)</label>
+                            <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: aula de reforço, apresentação de trabalhos, etc."></textarea>
+                        </div>
+
+                        {% if is_admin %}
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label style="display:flex; align-items:center; gap:10px; background:var(--lh-primary-light); padding:10px 14px; border-radius:8px; cursor:pointer; margin:0; max-width:480px;">
+                                <input type="checkbox" name="fixo" value="1" style="width:18px; height:18px; accent-color:var(--lh-primary); cursor:pointer;">
+                                <span style="font-weight:700; font-size:14px; color:var(--lh-primary);">📌 Fixar neste dia da semana</span>
+                            </label>
+                            <p style="font-size:12px; color:var(--lh-text-muted); margin:4px 0 0 2px;">O agendamento será repetido em todas as {{ dia_semana }}s até o final do ano letivo.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- 2. Escolha das Salas e Aulas -->
+                <div style="margin-bottom: 12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                    <h4 style="margin:0; font-size:15px; font-weight:700; color:var(--lh-text);">🏫 2. Selecione as Salas e Aulas Desejadas</h4>
+                    <span style="font-size:12px; color:var(--lh-text-muted);">Marque as opções livres desejadas</span>
+                </div>
+
                 <div class="panel-group" id="acordeao-salas" style="margin-bottom: 20px;">
                     {% for aula in aulas %}
                     <div class="panel panel-default painel-aula">
@@ -310,51 +367,10 @@
                     {% endfor %}
                 </div>
 
-                <div class="lh-card">
-                    <div class="lh-card-header">
-                        <h3 class="lh-card-title">📝 Finalizar Agendamento de Sala</h3>
-                    </div>
-                    <div class="lh-card-body">
-                        {% if is_admin %}
-                        <div class="form-group" style="max-width:400px; margin-bottom:16px;">
-                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Agendar em nome de</label>
-                            <select name="professor" class="form-control">
-                                {% for p in professores %}
-                                <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        {% endif %}
-
-                        <div class="form-group" style="max-width:400px; margin-bottom:16px;">
-                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Turma do agendamento</label>
-                            <select name="turma" class="form-control" required>
-                                <option value="">— selecione a turma —</option>
-                                {% for t in turmas %}
-                                <option value="{{ t.id }}">{{ t.nome }} ({{ t.get_turno_display }})</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Observação (opcional)</label>
-                            <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: aula de reforço, apresentação de trabalhos, etc."></textarea>
-                        </div>
-
-                        {% if is_admin %}
-                        <div class="form-group" style="margin-bottom:20px;">
-                            <label style="display:flex; align-items:center; gap:10px; background:var(--lh-primary-light); padding:10px 14px; border-radius:8px; cursor:pointer; margin:0; max-width:400px;">
-                                <input type="checkbox" name="fixo" value="1" style="width:18px; height:18px; accent-color:var(--lh-primary); cursor:pointer;">
-                                <span style="font-weight:700; font-size:14px; color:var(--lh-primary);">📌 Fixar neste dia da semana</span>
-                            </label>
-                            <p style="font-size:12px; color:var(--lh-text-muted); margin:4px 0 0 2px;">O agendamento será repetido em todas as {{ dia_semana }}s até o final do ano letivo.</p>
-                        </div>
-                        {% endif %}
-
-                        <button type="submit" class="lh-btn lh-btn--primary lh-btn--lg">
-                            📌 Confirmar Agendamento
-                        </button>
-                    </div>
+                <div style="margin: 24px 0 10px; text-align: right;">
+                    <button type="submit" class="lh-btn lh-btn--primary lh-btn--lg" style="font-size:15px; padding:12px 28px;">
+                        📌 Confirmar Agendamento de Sala
+                    </button>
                 </div>
             </form>
             {% endif %}
@@ -377,6 +393,66 @@
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="tipo" value="dispositivo">
+
+                <!-- 1. Informações do Agendamento (ANTES das aulas) -->
+                <div class="lh-card" style="margin-bottom: 20px;">
+                    <div class="lh-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <h3 class="lh-card-title" style="margin:0;">📝 1. Informações do Agendamento de Equipamentos</h3>
+                        <span style="font-size:12px; color:var(--lh-text-muted);">Defina a turma para orientar a quantidade de equipamentos</span>
+                    </div>
+                    <div class="lh-card-body">
+                        {% if is_admin %}
+                        <div class="form-group" style="max-width:480px; margin-bottom:16px;">
+                            <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Agendar em nome de</label>
+                            <select name="professor" class="form-control">
+                                {% for p in professores %}
+                                <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+
+                        <div class="form-group" style="max-width:480px; margin-bottom:16px;">
+                            <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Turma do agendamento</label>
+                            <select name="turma" id="select-turma-disp" class="form-control select-turma-com-qtd" required>
+                                <option value="" data-alunos="0">— selecione a turma —</option>
+                                {% for t in turmas %}
+                                <option value="{{ t.id }}" data-alunos="{{ t.num_alunos }}">{{ t.nome }} ({{ t.get_turno_display }}) — {{ t.num_alunos }} aluno{{ t.num_alunos|pluralize:"s" }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="info-alunos-box" style="display:none; margin-top:8px;">
+                                <div class="lh-badge lh-badge--primary" style="font-size:13px; font-weight:600; padding:6px 12px; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+                                    <span>👥</span>
+                                    <span>Esta turma possui <strong class="qtd-alunos-val">0</strong> <span class="qtd-alunos-plural">alunos</span> cadastrados.</span>
+                                </div>
+                                <div style="font-size:12px; color:var(--lh-text-muted); margin-top:5px;">
+                                    💡 Ajuste os controles deslizantes das aulas abaixo para solicitar a quantidade de equipamentos para esta turma.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Observação (opcional)</label>
+                            <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: trabalho em grupo, pesquisa na internet, etc."></textarea>
+                        </div>
+
+                        {% if is_admin %}
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label style="display:flex; align-items:center; gap:10px; background:var(--lh-primary-light); padding:10px 14px; border-radius:8px; cursor:pointer; margin:0; max-width:480px;">
+                                <input type="checkbox" name="fixo" value="1" style="width:18px; height:18px; accent-color:var(--lh-primary); cursor:pointer;">
+                                <span style="font-weight:700; font-size:14px; color:var(--lh-primary);">📌 Fixar neste dia da semana</span>
+                            </label>
+                            <p style="font-size:12px; color:var(--lh-text-muted); margin:4px 0 0 2px;">O agendamento será repetido em todas as {{ dia_semana }}s até o final do ano letivo.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- 2. Ajuste de Quantidades por Aula -->
+                <div style="margin-bottom: 12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                    <h4 style="margin:0; font-size:15px; font-weight:700; color:var(--lh-text);">💻 2. Ajuste a Quantidade de Dispositivos por Aula</h4>
+                    <span style="font-size:12px; color:var(--lh-text-muted);">Use os sliders ou botões + e −</span>
+                </div>
 
                 <div class="panel-group" id="acordeao-disp" style="margin-bottom: 20px;">
                     {% for aula in aulas_disp %}
@@ -447,51 +523,10 @@
                     {% endfor %}
                 </div>
 
-                <div class="lh-card">
-                    <div class="lh-card-header">
-                        <h3 class="lh-card-title">📝 Finalizar Agendamento de Equipamentos</h3>
-                    </div>
-                    <div class="lh-card-body">
-                        {% if is_admin %}
-                        <div class="form-group" style="max-width:400px; margin-bottom:16px;">
-                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Agendar em nome de</label>
-                            <select name="professor" class="form-control">
-                                {% for p in professores %}
-                                <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        {% endif %}
-
-                        <div class="form-group" style="max-width:400px; margin-bottom:16px;">
-                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Turma do agendamento</label>
-                            <select name="turma" class="form-control" required>
-                                <option value="">— selecione a turma —</option>
-                                {% for t in turmas %}
-                                <option value="{{ t.id }}">{{ t.nome }} ({{ t.get_turno_display }})</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label style="display:block; font-size:13px; font-weight:600; color:var(--lh-text); margin-bottom:6px;">Observação (opcional)</label>
-                            <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: trabalho em grupo, pesquisa na internet, etc."></textarea>
-                        </div>
-
-                        {% if is_admin %}
-                        <div class="form-group" style="margin-bottom:20px;">
-                            <label style="display:flex; align-items:center; gap:10px; background:var(--lh-primary-light); padding:10px 14px; border-radius:8px; cursor:pointer; margin:0; max-width:400px;">
-                                <input type="checkbox" name="fixo" value="1" style="width:18px; height:18px; accent-color:var(--lh-primary); cursor:pointer;">
-                                <span style="font-weight:700; font-size:14px; color:var(--lh-primary);">📌 Fixar neste dia da semana</span>
-                            </label>
-                            <p style="font-size:12px; color:var(--lh-text-muted); margin:4px 0 0 2px;">O agendamento será repetido em todas as {{ dia_semana }}s até o final do ano letivo.</p>
-                        </div>
-                        {% endif %}
-
-                        <button type="submit" class="lh-btn lh-btn--primary lh-btn--lg">
-                            📌 Confirmar Agendamento
-                        </button>
-                    </div>
+                <div style="margin: 24px 0 10px; text-align: right;">
+                    <button type="submit" class="lh-btn lh-btn--primary lh-btn--lg" style="font-size:15px; padding:12px 28px;">
+                        📌 Confirmar Agendamento de Equipamentos
+                    </button>
                 </div>
             </form>
             {% endif %}
@@ -502,6 +537,33 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        // Exibe quantidade de alunos da turma selecionada em tempo real
+        function atualizarQtdAlunos(select) {
+            let selectedOpt = select.options[select.selectedIndex];
+            let box = select.parentElement.querySelector('.info-alunos-box');
+            if (!box) return;
+            let val = selectedOpt ? selectedOpt.getAttribute('data-alunos') : null;
+            if (val !== null && select.value) {
+                let count = parseInt(val, 10) || 0;
+                let strong = box.querySelector('.qtd-alunos-val');
+                let plural = box.querySelector('.qtd-alunos-plural');
+                if (strong) strong.textContent = count;
+                if (plural) plural.textContent = count === 1 ? 'aluno' : 'alunos';
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
+        document.querySelectorAll('.select-turma-com-qtd').forEach(function(sel) {
+            sel.addEventListener('change', function() {
+                atualizarQtdAlunos(this);
+            });
+            if (sel.value) {
+                atualizarQtdAlunos(sel);
+            }
+        });
+
         // Atualiza valor do slider
         document.addEventListener("input", function (e) {
             if (e.target && e.target.classList.contains('dispo-slider')) {

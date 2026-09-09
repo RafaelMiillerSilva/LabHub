@@ -733,7 +733,7 @@ def agendamento_detalhe(request, ano, mes, dia):
         'mes_nome': MESES_PT[mes - 1],
         'aulas': aulas,
         'aulas_disp': aulas_disp,
-        'turmas': Turma.objects.order_by('nome', 'turno'),
+        'turmas': Turma.objects.annotate(num_alunos=Count('alunos')).order_by('nome', 'turno'),
         'tem_salas': bool(salas_ativas),
         'tem_equipamentos': bool(estoque_categoria),
         'is_admin': is_admin,
