@@ -214,4 +214,3 @@ Ao acessar o sistema pela primeira vez, siga esta ordem recomendada para colocar
 ## 📄 Licença
 
 Este projeto é disponibilizado sob a licença **MIT** — livre para uso educacional, comercial, estudo e modificações.
-Sinta-se livre para contribuir abrindo *Issues* ou enviando *Pull Requests*! 🚀
