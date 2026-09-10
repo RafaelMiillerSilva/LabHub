@@ -236,89 +236,95 @@
         </div>
     </div>
 
-    <ul class="nav nav-tabs nav-tabs-modern" role="tablist">
-        <li role="presentation" class="active">
-            <a href="#tab-sala" role="tab" data-toggle="tab">🏫 Sala de Aula</a>
-        </li>
-        <li role="presentation">
-            <a href="#tab-movel" role="tab" data-toggle="tab">💻 Equipamentos Móveis</a>
-        </li>
-    </ul>
+    {% if not turmas %}
+    <div class="lh-card" style="padding:24px; text-align:center; color:var(--lh-text-muted); margin-bottom: 24px;">
+        <p style="margin:0 0 10px; font-size:15px;">Nenhuma turma cadastrada no sistema.</p>
+        <a href="{% url 'turmas' %}" class="lh-btn lh-btn--primary lh-btn--sm">Cadastrar Turmas</a>
+    </div>
+    {% else %}
 
-    <div class="tab-content">
+    <form method="post" id="form-agendamento">
+        {% csrf_token %}
+        <input type="hidden" name="tipo" id="input-tipo-agendamento" value="sala">
 
-        <!-- ===================== ABA 1: SALA DE AULA ===================== -->
-        <div role="tabpanel" class="tab-pane active" id="tab-sala">
-            {% if not tem_salas %}
-            <div class="lh-card" style="padding:24px; text-align:center; color:var(--lh-text-muted);">
-                <p style="margin:0 0 10px; font-size:15px;">Nenhuma sala cadastrada no sistema.</p>
-                <a href="{% url 'salas' %}" class="lh-btn lh-btn--primary lh-btn--sm">Cadastrar Salas</a>
+        <!-- 1. Informações do Agendamento (LADO DE FORA, EM CIMA DAS ABAS) -->
+        <div class="lh-card" style="margin-bottom: 24px;">
+            <div class="lh-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <h3 class="lh-card-title" style="margin:0;">📝 1. Informações do Agendamento de Sala e Dispositivos</h3>
+                <span style="font-size:12px; color:var(--lh-text-muted);">Defina a turma e os dados gerais antes de escolher os espaços ou equipamentos</span>
             </div>
-            {% elif not turmas %}
-            <div class="lh-card" style="padding:24px; text-align:center; color:var(--lh-text-muted);">
-                <p style="margin:0 0 10px; font-size:15px;">Nenhuma turma cadastrada.</p>
-                <a href="{% url 'turmas' %}" class="lh-btn lh-btn--primary lh-btn--sm">Cadastrar Turmas</a>
-            </div>
-            {% else %}
+            <div class="lh-card-body">
+                {% if is_admin %}
+                <div class="form-group" style="max-width:480px; margin-bottom:16px;">
+                    <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Agendar em nome de</label>
+                    <select name="professor" class="form-control">
+                        {% for p in professores %}
+                        <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
 
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="tipo" value="sala">
-
-                <!-- 1. Informações do Agendamento (ANTES das aulas) -->
-                <div class="lh-card" style="margin-bottom: 20px;">
-                    <div class="lh-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                        <h3 class="lh-card-title" style="margin:0;">📝 1. Informações do Agendamento de Sala</h3>
-                        <span style="font-size:12px; color:var(--lh-text-muted);">Defina a turma antes de escolher as salas</span>
-                    </div>
-                    <div class="lh-card-body">
-                        {% if is_admin %}
-                        <div class="form-group" style="max-width:480px; margin-bottom:16px;">
-                            <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Agendar em nome de</label>
-                            <select name="professor" class="form-control">
-                                {% for p in professores %}
-                                <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
-                                {% endfor %}
-                            </select>
+                <div class="form-group" style="max-width:480px; margin-bottom:16px;">
+                    <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Turma do agendamento</label>
+                    <select name="turma" id="select-turma-geral" class="form-control select-turma-com-qtd" required>
+                        <option value="" data-alunos="0">— selecione a turma —</option>
+                        {% for t in turmas %}
+                        <option value="{{ t.id }}" data-alunos="{{ t.num_alunos }}">{{ t.nome }} ({{ t.get_turno_display }}) — {{ t.num_alunos }} aluno{{ t.num_alunos|pluralize:"s" }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="info-alunos-box" style="display:none; margin-top:8px;">
+                        <div class="lh-badge lh-badge--primary" style="font-size:13px; font-weight:600; padding:6px 12px; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+                            <span>👥</span>
+                            <span>Esta turma possui <strong class="qtd-alunos-val">0</strong> <span class="qtd-alunos-plural">alunos</span> cadastrados.</span>
                         </div>
-                        {% endif %}
-
-                        <div class="form-group" style="max-width:480px; margin-bottom:16px;">
-                            <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Turma do agendamento</label>
-                            <select name="turma" id="select-turma-sala" class="form-control select-turma-com-qtd" required>
-                                <option value="" data-alunos="0">— selecione a turma —</option>
-                                {% for t in turmas %}
-                                <option value="{{ t.id }}" data-alunos="{{ t.num_alunos }}">{{ t.nome }} ({{ t.get_turno_display }}) — {{ t.num_alunos }} aluno{{ t.num_alunos|pluralize:"s" }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="info-alunos-box" style="display:none; margin-top:8px;">
-                                <div class="lh-badge lh-badge--primary" style="font-size:13px; font-weight:600; padding:6px 12px; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
-                                    <span>👥</span>
-                                    <span>Esta turma possui <strong class="qtd-alunos-val">0</strong> <span class="qtd-alunos-plural">alunos</span> cadastrados.</span>
-                                </div>
-                            </div>
+                        <div style="font-size:12px; color:var(--lh-text-muted); margin-top:5px;">
+                            💡 Escolha uma das abas abaixo para reservar Salas/Laboratórios ou solicitar Dispositivos Móveis para esta turma.
                         </div>
-
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Observação (opcional)</label>
-                            <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: aula de reforço, apresentação de trabalhos, etc."></textarea>
-                        </div>
-
-                        {% if is_admin %}
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label style="display:flex; align-items:center; gap:10px; background:var(--lh-primary-light); padding:10px 14px; border-radius:8px; cursor:pointer; margin:0; max-width:480px;">
-                                <input type="checkbox" name="fixo" value="1" style="width:18px; height:18px; accent-color:var(--lh-primary); cursor:pointer;">
-                                <span style="font-weight:700; font-size:14px; color:var(--lh-primary);">📌 Fixar neste dia da semana</span>
-                            </label>
-                            <p style="font-size:12px; color:var(--lh-text-muted); margin:4px 0 0 2px;">O agendamento será repetido em todas as {{ dia_semana }}s até o final do ano letivo.</p>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
 
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Observação (opcional)</label>
+                    <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: aula prática de laboratório, pesquisa na web, apresentação de trabalhos, etc."></textarea>
+                </div>
+
+                {% if is_admin %}
+                <div class="form-group" style="margin-bottom:8px;">
+                    <label style="display:flex; align-items:center; gap:10px; background:var(--lh-primary-light); padding:10px 14px; border-radius:8px; cursor:pointer; margin:0; max-width:480px;">
+                        <input type="checkbox" name="fixo" value="1" style="width:18px; height:18px; accent-color:var(--lh-primary); cursor:pointer;">
+                        <span style="font-weight:700; font-size:14px; color:var(--lh-primary);">📌 Fixar neste dia da semana</span>
+                    </label>
+                    <p style="font-size:12px; color:var(--lh-text-muted); margin:4px 0 0 2px;">O agendamento será repetido em todas as {{ dia_semana }}s até o final do ano letivo.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ===================== ABAS: SALAS/LABORATÓRIOS E DISPOSITIVOS MÓVEIS ===================== -->
+        <ul class="nav nav-tabs nav-tabs-modern" role="tablist" style="margin-bottom: 20px;">
+            <li role="presentation" class="active">
+                <a href="#tab-sala" role="tab" data-toggle="tab">🏫 Salas e Laboratórios</a>
+            </li>
+            <li role="presentation">
+                <a href="#tab-movel" role="tab" data-toggle="tab">💻 Dispositivos Móveis</a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+
+            <!-- ===================== ABA 1: SALAS E LABORATÓRIOS ===================== -->
+            <div role="tabpanel" class="tab-pane active" id="tab-sala">
+                {% if not tem_salas %}
+                <div class="lh-card" style="padding:24px; text-align:center; color:var(--lh-text-muted);">
+                    <p style="margin:0 0 10px; font-size:15px;">Nenhuma sala ou laboratório cadastrado no sistema.</p>
+                    <a href="{% url 'salas' %}" class="lh-btn lh-btn--primary lh-btn--sm">Cadastrar Salas</a>
+                </div>
+                {% else %}
+
                 <!-- 2. Escolha das Salas e Aulas -->
                 <div style="margin-bottom: 12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-                    <h4 style="margin:0; font-size:15px; font-weight:700; color:var(--lh-text);">🏫 2. Selecione as Salas e Aulas Desejadas</h4>
+                    <h4 style="margin:0; font-size:15px; font-weight:700; color:var(--lh-text);">🏫 2. Selecione as Salas/Laboratórios e Aulas Desejadas</h4>
                     <span style="font-size:12px; color:var(--lh-text-muted);">Marque as opções livres desejadas</span>
                 </div>
 
@@ -368,85 +374,21 @@
                 </div>
 
                 <div style="margin: 24px 0 10px; text-align: right;">
-                    <button type="submit" class="lh-btn lh-btn--primary lh-btn--lg" style="font-size:15px; padding:12px 28px;">
+                    <button type="submit" name="tipo" value="sala" class="lh-btn lh-btn--primary lh-btn--lg btn-submit-agendamento" style="font-size:15px; padding:12px 28px;">
                         📌 Confirmar Agendamento de Sala
                     </button>
                 </div>
-            </form>
-            {% endif %}
-        </div>
-
-        <!-- ================== ABA 2: EQUIPAMENTOS MÓVEIS ================== -->
-        <div role="tabpanel" class="tab-pane" id="tab-movel">
-            {% if not tem_equipamentos %}
-            <div class="lh-card" style="padding:24px; text-align:center; color:var(--lh-text-muted);">
-                <p style="margin:0 0 10px; font-size:15px;">Nenhum equipamento cadastrado no sistema.</p>
-                <a href="{% url 'equipamentos' %}" class="lh-btn lh-btn--primary lh-btn--sm">Cadastrar Equipamentos</a>
+                {% endif %}
             </div>
-            {% elif not turmas %}
-            <div class="lh-card" style="padding:24px; text-align:center; color:var(--lh-text-muted);">
-                <p style="margin:0 0 10px; font-size:15px;">Nenhuma turma cadastrada.</p>
-                <a href="{% url 'turmas' %}" class="lh-btn lh-btn--primary lh-btn--sm">Cadastrar Turmas</a>
-            </div>
-            {% else %}
 
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="tipo" value="dispositivo">
-
-                <!-- 1. Informações do Agendamento (ANTES das aulas) -->
-                <div class="lh-card" style="margin-bottom: 20px;">
-                    <div class="lh-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                        <h3 class="lh-card-title" style="margin:0;">📝 1. Informações do Agendamento de Equipamentos</h3>
-                        <span style="font-size:12px; color:var(--lh-text-muted);">Defina a turma para orientar a quantidade de equipamentos</span>
-                    </div>
-                    <div class="lh-card-body">
-                        {% if is_admin %}
-                        <div class="form-group" style="max-width:480px; margin-bottom:16px;">
-                            <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Agendar em nome de</label>
-                            <select name="professor" class="form-control">
-                                {% for p in professores %}
-                                <option value="{{ p.id }}" {% if p.id == user.id %}selected{% endif %}>{{ p.get_full_name|default:p.username }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        {% endif %}
-
-                        <div class="form-group" style="max-width:480px; margin-bottom:16px;">
-                            <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Turma do agendamento</label>
-                            <select name="turma" id="select-turma-disp" class="form-control select-turma-com-qtd" required>
-                                <option value="" data-alunos="0">— selecione a turma —</option>
-                                {% for t in turmas %}
-                                <option value="{{ t.id }}" data-alunos="{{ t.num_alunos }}">{{ t.nome }} ({{ t.get_turno_display }}) — {{ t.num_alunos }} aluno{{ t.num_alunos|pluralize:"s" }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="info-alunos-box" style="display:none; margin-top:8px;">
-                                <div class="lh-badge lh-badge--primary" style="font-size:13px; font-weight:600; padding:6px 12px; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
-                                    <span>👥</span>
-                                    <span>Esta turma possui <strong class="qtd-alunos-val">0</strong> <span class="qtd-alunos-plural">alunos</span> cadastrados.</span>
-                                </div>
-                                <div style="font-size:12px; color:var(--lh-text-muted); margin-top:5px;">
-                                    💡 Ajuste os controles deslizantes das aulas abaixo para solicitar a quantidade de equipamentos para esta turma.
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label style="display:block; font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:6px;">Observação (opcional)</label>
-                            <textarea name="observacao" class="form-control" rows="2" placeholder="Ex: trabalho em grupo, pesquisa na internet, etc."></textarea>
-                        </div>
-
-                        {% if is_admin %}
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label style="display:flex; align-items:center; gap:10px; background:var(--lh-primary-light); padding:10px 14px; border-radius:8px; cursor:pointer; margin:0; max-width:480px;">
-                                <input type="checkbox" name="fixo" value="1" style="width:18px; height:18px; accent-color:var(--lh-primary); cursor:pointer;">
-                                <span style="font-weight:700; font-size:14px; color:var(--lh-primary);">📌 Fixar neste dia da semana</span>
-                            </label>
-                            <p style="font-size:12px; color:var(--lh-text-muted); margin:4px 0 0 2px;">O agendamento será repetido em todas as {{ dia_semana }}s até o final do ano letivo.</p>
-                        </div>
-                        {% endif %}
-                    </div>
+            <!-- ================== ABA 2: DISPOSITIVOS MÓVEIS ================== -->
+            <div role="tabpanel" class="tab-pane" id="tab-movel">
+                {% if not tem_equipamentos %}
+                <div class="lh-card" style="padding:24px; text-align:center; color:var(--lh-text-muted);">
+                    <p style="margin:0 0 10px; font-size:15px;">Nenhum equipamento cadastrado no sistema.</p>
+                    <a href="{% url 'equipamentos' %}" class="lh-btn lh-btn--primary lh-btn--sm">Cadastrar Equipamentos</a>
                 </div>
+                {% else %}
 
                 <!-- 2. Ajuste de Quantidades por Aula -->
                 <div style="margin-bottom: 12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
@@ -524,15 +466,16 @@
                 </div>
 
                 <div style="margin: 24px 0 10px; text-align: right;">
-                    <button type="submit" class="lh-btn lh-btn--primary lh-btn--lg" style="font-size:15px; padding:12px 28px;">
+                    <button type="submit" name="tipo" value="dispositivo" class="lh-btn lh-btn--primary lh-btn--lg btn-submit-agendamento" style="font-size:15px; padding:12px 28px;">
                         📌 Confirmar Agendamento de Equipamentos
                     </button>
                 </div>
-            </form>
-            {% endif %}
-        </div>
+                {% endif %}
+            </div>
 
-    </div>
+        </div>
+    </form>
+    {% endif %}
 </div>
 
 <script>
@@ -562,6 +505,72 @@
             if (sel.value) {
                 atualizarQtdAlunos(sel);
             }
+        });
+
+        // Garante que o input hidden 'tipo' acompanhe o botão clicado
+        document.querySelectorAll('.btn-submit-agendamento').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var tipo = this.getAttribute('value');
+                var inputTipo = document.getElementById('input-tipo-agendamento');
+                if (tipo && inputTipo) {
+                    inputTipo.value = tipo;
+                }
+            });
+        });
+
+        // Alternância de abas Bootstrap atualiza o tipo padrão
+        if (window.jQuery) {
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+                var target = $(e.target).attr('href');
+                var inputTipo = document.getElementById('input-tipo-agendamento');
+                if (inputTipo) {
+                    inputTipo.value = (target === '#tab-movel') ? 'dispositivo' : 'sala';
+                }
+            });
+        }
+
+        // Validação e isolamento antes de enviar o formulário
+        var formAgendamento = document.getElementById('form-agendamento');
+        if (formAgendamento) {
+            formAgendamento.addEventListener('submit', function(e) {
+                var inputTipo = document.getElementById('input-tipo-agendamento');
+                var tipo = inputTipo ? inputTipo.value : 'sala';
+
+                if (tipo === 'sala') {
+                    var checks = document.querySelectorAll('#tab-sala .aula-check:checked');
+                    if (checks.length === 0) {
+                        e.preventDefault();
+                        alert('Por favor, selecione pelo menos uma sala/laboratório disponível antes de confirmar o agendamento.');
+                        return false;
+                    }
+                    // Desabilita sliders de dispositivos para enviar apenas salas
+                    document.querySelectorAll('#tab-movel input, #tab-movel select').forEach(function(inp) {
+                        inp.disabled = true;
+                    });
+                } else if (tipo === 'dispositivo') {
+                    var sliders = document.querySelectorAll('#tab-movel .dispo-slider');
+                    var totalQtd = 0;
+                    sliders.forEach(function(s) {
+                        totalQtd += parseInt(s.value, 10) || 0;
+                    });
+                    if (totalQtd === 0) {
+                        e.preventDefault();
+                        alert('Por favor, selecione a quantidade de pelo menos um dispositivo móvel antes de confirmar o agendamento.');
+                        return false;
+                    }
+                    // Desabilita checkboxes de salas para enviar apenas dispositivos
+                    document.querySelectorAll('#tab-sala input, #tab-sala select').forEach(function(inp) {
+                        inp.disabled = true;
+                    });
+                }
+            });
+        }
+
+        // Reativa inputs se o usuário voltar pelo cache do navegador
+        window.addEventListener('pageshow', function() {
+            document.querySelectorAll('#form-agendamento input, #form-agendamento select').forEach(function(inp) {
+                inp.disabled = false;
+            });
         });
 
         // Atualiza valor do slider

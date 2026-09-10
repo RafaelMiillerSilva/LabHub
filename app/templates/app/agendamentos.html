@@ -218,6 +218,48 @@
         color: var(--lh-primary);
     }
 
+    .th-dia-clicavel {
+        padding: 0 !important;
+        vertical-align: middle !important;
+    }
+
+    .th-dia-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none !important;
+        padding: 8px 4px;
+        color: inherit;
+        border-radius: var(--lh-radius-sm);
+        transition: all 0.15s ease;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+        user-select: none;
+    }
+
+    .th-dia-link:hover {
+        background-color: var(--lh-surface-subtle);
+        transform: translateY(-1px);
+    }
+
+    .th-dia-link:hover .th-numero {
+        color: var(--lh-primary) !important;
+    }
+
+    .th-dia-link.hoje:hover {
+        background-color: rgba(99, 102, 241, 0.15);
+    }
+
+    [data-theme="dark"] .th-dia-link:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    [data-theme="dark"] .th-dia-link.hoje:hover {
+        background-color: rgba(99, 102, 241, 0.25);
+    }
+
     .cal-header {
         padding: 20px 24px;
         background: var(--lh-surface);
@@ -594,15 +636,22 @@
                         <th class="text-center" style="width:55px;">Aula</th>
                         {% for cabecalho in dias_cabecalho %}
                         {% if cabecalho.hoje %}
-                        <th class="text-center th-hoje" style="width:calc((100% - 55px) / 7);">
-                            <div class="th-nome-curto">{{ cabecalho.nome_curto }}</div>
-                            <div class="th-numero">{{ cabecalho.numero }}</div>
+                        <th class="text-center th-hoje th-dia-clicavel" style="width:calc((100% - 55px) / 7);">
+                            <a href="{% url 'agendamento_detalhe' ano=cabecalho.data.year mes=cabecalho.data.month dia=cabecalho.data.day %}"
+                               class="th-dia-link hoje"
+                               title="Ver detalhes de hoje ({{ cabecalho.data|date:'d/m/Y' }})">
+                                <div class="th-nome-curto">{{ cabecalho.nome_curto }}</div>
+                                <div class="th-numero">{{ cabecalho.numero }}</div>
+                            </a>
                         </th>
                         {% else %}
-                        <th class="text-center" style="width:calc((100% - 55px) / 7);">
-                            <div style="font-size:11px; text-transform:uppercase;">{{ cabecalho.nome_curto }}</div>
-                            <div style="font-size:16px; font-weight:700; color:var(--lh-text);">{{ cabecalho.numero }}
-                            </div>
+                        <th class="text-center th-dia-clicavel" style="width:calc((100% - 55px) / 7);">
+                            <a href="{% url 'agendamento_detalhe' ano=cabecalho.data.year mes=cabecalho.data.month dia=cabecalho.data.day %}"
+                               class="th-dia-link"
+                               title="Ver detalhes de {{ cabecalho.data|date:'d/m/Y' }}">
+                                <div style="font-size:11px; text-transform:uppercase; color:var(--lh-text-muted);">{{ cabecalho.nome_curto }}</div>
+                                <div class="th-numero" style="font-size:16px; font-weight:700; color:var(--lh-text);">{{ cabecalho.numero }}</div>
+                            </a>
                         </th>
                         {% endif %}
                         {% endfor %}
