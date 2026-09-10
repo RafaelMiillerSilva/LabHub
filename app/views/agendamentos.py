@@ -400,33 +400,54 @@ def agendamentos(request):
 
     try:
         ano = int(request.GET.get('ano', hoje.year))
-        mes = int(request.GET.get('mes', hoje.month))
-        dia = int(request.GET.get('dia', hoje.day))
-        data_atual = date(ano, mes, dia)
     except (TypeError, ValueError):
-        ano, mes, dia = hoje.year, hoje.month, hoje.day
-        data_atual = hoje
+        ano = hoje.year
+
+    try:
+        mes = int(request.GET.get('mes', hoje.month))
+    except (TypeError, ValueError):
+        mes = hoje.month
 
     if not (1 <= mes <= 12):
         mes = hoje.month
 
+    dia_param = request.GET.get('dia')
+    if dia_param:
+        try:
+            dia = int(dia_param)
+        except (TypeError, ValueError):
+            dia = hoje.day if (ano == hoje.year and mes == hoje.month) else 1
+    else:
+        dia = hoje.day if (ano == hoje.year and mes == hoje.month) else 1
+
+    try:
+        data_atual = date(ano, mes, dia)
+    except ValueError:
+        ultimo_dia = calendar.monthrange(ano, mes)[1]
+        dia = min(max(1, dia), ultimo_dia)
+        try:
+            data_atual = date(ano, mes, dia)
+        except ValueError:
+            ano, mes, dia = hoje.year, hoje.month, hoje.day
+            data_atual = hoje
+
     dia_ant = data_atual - timedelta(days=1)
     dia_prox = data_atual + timedelta(days=1)
 
-    mes_ant = data_atual.month - 1
-    ano_mes_ant = data_atual.year
+    mes_ant = mes - 1
+    ano_mes_ant = ano
     if mes_ant < 1:
         mes_ant = 12
         ano_mes_ant -= 1
 
-    mes_prox = data_atual.month + 1
-    ano_mes_prox = data_atual.year
+    mes_prox = mes + 1
+    ano_mes_prox = ano
     if mes_prox > 12:
         mes_prox = 1
         ano_mes_prox += 1
 
-    ano_ant = data_atual.year - 1
-    ano_prox = data_atual.year + 1
+    ano_ant = ano - 1
+    ano_prox = ano + 1
 
     cal = calendar.Calendar(firstweekday=6)
     semanas = []
@@ -447,6 +468,9 @@ def agendamentos(request):
     dias_para_domingo = data_atual.isoweekday() % 7
     domingo = data_atual - timedelta(days=dias_para_domingo)
     sabado = domingo + timedelta(days=6)
+
+    semana_ant = domingo - timedelta(days=7)
+    semana_prox = domingo + timedelta(days=7)
 
     reservas_qs = (
         Agendamento.objects.filter(data__range=(domingo, sabado))
@@ -502,6 +526,8 @@ def agendamentos(request):
         'dias_cabecalho': dias_cabecalho,
         'domingo': domingo,
         'sabado': sabado,
+        'semana_ant': semana_ant,
+        'semana_prox': semana_prox,
     }
     return render(request, 'app/agendamentos.html', context)
 

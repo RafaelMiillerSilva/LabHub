@@ -4,7 +4,8 @@
 <!-- ==================== ESTILOS MODERNOS DO CALENDÁRIO ==================== -->
 <style>
     .cal-card {
-        max-width: 820px;
+        max-width: 1200px;
+        width: 100%;
         margin: 0 auto;
         border: 1px solid var(--lh-border);
         border-radius: var(--lh-radius-lg);
@@ -482,9 +483,9 @@
 
                 <!-- Botões de navegação -->
                 <div class="cal-nav">
-                    <a href="?ano={{ ano_ant }}&mes={{ mes_ant }}" class="btn btn-default">◀ Mês anterior</a>
-                    <a href="?ano={{ hoje_ano }}&mes={{ hoje_mes }}" class="btn btn-primary">Hoje</a>
-                    <a href="?ano={{ ano_prox }}&mes={{ mes_prox }}" class="btn btn-default">Próximo mês ▶</a>
+                    <a href="?ano={{ ano_mes_ant }}&mes={{ mes_ant }}" class="btn btn-default">◀ Mês anterior</a>
+                    <a href="?ano={{ hoje_ano }}&mes={{ hoje_mes }}&dia={{ hoje_dia }}" class="btn btn-primary">Hoje</a>
+                    <a href="?ano={{ ano_mes_prox }}&mes={{ mes_prox }}" class="btn btn-default">Próximo mês ▶</a>
                 </div>
             </div>
         </div>
@@ -544,7 +545,7 @@
         <div class="lh-card-header"
             style="background:var(--lh-surface-subtle); border-bottom:1px solid var(--lh-border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
             <!-- Navegador de Semanas -->
-            <div
+            <div class="lh-date-navigator cal-week-nav"
                 style="display:inline-flex; align-items:center; background:var(--lh-surface); border:1px solid var(--lh-border); border-radius:8px; padding:4px 8px;">
                 <a href="?dia={{ semana_ant.day }}&mes={{ semana_ant.month }}&ano={{ semana_ant.year }}"
                     class="lh-btn lh-btn--xs lh-btn--ghost" style="padding:4px 8px;">◀</a>
@@ -785,7 +786,7 @@
         function isNavLink(link) {
             if (link.matches('.cal-dropdowns-group a')) return true;
             if (link.matches('.cal-nav a')) return true;
-            if (link.matches('.lh-date-navigator a')) return true;
+            if (link.matches('.lh-date-navigator a, .cal-week-nav a')) return true;
             return false;
         }
 
