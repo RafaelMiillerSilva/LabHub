@@ -444,6 +444,13 @@
 
 <div class="cal-container-wrap">
 
+    <!-- Título do Calendário Mensal -->
+    <div style="max-width:1200px; width:100%; margin:0 auto 12px; display:flex; align-items:center; gap:8px;">
+        <h2 style="margin:0; font-size:18px; font-weight:800; color:var(--lh-text); text-transform:uppercase; letter-spacing:0.04em; display:flex; align-items:center; gap:8px;">
+            <span>📅</span> CALENDÁRIO
+        </h2>
+    </div>
+
     <!-- Card Principal do Calendário -->
     <div class="cal-card">
         <div class="cal-header">
@@ -519,11 +526,18 @@
     </p>
 
     <!-- ===================== BLOCO: PDF E AGENDA SEMANAL ===================== -->
+    <!-- Título da Agenda Semanal -->
+    <div style="max-width:1200px; width:100%; margin:0 auto 12px; display:flex; align-items:center; gap:8px;">
+        <h2 style="margin:0; font-size:18px; font-weight:800; color:var(--lh-text); text-transform:uppercase; letter-spacing:0.04em; display:flex; align-items:center; gap:8px;">
+            <span>📋</span> AGENDA SEMANAL
+        </h2>
+    </div>
+
     <div class="lh-card" style="max-width:1200px; width:100%; margin: 0 auto 40px;">
         <div class="lh-card-header"
             style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
             <div style="display:flex; align-items:center; gap:12px;">
-                <h3 style="margin:0; font-size:18px; font-weight:700; color:var(--lh-text);">Agenda Semanal</h3>
+                <span style="font-size:14px; font-weight:600; color:var(--lh-text-muted);">Visualização da grade de aulas e reservas da semana</span>
             </div>
             <!-- Formulário de PDF -->
             <form action="{% url 'exportar_excel_mes' %}" method="get"
