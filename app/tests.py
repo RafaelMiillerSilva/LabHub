@@ -710,4 +710,108 @@ class PainelDiarioHomeTest(TestCase):
         self.assertIn(f'data-id="{ag_prof2.id}"', content_admin)
 
 
+class AgendamentosRelacaoExportTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.prof1 = User.objects.create_user(username='prof_rel1', email='prof1@rel.com', password='Password@123')
+        self.prof1.perfil.tipo = 'PROFESSOR'
+        self.prof1.perfil.aprovado = True
+        self.prof1.perfil.save()
+
+        self.prof2 = User.objects.create_user(username='prof_rel2', email='prof2@rel.com', password='Password@123')
+        self.prof2.perfil.tipo = 'PROFESSOR'
+        self.prof2.perfil.aprovado = True
+        self.prof2.perfil.save()
+
+        self.turma = Turma.objects.create(nome='1º Ano EM', turno='MANHA')
+        self.sala = Sala.objects.create(nome='Lab Multiuso')
+
+        self.d1 = date(2026, 9, 1)
+        self.d2 = date(2026, 9, 5)
+        self.d3 = date(2026, 9, 10)
+
+        self.ag1 = Agendamento.objects.create(data=self.d1, aula=1, tipo='SALA', professor=self.prof1, turma=self.turma, sala=self.sala, observacao='Obs 1')
+        self.ag2 = Agendamento.objects.create(data=self.d2, aula=2, tipo='SALA', professor=self.prof2, turma=self.turma, sala=self.sala, observacao='Obs 2')
+        self.ag3 = Agendamento.objects.create(data=self.d3, aula=3, tipo='SALA', professor=self.prof1, turma=self.turma, sala=self.sala, observacao='Obs 3')
+
+    def test_navbar_renomeada_para_calendario(self):
+        """Item de menu na navbar foi renomeado de Agendamentos para Calendário preservando a rota."""
+        self.client.force_login(self.prof1)
+        resp = self.client.get(reverse('home'))
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode('utf-8')
+        self.assertIn(f'<a href="{reverse("agendamentos")}">Calendário</a>', content)
+
+    def test_aba_relacao_listagem_e_ordenacao(self):
+        """Aba Relação exibe agendamentos ordenados de forma decrescente por data."""
+        self.client.force_login(self.prof1)
+        resp = self.client.get(reverse('agendamentos'), {'aba': 'relacao'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['aba_ativa'], 'relacao')
+
+        agendamentos = list(resp.context['agendamentos_relacao'])
+        # Ordenação decrescente: ag3 (10/09), ag2 (05/09), ag1 (01/09)
+        self.assertEqual([a.id for a in agendamentos], [self.ag3.id, self.ag2.id, self.ag1.id])
+
+    def test_aba_relacao_filtros(self):
+        """Filtros por período, aula e professor funcionam corretamente na relação."""
+        self.client.force_login(self.prof1)
+
+        # Filtro por professor prof1
+        resp = self.client.get(reverse('agendamentos'), {'usuario': str(self.prof1.id)})
+        self.assertEqual(resp.context['aba_ativa'], 'relacao')
+        self.assertEqual(resp.context['total_relacao'], 2)
+
+        # Filtro por aula 2
+        resp_aula = self.client.get(reverse('agendamentos'), {'aula': '2'})
+        self.assertEqual(resp_aula.context['total_relacao'], 1)
+        self.assertEqual(resp_aula.context['agendamentos_relacao'][0].id, self.ag2.id)
+
+        # Filtro por período
+        resp_periodo = self.client.get(reverse('agendamentos'), {
+            'data_inicio': '2026-09-02',
+            'data_fim': '2026-09-06'
+        })
+        self.assertEqual(resp_periodo.context['total_relacao'], 1)
+        self.assertEqual(resp_periodo.context['agendamentos_relacao'][0].id, self.ag2.id)
+
+    def test_exportar_agendamentos_sem_selecao(self):
+        """Tentar exportar sem registros selecionados redireciona e exibe mensagem de aviso."""
+        self.client.force_login(self.prof1)
+        resp = self.client.post(reverse('exportar_agendamentos'), {'formato': 'csv'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('aba=relacao', resp['Location'])
+
+    def test_exportar_agendamentos_csv(self):
+        """Exportação para CSV gera arquivo válido com delimitador ';' e BOM UTF-8."""
+        self.client.force_login(self.prof1)
+        resp = self.client.post(reverse('exportar_agendamentos'), {
+            'formato': 'csv',
+            'ids': [str(self.ag1.id), str(self.ag3.id)],
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'text/csv; charset=utf-8')
+        self.assertIn('attachment; filename="relacao_agendamentos_', resp['Content-Disposition'])
+
+        conteudo = resp.content.decode('utf-8')
+        self.assertTrue(conteudo.startswith('\ufeff'))
+        self.assertIn('Espaço / Equipamentos;Turma;Turno', conteudo)
+        self.assertIn('Obs 1', conteudo)
+        self.assertIn('Obs 3', conteudo)
+        self.assertNotIn('Obs 2', conteudo)
+
+    def test_exportar_agendamentos_pdf(self):
+        """Exportação para PDF gera arquivo application/pdf válido com ReportLab."""
+        self.client.force_login(self.prof1)
+        resp = self.client.post(reverse('exportar_agendamentos'), {
+            'formato': 'pdf',
+            'ids': [str(self.ag1.id), str(self.ag2.id)],
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/pdf')
+        self.assertIn('attachment; filename="relacao_agendamentos_', resp['Content-Disposition'])
+        self.assertTrue(resp.content.startswith(b'%PDF'))
+
+
+
 

@@ -482,9 +482,77 @@
             width: 100%;
         }
     }
+
+    /* ── Estilos das Abas Modernas ── */
+    .nav-tabs-modern {
+        border-bottom: 2px solid var(--lh-border);
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .nav-tabs-modern > li > a {
+        border: none !important;
+        background: transparent !important;
+        color: var(--lh-text-muted) !important;
+        font-weight: 700;
+        font-size: 15px;
+        padding: 12px 20px;
+        border-radius: 0;
+        border-bottom: 2px solid transparent !important;
+        transition: color 0.2s ease, border-color 0.2s ease;
+        margin: 0;
+        text-decoration: none !important;
+    }
+
+    .nav-tabs-modern > li.active > a,
+    .nav-tabs-modern > li.active > a:hover,
+    .nav-tabs-modern > li.active > a:focus {
+        color: var(--lh-primary) !important;
+        border-bottom: 2px solid var(--lh-primary) !important;
+    }
+
+    [data-theme="dark"] .nav-tabs-modern > li.active > a {
+        color: var(--lh-primary-light) !important;
+        border-bottom-color: var(--lh-primary-light) !important;
+    }
+
+    /* ── Tabela da Relação ── */
+    .tr-selecionada {
+        background-color: rgba(26, 74, 138, 0.06) !important;
+    }
+
+    [data-theme="dark"] .tr-selecionada {
+        background-color: rgba(99, 102, 241, 0.15) !important;
+    }
+
+    .btn-exportar-acao {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: var(--lh-radius-sm);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
 </style>
 
-<div class="cal-container-wrap">
+<!-- ===================== NAVEGAÇÃO DE ABAS ===================== -->
+<div class="cal-page-header" style="max-width:1200px; width:100%; margin:0 auto 20px;">
+    <ul class="nav nav-tabs nav-tabs-modern" role="tablist">
+        <li role="presentation" class="{% if aba_ativa != 'relacao' %}active{% endif %}">
+            <a href="#tab-agendamentos" role="tab" data-toggle="tab">📅 Agendamentos</a>
+        </li>
+        <li role="presentation" class="{% if aba_ativa == 'relacao' %}active{% endif %}">
+            <a href="#tab-relacao" role="tab" data-toggle="tab">📋 Relação</a>
+        </li>
+    </ul>
+</div>
+
+<div class="tab-content">
+    <!-- ===================== ABA 1: AGENDAMENTOS (CONTEÚDO ORIGINAL) ===================== -->
+    <div role="tabpanel" class="tab-pane {% if aba_ativa != 'relacao' %}active{% endif %}" id="tab-agendamentos">
+        <div class="cal-container-wrap">
 
     <!-- Título do Calendário Mensal -->
     <div style="max-width:1200px; width:100%; margin:0 auto 12px; display:flex; align-items:center; gap:8px;">
@@ -753,7 +821,182 @@
         </div>
     </div>
 
+    </div>
+    <!-- Fim de .cal-container-wrap -->
 </div>
+<!-- Fim de #tab-agendamentos -->
+
+<!-- ===================== ABA 2: RELAÇÃO (LISTAGEM, FILTROS E EXPORTAÇÕES) ===================== -->
+<div role="tabpanel" class="tab-pane {% if aba_ativa == 'relacao' %}active{% endif %}" id="tab-relacao" style="max-width:1200px; width:100%; margin:0 auto 40px;">
+
+    <!-- Card de Filtros Funcionais -->
+    <div class="lh-card" style="margin-bottom: 20px;">
+        <div class="lh-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <h3 class="lh-card-title" style="margin:0; font-size:16px;">🔍 Filtros da Relação</h3>
+            <span style="font-size:12px; color:var(--lh-text-muted);">Filtre por período, aula ou professor</span>
+        </div>
+        <div class="lh-card-body">
+            <form method="get" action="{% url 'agendamentos' %}" id="form-filtros-relacao" style="display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end;">
+                <input type="hidden" name="aba" value="relacao">
+
+                <div style="flex:1; min-width:160px;">
+                    <label style="display:block; font-size:12px; font-weight:700; color:var(--lh-text); margin-bottom:4px;">Data Inicial</label>
+                    <input type="date" name="data_inicio" value="{{ f_data_inicio }}" class="form-control" style="font-size:13px;">
+                </div>
+
+                <div style="flex:1; min-width:160px;">
+                    <label style="display:block; font-size:12px; font-weight:700; color:var(--lh-text); margin-bottom:4px;">Data Final</label>
+                    <input type="date" name="data_fim" value="{{ f_data_fim }}" class="form-control" style="font-size:13px;">
+                </div>
+
+                <div style="flex:1; min-width:140px;">
+                    <label style="display:block; font-size:12px; font-weight:700; color:var(--lh-text); margin-bottom:4px;">Aula</label>
+                    <select name="aula" class="form-control" style="font-size:13px;">
+                        <option value="">Todas as Aulas</option>
+                        {% for num_aula, nome_aula in aulas_filtro %}
+                        <option value="{{ num_aula }}" {% if f_aula == num_aula|stringformat:"i" %}selected{% endif %}>{{ nome_aula }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="flex:1; min-width:180px;">
+                    <label style="display:block; font-size:12px; font-weight:700; color:var(--lh-text); margin-bottom:4px;">Usuário / Professor</label>
+                    <select name="usuario" class="form-control" style="font-size:13px;">
+                        <option value="">Todos os Usuários</option>
+                        {% for u in usuarios_filtro %}
+                        <option value="{{ u.id }}" {% if f_usuario == u.id|stringformat:"i" %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button type="submit" class="lh-btn lh-btn--primary" style="padding:9px 18px; font-size:13px;">
+                        🔍 Filtrar
+                    </button>
+                    {% if f_data_inicio or f_data_fim or f_aula or f_usuario %}
+                    <a href="{% url 'agendamentos' %}?aba=relacao" class="lh-btn lh-btn--ghost" style="padding:9px 14px; font-size:13px;">
+                        ✕ Limpar
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Formulário de Seleção em Lote e Exportação -->
+    <form method="post" action="{% url 'exportar_agendamentos' %}" id="form-exportacao-relacao">
+        {% csrf_token %}
+        <input type="hidden" name="formato" id="input-formato-exportacao" value="csv">
+
+        <!-- Barra Superior de Seleção e Ações -->
+        <div class="lh-card" style="margin-bottom: 16px; padding: 12px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <label style="display:inline-flex; align-items:center; gap:8px; margin:0; cursor:pointer; font-weight:700; font-size:13.5px; color:var(--lh-text);">
+                    <input type="checkbox" id="check-selecionar-todos-topo" style="width:17px; height:17px; cursor:pointer; accent-color:var(--lh-primary);">
+                    <span>Selecionar Todos</span>
+                </label>
+                <span class="lh-badge lh-badge--primary" id="badge-contador-selecionados" style="font-size:12px; font-weight:700; padding:5px 10px; border-radius:6px;">
+                    0 selecionados de {{ total_relacao }}
+                </span>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="lh-btn lh-btn--outline btn-exportar-acao" data-formato="csv" style="font-size:13px; font-weight:700;">
+                    📄 Exportar CSV
+                </button>
+                <button type="button" class="lh-btn lh-btn--primary btn-exportar-acao" data-formato="pdf" style="font-size:13px; font-weight:700;">
+                    📕 Exportar PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabela de Registros da Relação -->
+        <div class="lh-card" style="overflow:hidden;">
+            <div class="table-responsive" style="margin:0;">
+                <table class="lh-table" style="margin:0; width:100%;" id="tabela-relacao-agendamentos">
+                    <thead>
+                        <tr>
+                            <th style="width:42px; text-align:center;">
+                                <input type="checkbox" id="check-todos-tabela" title="Selecionar Todos" style="width:16px; height:16px; cursor:pointer; accent-color:var(--lh-primary);">
+                            </th>
+                            <th style="width:105px;">Data</th>
+                            <th style="width:80px;">Aula</th>
+                            <th style="width:120px;">Tipo</th>
+                            <th>Espaço / Equipamentos</th>
+                            <th style="width:140px;">Turma</th>
+                            <th style="width:160px;">Professor / Usuário</th>
+                            <th>Observação</th>
+                            <th style="width:85px; text-align:center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ag in agendamentos_relacao %}
+                        <tr class="linha-agendamento-relacao" data-rel-id="{{ ag.id }}">
+                            <td style="text-align:center; vertical-align:middle;">
+                                <input type="checkbox" name="ids" value="{{ ag.id }}" class="check-agendamento-item" style="width:16px; height:16px; cursor:pointer; accent-color:var(--lh-primary);">
+                            </td>
+                            <td style="vertical-align:middle; font-weight:700; white-space:nowrap;">
+                                {{ ag.data|date:"d/m/Y" }}
+                            </td>
+                            <td style="vertical-align:middle;">
+                                <span class="lh-badge lh-badge--primary">{{ ag.aula }}ª Aula</span>
+                            </td>
+                            <td style="vertical-align:middle;">
+                                {% if ag.tipo == 'SALA' %}
+                                <span class="lh-badge lh-badge--success" style="font-weight:700;">🏫 Sala</span>
+                                {% else %}
+                                <span class="lh-badge lh-badge--warning" style="font-weight:700;">💻 Equipamentos</span>
+                                {% endif %}
+                            </td>
+                            <td style="vertical-align:middle;">
+                                {% if ag.tipo == 'SALA' %}
+                                <strong style="color:var(--lh-text);">{{ ag.sala.nome|default:"Sala não informada" }}</strong>
+                                {% if ag.sala.localizacao %}<span style="font-size:12px; color:var(--lh-text-muted);">({{ ag.sala.localizacao }})</span>{% endif %}
+                                {% else %}
+                                <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                                    {% for item in ag.itens.all %}
+                                    <span class="lh-badge lh-badge--outline" style="font-size:11.5px;">{{ item.get_categoria_display }}: <strong>{{ item.quantidade }}</strong></span>
+                                    {% empty %}
+                                    <span style="font-size:12px; color:var(--lh-text-muted);">Nenhum equipamento registrado</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td style="vertical-align:middle;">
+                                <div style="font-weight:600; color:var(--lh-text);">{{ ag.turma.nome }}</div>
+                                <small style="color:var(--lh-text-muted);">{{ ag.turma.get_turno_display }}</small>
+                            </td>
+                            <td style="vertical-align:middle;">
+                                <span style="font-weight:600;">{{ ag.professor.get_full_name|default:ag.professor.username }}</span>
+                            </td>
+                            <td style="vertical-align:middle; font-size:12px; color:var(--lh-text-muted);">
+                                {{ ag.observacao|default:"—"|truncatechars:40 }}
+                            </td>
+                            <td style="text-align:center; vertical-align:middle; white-space:nowrap;">
+                                <a href="{% url 'relacao_agendamento' ag.id %}" class="lh-btn lh-btn--xs lh-btn--outline" title="Ver detalhes e atribuições de alunos">
+                                    📋 Detalhes
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" style="text-align:center; padding:48px 16px; color:var(--lh-text-muted);">
+                                <div style="font-size:32px; margin-bottom:8px;">📭</div>
+                                <p style="margin:0; font-size:15px; font-weight:600;">Nenhum agendamento encontrado.</p>
+                                <p style="margin:4px 0 0; font-size:13px;">Tente ajustar os filtros acima para visualizar outros registros.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+</div>
+<!-- Fim de #tab-relacao -->
+
+</div>
+<!-- Fim de .tab-content -->
 
 {% endblock %}
 
@@ -897,6 +1140,102 @@
         });
 
         bindEvents();
+
+        // ── Gerenciamento da Aba 2 (Relação e Exportações em Lote) ──
+        if (window.location.hash === '#tab-relacao' && window.jQuery) {
+            $('a[href="#tab-relacao"]').tab('show');
+        }
+
+        if (window.jQuery) {
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                var target = $(e.target).attr('href');
+                if (history.replaceState) {
+                    history.replaceState(null, null, target);
+                } else {
+                    window.location.hash = target;
+                }
+            });
+        }
+
+        var checkTodosTopo = document.getElementById('check-selecionar-todos-topo');
+        var checkTodosTabela = document.getElementById('check-todos-tabela');
+        var itemCheckboxes = document.querySelectorAll('.check-agendamento-item');
+        var badgeContador = document.getElementById('badge-contador-selecionados');
+        var totalItens = itemCheckboxes.length;
+
+        function atualizarContador() {
+            var selecionados = document.querySelectorAll('.check-agendamento-item:checked').length;
+            if (badgeContador) {
+                badgeContador.textContent = selecionados + ' selecionado' + (selecionados === 1 ? '' : 's') + ' de ' + totalItens;
+            }
+            var todos = (totalItens > 0 && selecionados === totalItens);
+            if (checkTodosTopo) checkTodosTopo.checked = todos;
+            if (checkTodosTabela) checkTodosTabela.checked = todos;
+
+            itemCheckboxes.forEach(function (chk) {
+                var row = chk.closest('tr');
+                if (row) {
+                    if (chk.checked) {
+                        row.classList.add('tr-selecionada');
+                    } else {
+                        row.classList.remove('tr-selecionada');
+                    }
+                }
+            });
+        }
+
+        function marcarTodos(estado) {
+            itemCheckboxes.forEach(function (chk) {
+                chk.checked = estado;
+            });
+            atualizarContador();
+        }
+
+        if (checkTodosTopo) {
+            checkTodosTopo.addEventListener('change', function () {
+                marcarTodos(this.checked);
+            });
+        }
+
+        if (checkTodosTabela) {
+            checkTodosTabela.addEventListener('change', function () {
+                marcarTodos(this.checked);
+            });
+        }
+
+        itemCheckboxes.forEach(function (chk) {
+            chk.addEventListener('change', atualizarContador);
+        });
+
+        // Submissão dos botões de exportação com validação visual
+        var formExportacao = document.getElementById('form-exportacao-relacao');
+        var inputFormato = document.getElementById('input-formato-exportacao');
+        var botoesExportar = document.querySelectorAll('.btn-exportar-acao');
+
+        botoesExportar.forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                var selecionados = document.querySelectorAll('.check-agendamento-item:checked');
+                if (selecionados.length === 0) {
+                    e.preventDefault();
+                    if (window.LabHubFlash) {
+                        window.LabHubFlash('Selecione pelo menos um agendamento para exportar.', 'warning');
+                    } else {
+                        alert('Selecione pelo menos um agendamento para exportar.');
+                    }
+                    return false;
+                }
+
+                var formato = this.getAttribute('data-formato') || 'csv';
+                if (inputFormato) {
+                    inputFormato.value = formato;
+                }
+                if (formExportacao) {
+                    formExportacao.submit();
+                }
+            });
+        });
+
+        atualizarContador();
     });
 </script>
 {% endblock %}
