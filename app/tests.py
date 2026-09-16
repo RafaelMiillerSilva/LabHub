@@ -12,7 +12,7 @@ from django.urls import reverse
 
 from app.backends import EmailBackend
 from app.forms import CadastroForm, EquipamentoForm
-from app.models import Agendamento, Aluno, Equipamento, ItemDispositivo, Sala, Turma
+from app.models import Agendamento, Aluno, Equipamento, ItemDispositivo, RelacaoAlunoEquipamento, Sala, Turma
 
 
 class EquipamentoFixoTest(TestCase):
@@ -812,6 +812,90 @@ class AgendamentosRelacaoExportTest(TestCase):
         self.assertIn('attachment; filename="relacao_agendamentos_', resp['Content-Disposition'])
         self.assertTrue(resp.content.startswith(b'%PDF'))
 
+    def test_relacao_alunos_equipamentos_exibicao_e_exportacao(self):
+        """Aba Relação exibe resumo dos aparelhos atribuídos e os exporta para CSV."""
+        aluno1 = Aluno.objects.create(nome='Carlos Silva', ra='12345', turma=self.turma)
+        aluno2 = Aluno.objects.create(nome='Ana Souza', ra='67890', turma=self.turma)
+        RelacaoAlunoEquipamento.objects.create(agendamento=self.ag1, aluno=aluno1, equipamento='NOTE-01')
+        RelacaoAlunoEquipamento.objects.create(agendamento=self.ag1, aluno=aluno2, equipamento='NOTE-02')
 
+        self.client.force_login(self.prof1)
+        resp = self.client.get(reverse('agendamentos'), {'aba': 'relacao'})
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode('utf-8')
 
+        # Verifica se o resumo de aparelhos aparece no card/tabela e o detalhe do aluno
+        self.assertIn('2 aparelhos entregues', content)
+        self.assertIn('NOTE-01', content)
+        self.assertIn('Carlos Silva', content)
+
+        # Verifica se o CSV gerado contém a relação de aparelhos entregues
+        resp_csv = self.client.post(reverse('exportar_agendamentos'), {
+            'formato': 'csv',
+            'ids': [str(self.ag1.id)],
+        })
+        self.assertEqual(resp_csv.status_code, 200)
+        conteudo_csv = resp_csv.content.decode('utf-8')
+        self.assertIn('Aparelhos atribuídos (2)', conteudo_csv)
+        self.assertIn('Carlos Silva (NOTE-01)', conteudo_csv)
+        self.assertIn('Ana Souza (NOTE-02)', conteudo_csv)
+
+    def test_salvar_relacao_atualiza_sem_duplicar_e_limpa_vazios(self):
+        """Salvar a relação de alunos atualiza os registros existentes e remove entradas vazias sem criar duplicatas."""
+        aluno1 = Aluno.objects.create(nome='Bruno Dias', ra='111', turma=self.turma)
+        aluno2 = Aluno.objects.create(nome='Carla Lima', ra='222', turma=self.turma)
+
+        self.client.force_login(self.prof1)
+        # Primeira gravação
+        resp1 = self.client.post(reverse('relacao_agendamento', args=[self.ag1.id]), {
+            'acao': 'relacao',
+            f'equip_{aluno1.id}': 'NOTE-10',
+            f'equip_{aluno2.id}': 'NOTE-20',
+        })
+        self.assertEqual(resp1.status_code, 302)
+        self.assertEqual(RelacaoAlunoEquipamento.objects.filter(agendamento=self.ag1).count(), 2)
+
+        # Segunda gravação: altera aluno1 para NOTE-15 e esvazia aluno2
+        resp2 = self.client.post(reverse('relacao_agendamento', args=[self.ag1.id]), {
+            'acao': 'relacao',
+            f'equip_{aluno1.id}': 'NOTE-15',
+            f'equip_{aluno2.id}': '',
+        })
+        self.assertEqual(resp2.status_code, 302)
+        # Deve haver apenas 1 registro (aluno1 atualizado e aluno2 removido)
+        self.assertEqual(RelacaoAlunoEquipamento.objects.filter(agendamento=self.ag1).count(), 1)
+        r1 = RelacaoAlunoEquipamento.objects.get(agendamento=self.ag1, aluno=aluno1)
+        self.assertEqual(r1.equipamento, 'NOTE-15')
+
+    def test_agendamento_dispositivo_atualiza_existente_sem_duplicar(self):
+        """Submeter reserva de dispositivos na mesma aula e turma atualiza o agendamento em vez de criar um novo."""
+        Equipamento.objects.create(apelido='NOTE-01', categoria='NOTEBOOK', status='ATIVO', fixo=False)
+        Equipamento.objects.create(apelido='NOTE-02', categoria='NOTEBOOK', status='ATIVO', fixo=False)
+        d = date.today() + timedelta(days=1)
+
+        self.client.force_login(self.prof1)
+        # Primeira submissão
+        resp1 = self.client.post(reverse('agendamento_detalhe', args=[d.year, d.month, d.day]), {
+            'tipo': 'dispositivo',
+            'turma': self.turma.id,
+            'observacao': 'Obs inicial',
+            'qtd_1_NOTEBOOK': '1',
+        })
+        self.assertEqual(resp1.status_code, 302)
+        self.assertEqual(Agendamento.objects.filter(data=d, aula=1, professor=self.prof1, tipo='DISPOSITIVO').count(), 1)
+
+        # Segunda submissão na mesma aula e data: altera observação e quantidade
+        resp2 = self.client.post(reverse('agendamento_detalhe', args=[d.year, d.month, d.day]), {
+            'tipo': 'dispositivo',
+            'turma': self.turma.id,
+            'observacao': 'Obs atualizada',
+            'qtd_1_NOTEBOOK': '2',
+        })
+        self.assertEqual(resp2.status_code, 302)
+        # Continua existindo apenas 1 agendamento, devidamente atualizado
+        qs = Agendamento.objects.filter(data=d, aula=1, professor=self.prof1, tipo='DISPOSITIVO')
+        self.assertEqual(qs.count(), 1)
+        ag = qs.first()
+        self.assertEqual(ag.observacao, 'Obs atualizada')
+        self.assertEqual(ag.itens.get(categoria='NOTEBOOK').quantidade, 2)
 

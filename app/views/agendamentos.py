@@ -214,36 +214,61 @@ def _processar_agendamento_sala(request, data, ano, mes, dia):
 
         try:
             with transaction.atomic():
-                ja_existe = Agendamento.objects.filter(
+                existente = Agendamento.objects.filter(
+                    data=data, aula=aula, professor=professor, turma=turma, tipo='SALA'
+                ).first()
+
+                ocupada_por_outro = Agendamento.objects.filter(
                     data=data, aula=aula, tipo='SALA', sala_id=sala_id
-                ).exists()
-                if ja_existe:
+                ).exclude(id=existente.id if existente else None).exists()
+
+                if ocupada_por_outro:
                     conflitos += 1
                     continue
 
-                Agendamento.objects.create(
-                    data=data, aula=aula, tipo='SALA',
-                    professor=professor, turma=turma,
-                    sala_id=sala_id, observacao=observacao,
-                    fixo=marcar_fixo, fixo_grupo_id=grupo_id,
-                )
+                if existente:
+                    existente.sala_id = sala_id
+                    existente.observacao = observacao
+                    if marcar_fixo:
+                        existente.fixo = True
+                        if not existente.fixo_grupo_id:
+                            existente.fixo_grupo_id = grupo_id
+                    existente.save()
+                else:
+                    Agendamento.objects.create(
+                        data=data, aula=aula, tipo='SALA',
+                        professor=professor, turma=turma,
+                        sala_id=sala_id, observacao=observacao,
+                        fixo=marcar_fixo, fixo_grupo_id=grupo_id,
+                    )
                 criados += 1
         except IntegrityError:
             conflitos += 1
 
-        # Criar agendamentos fixos futuros
+        # Criar ou atualizar agendamentos fixos futuros
         if marcar_fixo:
             datas_futuras = _datas_futuras_mesmo_dia_semana(data)
             for data_futura in datas_futuras:
                 _sobrepor_conflito_sala(data_futura, aula, sala_id, request.user)
                 try:
                     with transaction.atomic():
-                        Agendamento.objects.create(
-                            data=data_futura, aula=aula, tipo='SALA',
-                            professor=professor, turma=turma,
-                            sala_id=sala_id, observacao=observacao,
-                            fixo=True, fixo_grupo_id=grupo_id,
-                        )
+                        futuro_existente = Agendamento.objects.filter(
+                            data=data_futura, aula=aula, professor=professor, turma=turma, tipo='SALA'
+                        ).first()
+                        if futuro_existente:
+                            futuro_existente.sala_id = sala_id
+                            futuro_existente.observacao = observacao
+                            futuro_existente.fixo = True
+                            if not futuro_existente.fixo_grupo_id:
+                                futuro_existente.fixo_grupo_id = grupo_id
+                            futuro_existente.save()
+                        else:
+                            Agendamento.objects.create(
+                                data=data_futura, aula=aula, tipo='SALA',
+                                professor=professor, turma=turma,
+                                sala_id=sala_id, observacao=observacao,
+                                fixo=True, fixo_grupo_id=grupo_id,
+                            )
                         criados += 1
                 except IntegrityError:
                     pass
@@ -311,6 +336,15 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
         estoque = _estoque_por_categoria()
 
         for aula, itens in selecao.items():
+            existente = Agendamento.objects.filter(
+                data=data, aula=aula, professor=professor, turma=turma, tipo='DISPOSITIVO'
+            ).first()
+
+            # Desconta o que já estava reservado por esta mesma reserva para calcular o disponível real
+            if existente:
+                for it in existente.itens.all():
+                    reservado[(aula, it.categoria)] = max(0, reservado.get((aula, it.categoria), 0) - it.quantidade)
+
             itens_validos = []
             for categoria, qtd in itens.items():
                 total = estoque.get(categoria, 0)
@@ -326,20 +360,36 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
             if not itens_validos:
                 continue
 
-            agendamento = Agendamento.objects.create(
-                data=data, aula=aula, tipo='DISPOSITIVO',
-                professor=professor, turma=turma,
-                sala=None, observacao=observacao,
-                fixo=marcar_fixo, fixo_grupo_id=grupo_id,
-            )
+            if existente:
+                agendamento = existente
+                agendamento.observacao = observacao
+                if marcar_fixo:
+                    agendamento.fixo = True
+                    if not agendamento.fixo_grupo_id:
+                        agendamento.fixo_grupo_id = grupo_id
+                agendamento.save()
+            else:
+                agendamento = Agendamento.objects.create(
+                    data=data, aula=aula, tipo='DISPOSITIVO',
+                    professor=professor, turma=turma,
+                    sala=None, observacao=observacao,
+                    fixo=marcar_fixo, fixo_grupo_id=grupo_id,
+                )
+
+            categorias_processadas = set()
             for categoria, usar in itens_validos:
-                ItemDispositivo.objects.create(
-                    agendamento=agendamento, categoria=categoria, quantidade=usar
+                categorias_processadas.add(categoria)
+                ItemDispositivo.objects.update_or_create(
+                    agendamento=agendamento,
+                    categoria=categoria,
+                    defaults={'quantidade': usar}
                 )
                 reservado[(aula, categoria)] = reservado.get((aula, categoria), 0) + usar
+
+            agendamento.itens.exclude(categoria__in=categorias_processadas).delete()
             aulas_agendadas += 1
 
-    # Criar agendamentos fixos futuros para dispositivos
+    # Atualizar ou criar agendamentos fixos futuros para dispositivos
     if marcar_fixo and aulas_agendadas:
         datas_futuras = _datas_futuras_mesmo_dia_semana(data)
         for data_futura in datas_futuras:
@@ -349,16 +399,33 @@ def _processar_agendamento_dispositivo(request, data, ano, mes, dia):
                     continue
                 try:
                     with transaction.atomic():
-                        novo = Agendamento.objects.create(
-                            data=data_futura, aula=aula, tipo='DISPOSITIVO',
-                            professor=professor, turma=turma,
-                            sala=None, observacao=observacao,
-                            fixo=True, fixo_grupo_id=grupo_id,
-                        )
-                        for categoria, usar in itens_validos:
-                            ItemDispositivo.objects.create(
-                                agendamento=novo, categoria=categoria, quantidade=usar
+                        futuro_disp = Agendamento.objects.filter(
+                            data=data_futura, aula=aula, professor=professor, turma=turma, tipo='DISPOSITIVO'
+                        ).first()
+                        if futuro_disp:
+                            novo = futuro_disp
+                            novo.observacao = observacao
+                            novo.fixo = True
+                            if not novo.fixo_grupo_id:
+                                novo.fixo_grupo_id = grupo_id
+                            novo.save()
+                        else:
+                            novo = Agendamento.objects.create(
+                                data=data_futura, aula=aula, tipo='DISPOSITIVO',
+                                professor=professor, turma=turma,
+                                sala=None, observacao=observacao,
+                                fixo=True, fixo_grupo_id=grupo_id,
                             )
+
+                        cats_proc = set()
+                        for categoria, usar in itens_validos:
+                            cats_proc.add(categoria)
+                            ItemDispositivo.objects.update_or_create(
+                                agendamento=novo,
+                                categoria=categoria,
+                                defaults={'quantidade': usar}
+                            )
+                        novo.itens.exclude(categoria__in=cats_proc).delete()
                         aulas_agendadas += 1
                 except IntegrityError:
                     pass
@@ -523,7 +590,7 @@ def agendamentos(request):
 
     relacao_qs = (
         Agendamento.objects.select_related('sala', 'turma', 'professor')
-        .prefetch_related('itens')
+        .prefetch_related('itens', 'relacoes', 'relacoes__aluno', 'turma__alunos')
         .order_by('-data', 'aula', '-criado_em')
     )
 
@@ -546,6 +613,34 @@ def agendamentos(request):
 
     if f_usuario and f_usuario.isdigit():
         relacao_qs = relacao_qs.filter(professor_id=int(f_usuario))
+
+    # Processa os agendamentos da relação para anexar as atribuições de alunos e aparelhos
+    agendamentos_relacao = list(relacao_qs)
+    for ag in agendamentos_relacao:
+        alunos_turma = list(ag.turma.alunos.all()) if ag.turma else []
+        salvos = {r.aluno_id: r.equipamento for r in ag.relacoes.all()}
+
+        linhas_alunos = []
+        for aluno in alunos_turma:
+            equip = salvos.get(aluno.id, '').strip()
+            linhas_alunos.append({
+                'aluno': aluno,
+                'equipamento': equip,
+            })
+
+        ag.linhas_alunos = linhas_alunos
+        ag.total_alunos_turma = len(alunos_turma)
+        ag.total_com_aparelho = sum(1 for item in linhas_alunos if item['equipamento'])
+
+        aparelhos = [item['equipamento'] for item in linhas_alunos if item['equipamento']]
+        ag.aparelhos_lista = aparelhos
+        if aparelhos:
+            resumo = ", ".join(aparelhos[:5])
+            if len(aparelhos) > 5:
+                resumo += f" (+{len(aparelhos) - 5})"
+            ag.aparelhos_resumo = resumo
+        else:
+            ag.aparelhos_resumo = ""
 
     usuarios_filtro = (
         User.objects.filter(agendamentos__isnull=False)
@@ -581,8 +676,8 @@ def agendamentos(request):
         'semana_ant': semana_ant,
         'semana_prox': semana_prox,
         # Aba 2 (Relação)
-        'agendamentos_relacao': relacao_qs,
-        'total_relacao': relacao_qs.count(),
+        'agendamentos_relacao': agendamentos_relacao,
+        'total_relacao': len(agendamentos_relacao),
         'usuarios_filtro': usuarios_filtro,
         'aulas_filtro': aulas_filtro,
         'f_data_inicio': f_data_inicio,
@@ -616,7 +711,7 @@ def exportar_agendamentos(request):
     agendamentos_qs = (
         Agendamento.objects.filter(id__in=ids)
         .select_related('sala', 'turma', 'professor')
-        .prefetch_related('itens')
+        .prefetch_related('itens', 'relacoes', 'relacoes__aluno', 'turma__alunos')
         .order_by('-data', 'aula', '-criado_em')
     )
 
@@ -638,7 +733,7 @@ def exportar_agendamentos(request):
 
 
 def _gerar_csv_agendamentos(agendamentos_qs, timestamp_str):
-    """Gera resposta HTTP com arquivo CSV nativo contendo os agendamentos selecionados."""
+    """Gera resposta HTTP com arquivo CSV nativo contendo os agendamentos selecionados e suas relações."""
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = f'attachment; filename="relacao_agendamentos_{timestamp_str}.csv"'
     response.write('\ufeff')  # BOM para Excel reconhecer UTF-8
@@ -659,11 +754,25 @@ def _gerar_csv_agendamentos(agendamentos_qs, timestamp_str):
     ])
 
     for ag in agendamentos_qs:
+        partes = []
         if ag.tipo == 'SALA':
-            espaco_equip = ag.sala.nome if ag.sala else 'Sala não informada'
+            partes.append(ag.sala.nome if ag.sala else 'Sala não informada')
         else:
             itens_str = [f"{it.get_categoria_display()} ({it.quantidade})" for it in ag.itens.all()]
-            espaco_equip = ", ".join(itens_str) if itens_str else 'Nenhum equipamento listado'
+            if itens_str:
+                partes.append(", ".join(itens_str))
+
+        relacoes_com_aparelho = [
+            f"{r.aluno.nome} ({r.equipamento})"
+            for r in ag.relacoes.all()
+            if r.equipamento and r.equipamento.strip()
+        ]
+        if relacoes_com_aparelho:
+            partes.append(f"Aparelhos atribuídos ({len(relacoes_com_aparelho)}): " + ", ".join(relacoes_com_aparelho))
+        elif not partes:
+            partes.append("Nenhum equipamento listado")
+
+        espaco_equip = " | ".join(partes)
 
         writer.writerow([
             ag.id,
@@ -780,13 +889,30 @@ def _gerar_pdf_agendamentos(agendamentos_qs, usuario):
     ]
 
     for ag in agendamentos_qs:
+        partes_pdf = []
         if ag.tipo == 'SALA':
             tipo_p = Paragraph("Sala de Aula", td_badge_sala)
-            espaco_equip = ag.sala.nome if ag.sala else 'Sala não informada'
+            partes_pdf.append(f"<b>{ag.sala.nome if ag.sala else 'Sala não informada'}</b>")
         else:
             tipo_p = Paragraph("Equip. Móveis", td_badge_disp)
             itens_str = [f"{it.get_categoria_display()} ({it.quantidade})" for it in ag.itens.all()]
-            espaco_equip = ", ".join(itens_str) if itens_str else 'Nenhum equipamento'
+            if itens_str:
+                partes_pdf.append("<b>" + ", ".join(itens_str) + "</b>")
+
+        relacoes_com_aparelho = [
+            r.equipamento.strip()
+            for r in ag.relacoes.all()
+            if r.equipamento and r.equipamento.strip()
+        ]
+        if relacoes_com_aparelho:
+            resumo = ", ".join(relacoes_com_aparelho[:6])
+            if len(relacoes_com_aparelho) > 6:
+                resumo += f" (+{len(relacoes_com_aparelho)-6})"
+            partes_pdf.append(f'<font color="#1A4A8A"><b>{len(relacoes_com_aparelho)} aparelho(s) entregues:</b></font> {resumo}')
+        elif not partes_pdf:
+            partes_pdf.append("Nenhum equipamento listado")
+
+        espaco_equip = "<br/>".join(partes_pdf)
 
         turma_str = f"{ag.turma.nome} ({ag.turma.get_turno_display()})" if ag.turma else '—'
         prof_str = ag.professor.get_full_name() or ag.professor.username
@@ -1352,10 +1478,32 @@ def relacao_agendamento(request, agendamento_id):
 
         for aluno in alunos:
             valor = request.POST.get(f'equip_{aluno.id}', '').strip()
-            RelacaoAlunoEquipamento.objects.update_or_create(
-                agendamento=ag, aluno=aluno,
-                defaults={'equipamento': valor},
+            if valor:
+                RelacaoAlunoEquipamento.objects.update_or_create(
+                    agendamento=ag, aluno=aluno,
+                    defaults={'equipamento': valor},
+                )
+            else:
+                RelacaoAlunoEquipamento.objects.filter(agendamento=ag, aluno=aluno).delete()
+
+        # Se for agendamento fixo, propaga a relação atualizada para agendamentos futuros da mesma turma e série fixa
+        if ag.fixo and ag.fixo_grupo_id:
+            futuros_rel = Agendamento.objects.filter(
+                fixo_grupo_id=ag.fixo_grupo_id,
+                data__gt=ag.data,
+                turma=ag.turma,
             )
+            for f in futuros_rel:
+                for aluno in alunos:
+                    valor = request.POST.get(f'equip_{aluno.id}', '').strip()
+                    if valor:
+                        RelacaoAlunoEquipamento.objects.update_or_create(
+                            agendamento=f, aluno=aluno,
+                            defaults={'equipamento': valor},
+                        )
+                    else:
+                        RelacaoAlunoEquipamento.objects.filter(agendamento=f, aluno=aluno).delete()
+
         messages.success(request, 'Relação de alunos e equipamentos salva com sucesso!')
         return redirect('relacao_agendamento', agendamento_id=ag.id)
 

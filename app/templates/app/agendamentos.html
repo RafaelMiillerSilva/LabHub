@@ -926,7 +926,7 @@
                             <th style="width:140px;">Turma</th>
                             <th style="width:160px;">Professor / Usuário</th>
                             <th>Observação</th>
-                            <th style="width:85px; text-align:center;">Ações</th>
+                            <th style="width:180px; text-align:center;">Ações / Relação</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -950,16 +950,38 @@
                             </td>
                             <td style="vertical-align:middle;">
                                 {% if ag.tipo == 'SALA' %}
-                                <strong style="color:var(--lh-text);">{{ ag.sala.nome|default:"Sala não informada" }}</strong>
-                                {% if ag.sala.localizacao %}<span style="font-size:12px; color:var(--lh-text-muted);">({{ ag.sala.localizacao }})</span>{% endif %}
+                                <div>
+                                    <strong style="color:var(--lh-text);">{{ ag.sala.nome|default:"Sala não informada" }}</strong>
+                                    {% if ag.sala.localizacao %}<span style="font-size:12px; color:var(--lh-text-muted);">({{ ag.sala.localizacao }})</span>{% endif %}
+                                </div>
+                                {% if ag.total_com_aparelho > 0 %}
+                                <div style="margin-top:4px;">
+                                    <span class="lh-badge lh-badge--primary" style="font-size:11px; font-weight:700;">
+                                        💻 {{ ag.total_com_aparelho }} aparelho{{ ag.total_com_aparelho|pluralize }} entregue{{ ag.total_com_aparelho|pluralize }}
+                                    </span>
+                                    {% if ag.aparelhos_resumo %}
+                                    <small style="color:var(--lh-text-muted); margin-left:3px;">({{ ag.aparelhos_resumo }})</small>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
                                 {% else %}
-                                <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                                <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:3px;">
                                     {% for item in ag.itens.all %}
                                     <span class="lh-badge lh-badge--outline" style="font-size:11.5px;">{{ item.get_categoria_display }}: <strong>{{ item.quantidade }}</strong></span>
-                                    {% empty %}
-                                    <span style="font-size:12px; color:var(--lh-text-muted);">Nenhum equipamento registrado</span>
                                     {% endfor %}
                                 </div>
+                                {% if ag.total_com_aparelho > 0 %}
+                                <div>
+                                    <span class="lh-badge lh-badge--primary" style="font-size:11px; font-weight:700;">
+                                        💻 {{ ag.total_com_aparelho }} aparelho{{ ag.total_com_aparelho|pluralize }} entregue{{ ag.total_com_aparelho|pluralize }}
+                                    </span>
+                                    {% if ag.aparelhos_resumo %}
+                                    <small style="color:var(--lh-text-muted); margin-left:3px;">({{ ag.aparelhos_resumo }})</small>
+                                    {% endif %}
+                                </div>
+                                {% elif not ag.itens.all %}
+                                <span style="font-size:12px; color:var(--lh-text-muted);">Nenhum equipamento registrado</span>
+                                {% endif %}
                                 {% endif %}
                             </td>
                             <td style="vertical-align:middle;">
@@ -973,9 +995,65 @@
                                 {{ ag.observacao|default:"—"|truncatechars:40 }}
                             </td>
                             <td style="text-align:center; vertical-align:middle; white-space:nowrap;">
-                                <a href="{% url 'relacao_agendamento' ag.id %}" class="lh-btn lh-btn--xs lh-btn--outline" title="Ver detalhes e atribuições de alunos">
-                                    📋 Detalhes
-                                </a>
+                                <div style="display:inline-flex; align-items:center; gap:4px;">
+                                    <button type="button" class="lh-btn lh-btn--xs lh-btn--outline btn-toggle-alunos" data-target="#rel-alunos-{{ ag.id }}" title="Ver lista de alunos e aparelhos">
+                                        👥 Alunos ({{ ag.total_com_aparelho }}/{{ ag.total_alunos_turma }}) ▾
+                                    </button>
+                                    <a href="{% url 'relacao_agendamento' ag.id %}" class="lh-btn lh-btn--xs lh-btn--primary" title="Editar relação e atribuir aparelhos">
+                                        📋 Relação
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Sub-linha expansível com a relação detalhada dos alunos da turma -->
+                        <tr id="rel-alunos-{{ ag.id }}" class="sub-linha-alunos" style="display:none; background-color:var(--lh-surface-subtle);">
+                            <td colspan="9" style="padding:14px 20px;">
+                                <div style="background:var(--lh-surface); border:1px solid var(--lh-border); border-radius:var(--lh-radius); padding:16px; box-shadow:var(--lh-shadow-sm);">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                                        <h5 style="margin:0; font-size:14px; font-weight:800; color:var(--lh-primary);">
+                                            📋 Relação de Alunos × Aparelhos — Turma {{ ag.turma.nome }} ({{ ag.data|date:"d/m/Y" }} - {{ ag.aula }}ª Aula)
+                                        </h5>
+                                        <a href="{% url 'relacao_agendamento' ag.id %}" class="lh-btn lh-btn--xs lh-btn--primary">
+                                            ✏️ Gerenciar / Editar Esta Relação
+                                        </a>
+                                    </div>
+                                    {% if ag.linhas_alunos %}
+                                    <div style="max-height:240px; overflow-y:auto; border:1px solid var(--lh-border-subtle); border-radius:6px;">
+                                        <table class="lh-table" style="font-size:12.5px; margin:0; width:100%;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:40px; text-align:center;">#</th>
+                                                    <th>Nome do Aluno</th>
+                                                    <th style="width:140px;">RA</th>
+                                                    <th style="width:220px;">Aparelho Entregue</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for linha in ag.linhas_alunos %}
+                                                <tr>
+                                                    <td style="text-align:center; color:var(--lh-text-light);">{{ forloop.counter }}</td>
+                                                    <td><strong>{{ linha.aluno.nome }}</strong></td>
+                                                    <td style="color:var(--lh-text-muted);">{{ linha.aluno.ra_formatado }}</td>
+                                                    <td>
+                                                        {% if linha.equipamento %}
+                                                        <span class="lh-badge lh-badge--success" style="font-size:11.5px; font-weight:700;">
+                                                            💻 {{ linha.equipamento }}
+                                                        </span>
+                                                        {% else %}
+                                                        <span style="color:var(--lh-text-muted); font-size:12px;">—</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <p style="margin:0; font-size:13px; color:var(--lh-text-muted); font-style:italic;">
+                                        Não há alunos cadastrados nesta turma.
+                                    </p>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                         {% empty %}
@@ -1233,6 +1311,22 @@
                     formExportacao.submit();
                 }
             });
+        });
+
+        // Alternador da listagem detalhada de alunos por agendamento
+        $(document).on('click', '.btn-toggle-alunos', function (e) {
+            e.preventDefault();
+            var targetSelector = $(this).attr('data-target');
+            var $targetRow = $(targetSelector);
+            if ($targetRow.length) {
+                if ($targetRow.is(':visible')) {
+                    $targetRow.hide();
+                    $(this).removeClass('active');
+                } else {
+                    $targetRow.show();
+                    $(this).addClass('active');
+                }
+            }
         });
 
         atualizarContador();
