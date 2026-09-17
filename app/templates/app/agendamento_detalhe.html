@@ -353,8 +353,11 @@
                                     <span class="nome-sala">{{ s.sala.nome }}</span>
                                     {% if s.sala.capacidade %}<span class="info-sala" style="margin-left:6px;">(👥 {{ s.sala.capacidade }} alunos)</span>{% endif %}<br>
                                     <span class="info-sala">{{ s.turma }} — {{ s.professor }}</span>
-                                    <div style="margin-top: 8px;">
+                                    <div style="margin-top: 8px; display: flex; gap: 6px;">
                                         <a href="{% url 'relacao_agendamento' s.ag_id %}" class="lh-btn lh-btn--xs lh-btn--outline">📋 Ver Relação</a>
+                                        {% if is_admin or user.is_staff or user.perfil.tipo == 'ADMINISTRADOR' %}
+                                        <a href="{% url 'ocorrencia_criar' %}?agendamento_id={{ s.ag_id }}" class="lh-btn lh-btn--xs" style="background:#F59E0B; color:#ffffff; border:none; font-weight:600;">⚠️ Ocorrência</a>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 {% else %}
@@ -453,8 +456,11 @@
                                         <span class="lh-badge lh-badge--primary">{{ item.get_categoria_display }} × {{ item.quantidade }}</span>
                                         {% endfor %}
                                     </div>
-                                    <div style="margin-top: 8px;">
+                                    <div style="margin-top: 8px; display: flex; gap: 6px;">
                                         <a href="{% url 'relacao_agendamento' ag.id %}" class="lh-btn lh-btn--xs lh-btn--outline">📋 Relação</a>
+                                        {% if is_admin or user.is_staff or user.perfil.tipo == 'ADMINISTRADOR' %}
+                                        <a href="{% url 'ocorrencia_criar' %}?agendamento_id={{ ag.id }}" class="lh-btn lh-btn--xs" style="background:#F59E0B; color:#ffffff; border:none; font-weight:600;">⚠️ Ocorrência</a>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 {% endfor %}

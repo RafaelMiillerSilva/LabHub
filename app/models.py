@@ -238,7 +238,77 @@ class Aluno(models.Model):
 # Agendamento: uma reserva de UMA aula, em um dia, por um professor,
 # para uma turma. Pode ser de Sala ou de Dispositivos.
 # ---------------------------------------------------------------------------
+# Relação: agrupador de atribuições de equipamentos para agendamentos (aulas)
+# Aulas consecutivas de mesma turma e professor compartilham a mesma Relacao.
+# ---------------------------------------------------------------------------
+class Relacao(models.Model):
+    if TYPE_CHECKING:
+        id: int
+        itens: RelatedManager
+        agendamentos: RelatedManager
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+    preenchido_em = models.DateTimeField(null=True, blank=True, db_index=True)
+
+    class Meta:
+        ordering = ['-preenchido_em', '-criado_em']
+        verbose_name = 'Relação'
+        verbose_name_plural = 'Relações'
+
+    @property
+    def esta_preenchida(self):
+        """Retorna True se houver ao menos um equipamento atribuído."""
+        if self.preenchido_em:
+            return True
+        return self.itens.filter(equipamento__gt='').exists()
+
+    def atualizar_status_preenchimento(self):
+        """Atualiza preenchido_em quando houver equipamentos preenchidos ou limpa se vazia."""
+        from django.utils import timezone
+        tem_itens = self.itens.filter(equipamento__gt='').exists()
+        if tem_itens:
+            if not self.preenchido_em:
+                self.preenchido_em = timezone.now()
+            self.save(update_fields=['preenchido_em', 'atualizado_em'])
+        else:
+            if self.preenchido_em is not None:
+                setattr(self, 'preenchido_em', None)
+                self.save(update_fields=['preenchido_em', 'atualizado_em'])
+
+    def aulas_formatadas(self):
+        """Retorna as aulas dos agendamentos vinculados formatadas (ex.: '1ª e 2ª Aula')."""
+        ags = list(self.agendamentos.order_by('aula'))
+        if not ags:
+            return '—'
+        aulas_nums = [ag.aula for ag in ags]
+        if len(aulas_nums) == 1:
+            return f"{aulas_nums[0]}ª Aula"
+        elif len(aulas_nums) == 2:
+            return f"{aulas_nums[0]}ª e {aulas_nums[1]}ª Aula"
+        else:
+            return f"{', '.join(str(n) for n in aulas_nums[:-1])} e {aulas_nums[-1]}ª Aula"
+
+    def __str__(self):
+        ags = self.agendamentos.all()
+        if ags.exists():
+            ag = ags.first()
+            return f"Relação {ag.data:%d/%m/%Y} - {ag.turma.nome} ({self.aulas_formatadas()})"
+        return f"Relação #{self.id}"
+
+
+# ---------------------------------------------------------------------------
+# Agendamento: uma reserva de UMA aula, em um dia, por um professor,
+# para uma turma. Pode ser de Sala ou de Dispositivos.
+# ---------------------------------------------------------------------------
 class Agendamento(models.Model):
+    if TYPE_CHECKING:
+        id: int
+        relacao_id: int | None
+        itens: RelatedManager
+        relacoes: RelatedManager
+        ocorrencias: RelatedManager
+
     TIPO_CHOICES = (
         ('SALA', 'Sala de Aula'),
         ('DISPOSITIVO', 'Equipamentos Móveis'),
@@ -265,6 +335,10 @@ class Agendamento(models.Model):
         max_length=36, blank=True, default='',
         help_text='UUID que agrupa agendamentos fixos do mesmo conjunto'
     )
+    relacao = models.ForeignKey(
+        Relacao, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='agendamentos'
+    )
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -283,6 +357,42 @@ class Agendamento(models.Model):
                 name='unique_reserva_sala_aula_data'
             )
         ]
+
+    @property
+    def aula_ja_passou(self):
+        """Verifica se o horário de término desta aula já passou em relação ao horário atual."""
+        from datetime import time
+        from django.utils import timezone
+        horarios_fim = {
+            1: time(7, 50),
+            2: time(8, 40),
+            3: time(9, 30),
+            4: time(10, 40),
+            5: time(11, 30),
+            6: time(12, 20),
+            7: time(13, 50),
+            8: time(14, 40),
+            9: time(15, 30),
+        }
+        agora = timezone.localtime()
+        if self.data < agora.date():
+            return True
+        if self.data > agora.date():
+            return False
+        fim = horarios_fim.get(self.aula, time(15, 30))
+        return agora.time() >= fim
+
+    @property
+    def relacao_pendente(self):
+        """Retorna True se a relação vinculada ainda estiver vazia/pendente de preenchimento."""
+        if self.relacao is None:
+            return True
+        return not self.relacao.esta_preenchida
+
+    @property
+    def deve_exibir_alerta_relacao(self):
+        """Ativa tag/badge 'preencher relação!' em vermelho se a aula já encerrou e a relação está pendente."""
+        return self.aula_ja_passou and self.relacao_pendente
 
     def __str__(self):
         return f"{self.data:%d/%m/%Y} - {self.aula}ª aula - {self.get_tipo_display()}"
@@ -312,11 +422,16 @@ class ItemDispositivo(models.Model):
 
 
 # ---------------------------------------------------------------------------
-# Relação aluno x equipamento dentro de um agendamento.
+# Relação aluno x equipamento dentro de uma Relacao (e agendamento).
 # ---------------------------------------------------------------------------
 class RelacaoAlunoEquipamento(models.Model):
     agendamento = models.ForeignKey(
-        Agendamento, on_delete=models.CASCADE, related_name='relacoes'
+        Agendamento, on_delete=models.CASCADE, related_name='relacoes',
+        null=True, blank=True
+    )
+    relacao = models.ForeignKey(
+        Relacao, on_delete=models.CASCADE, related_name='itens',
+        null=True, blank=True
     )
     aluno = models.ForeignKey(
         Aluno, on_delete=models.CASCADE, related_name='relacoes'
@@ -327,7 +442,6 @@ class RelacaoAlunoEquipamento(models.Model):
     )
 
     class Meta:
-        unique_together = ('agendamento', 'aluno')
         verbose_name = 'Relação aluno/equipamento'
         verbose_name_plural = 'Relações aluno/equipamento'
 
@@ -413,3 +527,73 @@ class MensagemChat(models.Model):
 
     def __str__(self):
         return f"De {self.remetente.username} para {self.destinatario.username} em {self.data_envio:%d/%m/%Y %H:%M}"
+
+
+# ---------------------------------------------------------------------------
+# Módulo de Ocorrências
+# ---------------------------------------------------------------------------
+class Ocorrencia(models.Model):
+    if TYPE_CHECKING:
+        id: int
+        fotos: RelatedManager
+        alunos: RelatedManager
+        equipamentos: RelatedManager
+
+    agendamento = models.ForeignKey(
+        Agendamento, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='ocorrencias', verbose_name='Aula / Agendamento'
+    )
+    data_hora_fato = models.DateTimeField(verbose_name='Data e Horário do Fato')
+    descricao = models.TextField(verbose_name='Descrição Detalhada')
+    professor = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='ocorrencias_professor',
+        verbose_name='Professor Responsável'
+    )
+    alunos = models.ManyToManyField(
+        Aluno, blank=True, related_name='ocorrencias',
+        verbose_name='Alunos Envolvidos'
+    )
+    equipamentos = models.ManyToManyField(
+        Equipamento, blank=True, related_name='ocorrencias',
+        verbose_name='Equipamentos Envolvidos'
+    )
+    criado_por = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='ocorrencias_criadas',
+        verbose_name='Registrado Por'
+    )
+    criado_em = models.DateTimeField(auto_now_add=True, verbose_name='Criado em')
+
+    class Meta:
+        ordering = ['-data_hora_fato', '-criado_em']
+        verbose_name = 'Ocorrência'
+        verbose_name_plural = 'Ocorrências'
+        indexes = [
+            models.Index(fields=['-data_hora_fato']),
+            models.Index(fields=['agendamento']),
+            models.Index(fields=['professor']),
+            models.Index(fields=['criado_por']),
+        ]
+
+    @property
+    def created_at(self):
+        return self.criado_em
+
+    def __str__(self):
+        return f"Ocorrência #{self.id} em {self.data_hora_fato:%d/%m/%Y %H:%M}"
+
+
+class OcorrenciaFoto(models.Model):
+    ocorrencia = models.ForeignKey(
+        Ocorrencia, on_delete=models.CASCADE, related_name='fotos',
+        verbose_name='Ocorrência'
+    )
+    foto = models.ImageField(upload_to='ocorrencias/%Y/%m/', verbose_name='Foto')
+    criado_em = models.DateTimeField(auto_now_add=True, verbose_name='Enviado em')
+
+    class Meta:
+        ordering = ['criado_em']
+        verbose_name = 'Foto da Ocorrência'
+        verbose_name_plural = 'Fotos da Ocorrência'
+
+    def __str__(self):
+        return f"Foto #{self.id} da Ocorrência #{self.ocorrencia_id}"

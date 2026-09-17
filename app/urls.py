@@ -50,6 +50,18 @@ urlpatterns = [
     path('agendamentos/<int:agendamento_id>/cancelar/', views.cancelar_reserva, name='cancelar_reserva'),
     path('agendamentos/<int:agendamento_id>/relacao/', views.relacao_agendamento, name='relacao_agendamento'),
 
+    # Relações
+    path('relacoes/', views.relacoes_lista, name='relacoes_lista'),
+    path('relacoes/exportar/', views.exportar_relacoes, name='exportar_relacoes'),
+
+    # Ocorrências (acesso restrito a administradores)
+    path('ocorrencias/', views.ocorrencias_lista, name='ocorrencias_lista'),
+    path('ocorrencias/nova/', views.ocorrencia_criar, name='ocorrencia_criar'),
+    path('ocorrencias/<int:ocorrencia_id>/', views.ocorrencia_detalhe, name='ocorrencia_detalhe'),
+    path('ocorrencias/<int:ocorrencia_id>/excluir/', views.ocorrencia_excluir, name='ocorrencia_excluir'),
+    path('ocorrencias/api/agendamentos-por-data/', views.api_agendamentos_por_data, name='api_agendamentos_por_data'),
+    path('ocorrencias/api/agendamento/<int:agendamento_id>/contexto/', views.api_agendamento_contexto, name='api_agendamento_contexto'),
+
     # Notificações
     path('notificacoes/', views.listar_notificacoes, name='listar_notificacoes'),
     path('notificacoes/lidas/', views.marcar_lidas, name='marcar_lidas'),

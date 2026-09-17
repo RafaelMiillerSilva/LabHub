@@ -1,9 +1,16 @@
 {% extends "app/layout.html" %}
 {% block content %}
 
-<a href="javascript:history.back()" class="lh-back-link">
-    ← Voltar
-</a>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+    <a href="javascript:history.back()" class="lh-back-link" style="margin-bottom:0;">
+        ← Voltar
+    </a>
+    {% if is_admin or user.is_staff or user.perfil.tipo == 'ADMINISTRADOR' %}
+    <a href="{% url 'ocorrencia_criar' %}?agendamento_id={{ ag.id }}" class="lh-btn lh-btn--warning" style="background:#F59E0B; color:#ffffff; border:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:13px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(245,158,11,0.25);">
+        ⚠️ Ocorrência
+    </a>
+    {% endif %}
+</div>
 
 <div class="lh-hero">
     <div class="lh-hero-icone">📋</div>

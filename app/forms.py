@@ -9,7 +9,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from .models import Aluno, Equipamento, Sala, Turma
+from .models import Aluno, Equipamento, Ocorrencia, Sala, Turma
 from .validators import custom_username_validator
 
 
@@ -263,3 +263,77 @@ class AlunoForm(forms.ModelForm):
             'digito': 'Dígito',
             'uf': 'UF',
         }
+
+
+# ---------------------------------------------------------------------------
+# Cadastro de Ocorrências
+# ---------------------------------------------------------------------------
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", MultipleFileInput())
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        single_file_clean = super().clean
+        if isinstance(data, (list, tuple)):
+            result = [single_file_clean(d, initial) for d in data]
+        else:
+            result = single_file_clean(data, initial)
+        return result
+
+
+class OcorrenciaForm(forms.ModelForm):
+    data_hora_fato = forms.DateTimeField(
+        input_formats=['%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%d/%m/%Y %H:%M', '%d/%m/%Y %H:%M:%S'],
+        widget=forms.DateTimeInput(
+            format='%Y-%m-%dT%H:%M',
+            attrs={'class': 'form-control', 'type': 'datetime-local'}
+        ),
+        label='Data e Horário do Fato'
+    )
+    fotos = MultipleFileField(
+        required=False,
+        label="Fotos da Ocorrência",
+        widget=MultipleFileInput(attrs={
+            'class': 'form-control',
+            'accept': 'image/*',
+            'multiple': True,
+        })
+    )
+
+    class Meta:
+        model = Ocorrencia
+        fields = ['agendamento', 'data_hora_fato', 'professor', 'descricao', 'alunos', 'equipamentos']
+        widgets = {
+            'agendamento': forms.HiddenInput(),
+            'professor': forms.Select(attrs={'class': 'form-control'}),
+            'descricao': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Descreva detalhadamente o fato ocorrido, eventuais danos, estado dos equipamentos, etc.'
+            }),
+            'alunos': forms.CheckboxSelectMultiple(),
+            'equipamentos': forms.CheckboxSelectMultiple(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['professor'].queryset = User.objects.filter(is_active=True).order_by('first_name', 'username')
+        self.fields['alunos'].required = False
+        self.fields['equipamentos'].required = False
+        self.fields['agendamento'].required = False
+
+    def clean_fotos(self):
+        arquivos = self.files.getlist('fotos')
+        extensoes_permitidas = ('.jpg', '.jpeg', '.png', '.webp', '.gif')
+        for arq in arquivos:
+            if arq.size > 10 * 1024 * 1024:
+                raise ValidationError(f"O arquivo '{arq.name}' excede o tamanho máximo de 10MB.")
+            ext = arq.name.lower()
+            if not ext.endswith(extensoes_permitidas):
+                raise ValidationError(f"O arquivo '{arq.name}' não é uma imagem válida (JPG, PNG ou WebP).")
+        return arquivos

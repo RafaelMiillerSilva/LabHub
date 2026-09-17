@@ -45,6 +45,8 @@ from .agendamentos import (
     agendamento_detalhe,
     cancelar_reserva,
     relacao_agendamento,
+    relacoes_lista,
+    exportar_relacoes,
     _disponibilidade_dispositivos,
     _estoque_por_categoria,
 )
@@ -65,6 +67,14 @@ from .perfil import (
     minha_conta,
     alterar_senha,
     foto_perfil,
+)
+from .ocorrencias import (
+    ocorrencias_lista,
+    ocorrencia_criar,
+    ocorrencia_detalhe,
+    ocorrencia_excluir,
+    api_agendamentos_por_data,
+    api_agendamento_contexto,
 )
 
 __all__ = [
@@ -100,6 +110,8 @@ __all__ = [
     'agendamento_detalhe',
     'cancelar_reserva',
     'relacao_agendamento',
+    'relacoes_lista',
+    'exportar_relacoes',
     '_disponibilidade_dispositivos',
     '_estoque_por_categoria',
     'listar_notificacoes',
@@ -114,4 +126,10 @@ __all__ = [
     'minha_conta',
     'alterar_senha',
     'foto_perfil',
+    'ocorrencias_lista',
+    'ocorrencia_criar',
+    'ocorrencia_detalhe',
+    'ocorrencia_excluir',
+    'api_agendamentos_por_data',
+    'api_agendamento_contexto',
 ]

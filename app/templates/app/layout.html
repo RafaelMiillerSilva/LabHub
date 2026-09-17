@@ -1128,6 +1128,10 @@
                         <li><a href="{% url 'salas' %}">Salas</a></li>
                         <li><a href="{% url 'equipamentos' %}">Equipamentos</a></li>
                         <li><a href="{% url 'agendamentos' %}">Calendário</a></li>
+                        <li><a href="{% url 'relacoes_lista' %}">Relação</a></li>
+                        {% if user.perfil.tipo == 'ADMINISTRADOR' or user.is_staff or user.is_superuser %}
+                        <li><a href="{% url 'ocorrencias_lista' %}">Ocorrências</a></li>
+                        {% endif %}
                         {% endif %}
 
                         <li><a href="{% url 'about' %}">Sobre</a></li>
@@ -1135,6 +1139,19 @@
 
                     {% if user.is_authenticated and user.perfil.aprovado %}
                     <div class="navbar-right-custom">
+                        {% if user.perfil.tipo == 'ADMINISTRADOR' or user.is_staff or user.is_superuser %}
+                        <!-- Ícone de Alerta: Registrar Ocorrência (exclusivo para admins) -->
+                        <div class="notif-wrapper">
+                            <a href="{% url 'ocorrencia_criar' %}"
+                                style="text-decoration: none; display: inline-flex; align-items: center; justify-content: flex-start;"
+                                title="Registrar Ocorrência">
+                                <span class="notif-bell" id="ocorrenciaIcon" style="font-size: 17px;" title="Registrar Ocorrência">
+                                    ⚠️
+                                </span>
+                            </a>
+                        </div>
+                        {% endif %}
+
                         <!-- Alternador de Tema -->
                         <div class="notif-wrapper">
                             <button type="button" class="theme-toggle-btn" id="themeToggleBtn"
@@ -1186,6 +1203,11 @@
                                 <a href="{% url 'minha_conta' %}" class="avatar-dropdown-item">
                                     👤 Você
                                 </a>
+                                {% if user.perfil.tipo == 'ADMINISTRADOR' or user.is_staff or user.is_superuser %}
+                                <a href="{% url 'ocorrencias_lista' %}" class="avatar-dropdown-item">
+                                    ⚠️ Ocorrências
+                                </a>
+                                {% endif %}
                                 <button type="button" class="avatar-dropdown-item" id="themeToggleDropdown"
                                     style="width:100%; text-align:left; cursor:pointer; background:none; border:none; display:flex; align-items:center; gap:10px;">
                                     <span class="theme-dropdown-icon">🌙</span> <span class="theme-dropdown-text">Modo

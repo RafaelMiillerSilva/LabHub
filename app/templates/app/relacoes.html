@@ -1,0 +1,429 @@
+{% extends "app/layout.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* ==================== ESTILOS DA TELA DE RELAÇÃO ==================== */
+    .rel-page-header {
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto 24px;
+    }
+
+    .rel-badge-aulas {
+        background: var(--lh-primary-light);
+        color: var(--lh-primary);
+        font-weight: 700;
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border: 1px solid rgba(26, 74, 138, 0.15);
+    }
+
+    [data-theme="dark"] .rel-badge-aulas {
+        background: rgba(99, 102, 241, 0.2);
+        color: #A5B4FC;
+        border-color: rgba(99, 102, 241, 0.3);
+    }
+
+    .tr-selecionada {
+        background-color: rgba(26, 74, 138, 0.05) !important;
+    }
+
+    [data-theme="dark"] .tr-selecionada {
+        background-color: rgba(99, 102, 241, 0.15) !important;
+    }
+
+    .btn-exportar-acao {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 16px;
+        font-weight: 700;
+        font-size: 13px;
+        border-radius: var(--lh-radius-sm);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .drawer-relacao {
+        background-color: var(--lh-surface-subtle);
+    }
+
+    .drawer-card-inner {
+        background: var(--lh-surface);
+        border: 1px solid var(--lh-border);
+        border-radius: var(--lh-radius-sm);
+        padding: 16px;
+    }
+
+    .status-preenchido {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .status-timestamp {
+        font-size: 11px;
+        color: var(--lh-text-muted);
+        font-weight: 500;
+    }
+</style>
+
+<div class="rel-page-header">
+
+    <!-- Hero Header -->
+    <div class="lh-hero" style="margin-bottom: 24px;">
+        <div class="lh-hero-icone">📋</div>
+        <div class="lh-hero-texto">
+            <h2>Relação de Alunos e Equipamentos</h2>
+            <p>Histórico, status de preenchimento e exportação dos equipamentos atribuídos às turmas nas aulas.</p>
+        </div>
+        <div class="lh-hero-stat">
+            <span class="num">{{ total_relacoes }}</span>
+            <span class="lbl">Relações</span>
+        </div>
+    </div>
+
+    <!-- Card de Filtros Funcionais -->
+    <div class="lh-card" style="margin-bottom: 20px;">
+        <div class="lh-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <h3 class="lh-card-title" style="margin:0; font-size:16px;">🔍 Filtros de Pesquisa</h3>
+            <span style="font-size:12px; color:var(--lh-text-muted);">Filtre por período, aula ou professor</span>
+        </div>
+        <div class="lh-card-body">
+            <form method="get" action="{% url 'relacoes_lista' %}" id="form-filtros-relacao" style="display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end;">
+                <div style="flex:1; min-width:160px;">
+                    <label style="display:block; font-size:12px; font-weight:700; color:var(--lh-text); margin-bottom:4px;">Data Inicial</label>
+                    <input type="date" name="data_inicio" value="{{ f_data_inicio }}" class="form-control" style="font-size:13px;">
+                </div>
+
+                <div style="flex:1; min-width:160px;">
+                    <label style="display:block; font-size:12px; font-weight:700; color:var(--lh-text); margin-bottom:4px;">Data Final</label>
+                    <input type="date" name="data_fim" value="{{ f_data_fim }}" class="form-control" style="font-size:13px;">
+                </div>
+
+                <div style="flex:1; min-width:140px;">
+                    <label style="display:block; font-size:12px; font-weight:700; color:var(--lh-text); margin-bottom:4px;">Aula</label>
+                    <select name="aula" class="form-control" style="font-size:13px;">
+                        <option value="">Todas as Aulas</option>
+                        {% for num_aula, nome_aula in aulas_filtro %}
+                        <option value="{{ num_aula }}" {% if f_aula == num_aula|stringformat:"i" %}selected{% endif %}>{{ nome_aula }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="flex:1; min-width:180px;">
+                    <label style="display:block; font-size:12px; font-weight:700; color:var(--lh-text); margin-bottom:4px;">Professor / Solicitante</label>
+                    <select name="usuario" class="form-control" style="font-size:13px;">
+                        <option value="">Todos os Professores</option>
+                        {% for u in usuarios_filtro %}
+                        <option value="{{ u.id }}" {% if f_usuario == u.id|stringformat:"i" %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button type="submit" class="lh-btn lh-btn--primary" style="padding:9px 18px; font-size:13px;">
+                        🔍 Filtrar
+                    </button>
+                    {% if f_data_inicio or f_data_fim or f_aula or f_usuario %}
+                    <a href="{% url 'relacoes_lista' %}" class="lh-btn lh-btn--ghost" style="padding:9px 14px; font-size:13px;">
+                        ✕ Limpar
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toolbar de Ações e Exportações em Lote -->
+    <form id="form-exportacao-relacao" method="post" action="{% url 'exportar_relacoes' %}">
+        {% csrf_token %}
+        <input type="hidden" name="formato" id="input-formato-exportacao" value="csv">
+
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <label style="display:inline-flex; align-items:center; gap:8px; margin:0; font-size:13px; font-weight:700; cursor:pointer; user-select:none; color:var(--lh-text);">
+                    <input type="checkbox" id="check-selecionar-todos-topo" style="cursor:pointer; width:17px; height:17px; accent-color:var(--lh-primary);">
+                    <span>Selecionar Todos</span>
+                </label>
+                <span id="badge-contador-selecionados" class="lh-badge lh-badge--primary" style="font-size:12px;">
+                    0 selecionados de {{ total_relacoes }}
+                </span>
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="lh-btn lh-btn--outline btn-exportar-acao" data-formato="csv">
+                    📥 Exportar CSV
+                </button>
+                <button type="button" class="lh-btn lh-btn--primary btn-exportar-acao" data-formato="pdf">
+                    📄 Exportar PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabela Principal de Relações -->
+        <div class="lh-card" style="overflow:hidden;">
+            <div class="table-responsive" style="margin:0;">
+                <table class="table lh-table" style="margin:0; vertical-align:middle;">
+                    <thead>
+                        <tr style="background:var(--lh-surface-subtle); border-bottom:2px solid var(--lh-border);">
+                            <th style="width:40px; text-align:center; padding:12px 8px;">
+                                <input type="checkbox" id="check-todos-tabela" style="cursor:pointer; width:16px; height:16px; accent-color:var(--lh-primary);" title="Selecionar todas as relações">
+                            </th>
+                            <th style="font-size:12px; font-weight:700; color:var(--lh-text-muted);">Data</th>
+                            <th style="font-size:12px; font-weight:700; color:var(--lh-text-muted);">Aula(s)</th>
+                            <th style="font-size:12px; font-weight:700; color:var(--lh-text-muted);">Espaço / Equipamentos</th>
+                            <th style="font-size:12px; font-weight:700; color:var(--lh-text-muted);">Turma</th>
+                            <th style="font-size:12px; font-weight:700; color:var(--lh-text-muted);">Professor</th>
+                            <th style="font-size:12px; font-weight:700; color:var(--lh-text-muted);">Status Relação</th>
+                            <th style="font-size:12px; font-weight:700; color:var(--lh-text-muted);">Aparelhos Atribuídos</th>
+                            <th style="font-size:12px; font-weight:700; color:var(--lh-text-muted); text-align:center;">Alunos</th>
+                            <th style="font-size:12px; font-weight:700; color:var(--lh-text-muted); text-align:right;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in relacoes %}
+                        <tr class="tr-relacao-row" data-rel-id="{{ item.rel.id }}">
+                            <td style="text-align:center; padding:12px 8px;">
+                                <input type="checkbox" name="ids" value="{{ item.ag_principal.id }}" class="check-relacao-item" style="cursor:pointer; width:16px; height:16px; accent-color:var(--lh-primary);">
+                            </td>
+                            <td style="font-weight:700; font-size:13px; color:var(--lh-text); white-space:nowrap;">
+                                {{ item.data|date:"d/m/Y" }}
+                                {% if item.fixo %}
+                                <span title="Agendamento Fixo Semanal" style="cursor:default; font-size:13px; margin-left:4px;">📌</span>
+                                {% endif %}
+                            </td>
+                            <td style="white-space:nowrap;">
+                                <span class="rel-badge-aulas">
+                                    {{ item.aulas_formatadas }}
+                                </span>
+                            </td>
+                            <td style="font-size:13px;">
+                                <div style="font-weight:600; color:var(--lh-text);">
+                                    {{ item.espaco_equip }}
+                                </div>
+                            </td>
+                            <td style="font-size:13px; font-weight:600; white-space:nowrap;">
+                                {{ item.turma.nome }}
+                                <span style="font-size:11px; font-weight:normal; color:var(--lh-text-muted);">({{ item.turma.get_turno_display }})</span>
+                            </td>
+                            <td style="font-size:13px;">
+                                {{ item.professor.get_full_name|default:item.professor.username }}
+                            </td>
+                            <td>
+                                {% if item.esta_preenchida %}
+                                <div class="status-preenchido">
+                                    <span class="lh-badge lh-badge--success" style="font-size:11px; font-weight:700;">
+                                        ✓ Preenchida
+                                    </span>
+                                    {% if item.preenchido_em %}
+                                    <span class="status-timestamp">
+                                        em {{ item.preenchido_em|date:"d/m/Y H:i" }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <span class="lh-badge lh-badge--warning" style="font-size:11px; font-weight:700;">
+                                    ⏳ Pendente
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td style="font-size:12.5px;">
+                                {% if item.total_com_aparelho > 0 %}
+                                <div style="font-weight:700; color:var(--lh-primary); display:flex; align-items:center; gap:6px;">
+                                    <span class="lh-badge lh-badge--primary" style="font-size:11px;">
+                                        {{ item.total_com_aparelho }} aparelho{{ item.total_com_aparelho|pluralize }}
+                                    </span>
+                                    <span style="font-size:12px; color:var(--lh-text-muted); font-weight:normal; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ item.aparelhos_resumo }}">
+                                        {{ item.aparelhos_resumo }}
+                                    </span>
+                                </div>
+                                {% else %}
+                                <span style="color:var(--lh-text-muted); font-style:italic; font-size:12px;">
+                                    Nenhum aparelho atribuído
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align:center; white-space:nowrap;">
+                                {% if item.total_alunos_turma > 0 %}
+                                <button type="button" class="lh-btn lh-btn--ghost lh-btn--sm btn-toggle-alunos" data-target="#drawer-alunos-{{ item.rel.id }}" style="padding:4px 10px; font-size:12px;">
+                                    👥 {{ item.total_alunos_turma }} alunos
+                                </button>
+                                {% else %}
+                                <span style="font-size:12px; color:var(--lh-text-muted);">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align:right; white-space:nowrap;">
+                                <a href="{% url 'relacao_agendamento' item.ag_principal.id %}" class="lh-btn lh-btn--ghost lh-btn--sm" style="padding:4px 10px; font-size:12px;">
+                                    ✏️ Preencher
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- Gaveta Retrátil com Alunos e Aparelhos da Relação -->
+                        {% if item.total_alunos_turma > 0 %}
+                        <tr id="drawer-alunos-{{ item.rel.id }}" class="drawer-relacao" style="display:none;">
+                            <td colspan="10" style="padding:16px 20px;">
+                                <div class="drawer-card-inner">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--lh-border-subtle); padding-bottom:8px; flex-wrap:wrap; gap:8px;">
+                                        <h4 style="margin:0; font-size:14px; font-weight:700; color:var(--lh-text);">
+                                            👥 Alunos da Turma: {{ item.turma.nome }} ({{ item.data|date:"d/m/Y" }} — {{ item.aulas_formatadas }})
+                                        </h4>
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <span style="font-size:12px; color:var(--lh-text-muted);">
+                                                {{ item.total_com_aparelho }} de {{ item.total_alunos_turma }} alunos com equipamento atribuído
+                                            </span>
+                                            <a href="{% url 'relacao_agendamento' item.ag_principal.id %}" class="lh-btn lh-btn--primary lh-btn--sm" style="font-size:11.5px; padding:3px 8px;">
+                                                Gerenciar Atribuições
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:10px;">
+                                        {% for linha in item.linhas_alunos %}
+                                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border:1px solid var(--lh-border); border-radius:6px; background:var(--lh-surface);">
+                                            <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:8px;">
+                                                <span style="font-size:12.5px; font-weight:600; color:var(--lh-text); display:block;">{{ linha.aluno.nome }}</span>
+                                                <span style="font-size:11px; color:var(--lh-text-muted);">RA: {{ linha.aluno.ra_formatado }}</span>
+                                            </div>
+                                            <div>
+                                                {% if linha.equipamento %}
+                                                <span class="lh-badge lh-badge--primary" style="font-size:11.5px; font-weight:700; padding:2px 8px;">
+                                                    {{ linha.equipamento }}
+                                                </span>
+                                                {% else %}
+                                                <span style="font-size:11.5px; color:var(--lh-text-muted); font-style:italic;">
+                                                    Sem aparelho
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" style="text-align:center; padding:48px 16px; color:var(--lh-text-muted);">
+                                <div style="font-size:32px; margin-bottom:8px;">📭</div>
+                                <p style="margin:0; font-size:15px; font-weight:600;">Nenhuma relação encontrada.</p>
+                                <p style="margin:4px 0 0; font-size:13px;">Tente ajustar os filtros acima para visualizar outros registros.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var checkTodosTopo = document.getElementById('check-selecionar-todos-topo');
+        var checkTodosTabela = document.getElementById('check-todos-tabela');
+        var itemCheckboxes = document.querySelectorAll('.check-relacao-item');
+        var badgeContador = document.getElementById('badge-contador-selecionados');
+        var totalItens = itemCheckboxes.length;
+
+        function atualizarContador() {
+            var selecionados = document.querySelectorAll('.check-relacao-item:checked').length;
+            if (badgeContador) {
+                badgeContador.textContent = selecionados + ' selecionado' + (selecionados === 1 ? '' : 's') + ' de ' + totalItens;
+            }
+            var todos = (totalItens > 0 && selecionados === totalItens);
+            if (checkTodosTopo) checkTodosTopo.checked = todos;
+            if (checkTodosTabela) checkTodosTabela.checked = todos;
+
+            itemCheckboxes.forEach(function (chk) {
+                var row = chk.closest('tr');
+                if (row) {
+                    if (chk.checked) {
+                        row.classList.add('tr-selecionada');
+                    } else {
+                        row.classList.remove('tr-selecionada');
+                    }
+                }
+            });
+        }
+
+        function marcarTodos(estado) {
+            itemCheckboxes.forEach(function (chk) {
+                chk.checked = estado;
+            });
+            atualizarContador();
+        }
+
+        if (checkTodosTopo) {
+            checkTodosTopo.addEventListener('change', function () {
+                marcarTodos(this.checked);
+            });
+        }
+
+        if (checkTodosTabela) {
+            checkTodosTabela.addEventListener('change', function () {
+                marcarTodos(this.checked);
+            });
+        }
+
+        itemCheckboxes.forEach(function (chk) {
+            chk.addEventListener('change', atualizarContador);
+        });
+
+        // Submissão dos botões de exportação com validação visual
+        var formExportacao = document.getElementById('form-exportacao-relacao');
+        var inputFormato = document.getElementById('input-formato-exportacao');
+        var botoesExportar = document.querySelectorAll('.btn-exportar-acao');
+
+        botoesExportar.forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                var selecionados = document.querySelectorAll('.check-relacao-item:checked');
+                if (selecionados.length === 0) {
+                    e.preventDefault();
+                    if (window.LabHubFlash) {
+                        window.LabHubFlash('Selecione pelo menos uma relação para exportar.', 'warning');
+                    } else {
+                        alert('Selecione pelo menos uma relação para exportar.');
+                    }
+                    return false;
+                }
+
+                var formato = this.getAttribute('data-formato') || 'csv';
+                if (inputFormato) {
+                    inputFormato.value = formato;
+                }
+                if (formExportacao) {
+                    formExportacao.submit();
+                }
+            });
+        });
+
+        // Alternador da listagem detalhada de alunos por relação
+        $(document).on('click', '.btn-toggle-alunos', function (e) {
+            e.preventDefault();
+            var targetSelector = $(this).attr('data-target');
+            var $targetRow = $(targetSelector);
+            if ($targetRow.length) {
+                if ($targetRow.is(':visible')) {
+                    $targetRow.hide();
+                    $(this).removeClass('active');
+                } else {
+                    $targetRow.show();
+                    $(this).addClass('active');
+                }
+            }
+        });
+
+        atualizarContador();
+    });
+</script>
+{% endblock %}

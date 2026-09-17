@@ -1,0 +1,242 @@
+{% extends "app/layout.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    .oc-list-container {
+        max-width: 1200px;
+        margin: 0 auto 40px;
+    }
+
+    .oc-header-flex {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .oc-filter-bar {
+        background: var(--lh-surface);
+        border: 1px solid var(--lh-border);
+        border-radius: var(--lh-radius);
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        box-shadow: var(--lh-shadow-sm);
+    }
+
+    .oc-card-item {
+        background: var(--lh-surface);
+        border: 1px solid var(--lh-border);
+        border-radius: var(--lh-radius);
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: var(--lh-shadow-sm);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        position: relative;
+    }
+
+    .oc-card-item:hover {
+        border-color: #F59E0B;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .oc-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 6px;
+    }
+
+    .oc-tag--warning {
+        background: rgba(245, 158, 11, 0.12);
+        color: #D97706;
+        border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+
+    [data-theme="dark"] .oc-tag--warning {
+        color: #FBBF24;
+    }
+
+    .oc-tag--alunos {
+        background: rgba(59, 130, 246, 0.1);
+        color: #2563EB;
+        border: 1px solid rgba(59, 130, 246, 0.25);
+    }
+
+    [data-theme="dark"] .oc-tag--alunos {
+        color: #93C5FD;
+    }
+
+    .oc-tag--equips {
+        background: rgba(16, 185, 129, 0.1);
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    [data-theme="dark"] .oc-tag--equips {
+        color: #6EE7B7;
+    }
+
+    .oc-tag--fotos {
+        background: rgba(139, 92, 246, 0.1);
+        color: #7C3AED;
+        border: 1px solid rgba(139, 92, 246, 0.25);
+    }
+
+    [data-theme="dark"] .oc-tag--fotos {
+        color: #C4B5FD;
+    }
+</style>
+
+<div class="oc-list-container">
+    <div style="margin-bottom: 16px;">
+        <a href="{% url 'painel' %}" class="lh-back-link">
+            ← Voltar ao Painel
+        </a>
+    </div>
+
+    <!-- Header com Título e Botão de Nova Ocorrência -->
+    <div class="oc-header-flex">
+        <div>
+            <h1 style="font-size:24px; font-weight:800; color:var(--lh-text); margin:0 0 6px 0; display:flex; align-items:center; gap:10px;">
+                <span>⚠️</span> Ocorrências do Sistema
+            </h1>
+            <p style="margin:0; font-size:13.5px; color:var(--lh-text-muted);">
+                Acompanhamento e gestão de incidentes, danos a equipamentos e ocorrências escolares.
+            </p>
+        </div>
+        <a href="{% url 'ocorrencia_criar' %}" class="lh-btn lh-btn--primary" style="background:#F59E0B; border:none; color:#fff; font-weight:700; padding:10px 22px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 2px 6px rgba(245,158,11,0.3);">
+            <span>➕</span> Registrar Nova Ocorrência
+        </a>
+    </div>
+
+    <!-- Barra de Filtros -->
+    <div class="oc-filter-bar">
+        <form method="get" action="{% url 'ocorrencias_lista' %}">
+            <div class="row" style="align-items: flex-end;">
+                <div class="col-md-4 col-sm-6 col-xs-12" style="margin-bottom:10px;">
+                    <label style="font-size:12px; font-weight:700; color:var(--lh-text-muted); display:block; margin-bottom:4px;">
+                        🔍 Busca Geral
+                    </label>
+                    <input type="text" name="q" class="form-control" placeholder="Buscar por descrição, aluno, equipamento..." value="{{ termo }}">
+                </div>
+                <div class="col-md-2 col-sm-3 col-xs-6" style="margin-bottom:10px;">
+                    <label style="font-size:12px; font-weight:700; color:var(--lh-text-muted); display:block; margin-bottom:4px;">
+                        📅 Data Inicial
+                    </label>
+                    <input type="date" name="data_inicio" class="form-control" value="{{ data_inicio }}">
+                </div>
+                <div class="col-md-2 col-sm-3 col-xs-6" style="margin-bottom:10px;">
+                    <label style="font-size:12px; font-weight:700; color:var(--lh-text-muted); display:block; margin-bottom:4px;">
+                        📅 Data Final
+                    </label>
+                    <input type="date" name="data_fim" class="form-control" value="{{ data_fim }}">
+                </div>
+                <div class="col-md-2 col-sm-6 col-xs-12" style="margin-bottom:10px;">
+                    <label style="font-size:12px; font-weight:700; color:var(--lh-text-muted); display:block; margin-bottom:4px;">
+                        👨‍🏫 Professor
+                    </label>
+                    <select name="professor" class="form-control">
+                        <option value="">Todos</option>
+                        {% for p in professores %}
+                        <option value="{{ p.id }}" {% if professor_selecionado == p.id %}selected{% endif %}>
+                            {{ p.get_full_name|default:p.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 col-sm-6 col-xs-12" style="margin-bottom:10px; display:flex; gap:8px;">
+                    <button type="submit" class="lh-btn lh-btn--primary" style="flex:1; padding:7px 14px; font-size:13px;">
+                        Filtrar
+                    </button>
+                    {% if termo or data_inicio or data_fim or professor_selecionado %}
+                    <a href="{% url 'ocorrencias_lista' %}" class="lh-btn lh-btn--ghost" style="padding:7px 12px; font-size:13px;" title="Limpar Filtros">
+                        ✕
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Contador de Resultados -->
+    <div style="margin-bottom:16px; font-size:13px; font-weight:600; color:var(--lh-text-muted); display:flex; justify-content:space-between; align-items:center;">
+        <span>Total de registros: <strong>{{ total_ocorrencias }}</strong></span>
+    </div>
+
+    <!-- Lista de Ocorrências -->
+    {% if ocorrencias %}
+        {% for oc in ocorrencias %}
+        <div class="oc-card-item">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:10px;">
+                <div>
+                    <span class="oc-tag oc-tag--warning" style="margin-bottom:6px;">
+                        Ocorrência #{{ oc.id }}
+                    </span>
+                    <div style="font-size:17px; font-weight:800; color:var(--lh-text);">
+                        Fato ocorrido em {{ oc.data_hora_fato|date:"d/m/Y \à\s H:i" }}
+                    </div>
+                    <div style="font-size:13px; color:var(--lh-text-muted); margin-top:2px;">
+                        {% if oc.agendamento %}
+                            <strong>Aula:</strong> {{ oc.agendamento.aula }}ª Aula — {{ oc.agendamento.turma.nome }}
+                            {% if oc.agendamento.tipo == 'SALA' and oc.agendamento.sala %}({{ oc.agendamento.sala.nome }}){% endif %}
+                            &bull;
+                        {% endif %}
+                        <strong>Prof. Responsável:</strong> {{ oc.professor.get_full_name|default:oc.professor.username }}
+                    </div>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <a href="{% url 'ocorrencia_detalhe' oc.id %}" class="lh-btn lh-btn--sm lh-btn--outline" style="font-size:12.5px; padding:6px 14px;">
+                        👁️ Detalhes
+                    </a>
+                </div>
+            </div>
+
+            <!-- Resumo da Descrição -->
+            <div style="font-size:13.5px; color:var(--lh-text); line-height:1.5; margin-bottom:14px; background:var(--lh-surface-subtle); padding:10px 14px; border-radius:6px; border-left:3px solid #F59E0B;">
+                {{ oc.descricao|truncatewords:40 }}
+            </div>
+
+            <!-- Tags de Envolvidos e Anexos -->
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; border-top:1px solid var(--lh-border-subtle); padding-top:10px; font-size:12px;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span class="oc-tag oc-tag--alunos" title="Alunos Envolvidos">
+                        👥 {{ oc.alunos.count }} aluno(s)
+                    </span>
+                    <span class="oc-tag oc-tag--equips" title="Equipamentos Envolvidos">
+                        💻 {{ oc.equipamentos.count }} equipamento(s)
+                    </span>
+                    <span class="oc-tag oc-tag--fotos" title="Fotos Anexadas">
+                        📷 {{ oc.fotos.count }} foto(s)
+                    </span>
+                </div>
+                <div style="color:var(--lh-text-muted);">
+                    Registrado por <strong>{{ oc.criado_por.first_name|default:oc.criado_por.username }}</strong> em {{ oc.criado_em|date:"d/m/Y H:i" }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align:center; padding:60px 20px; background:var(--lh-surface); border:1px solid var(--lh-border); border-radius:var(--lh-radius);">
+            <div style="font-size:48px; margin-bottom:12px;">📭</div>
+            <h3 style="font-size:18px; font-weight:700; color:var(--lh-text); margin:0 0 6px 0;">Nenhuma ocorrência encontrada</h3>
+            <p style="font-size:13.5px; color:var(--lh-text-muted); margin:0 0 18px 0;">
+                {% if termo or data_inicio or data_fim or professor_selecionado %}
+                Nenhum registro corresponde aos filtros selecionados. Tente ajustar os termos de busca.
+                {% else %}
+                Não há ocorrências registradas no sistema até o momento.
+                {% endif %}
+            </p>
+            <a href="{% url 'ocorrencia_criar' %}" class="lh-btn lh-btn--primary" style="background:#F59E0B; border:none; color:#fff; font-weight:700; padding:10px 20px;">
+                ➕ Registrar Ocorrência
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

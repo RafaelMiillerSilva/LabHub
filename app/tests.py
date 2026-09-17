@@ -9,10 +9,14 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from app.backends import EmailBackend
 from app.forms import CadastroForm, EquipamentoForm
-from app.models import Agendamento, Aluno, Equipamento, ItemDispositivo, RelacaoAlunoEquipamento, Sala, Turma
+from app.models import (
+    Agendamento, Aluno, Equipamento, ItemDispositivo,
+    Ocorrencia, OcorrenciaFoto, Relacao, RelacaoAlunoEquipamento, Sala, Turma
+)
 
 
 class EquipamentoFixoTest(TestCase):
@@ -730,62 +734,132 @@ class AgendamentosRelacaoExportTest(TestCase):
         self.d2 = date(2026, 9, 5)
         self.d3 = date(2026, 9, 10)
 
-        self.ag1 = Agendamento.objects.create(data=self.d1, aula=1, tipo='SALA', professor=self.prof1, turma=self.turma, sala=self.sala, observacao='Obs 1')
-        self.ag2 = Agendamento.objects.create(data=self.d2, aula=2, tipo='SALA', professor=self.prof2, turma=self.turma, sala=self.sala, observacao='Obs 2')
-        self.ag3 = Agendamento.objects.create(data=self.d3, aula=3, tipo='SALA', professor=self.prof1, turma=self.turma, sala=self.sala, observacao='Obs 3')
+        self.r1 = Relacao.objects.create()
+        self.r2 = Relacao.objects.create()
+        self.r3 = Relacao.objects.create()
 
-    def test_navbar_renomeada_para_calendario(self):
-        """Item de menu na navbar foi renomeado de Agendamentos para Calendário preservando a rota."""
+        self.ag1 = Agendamento.objects.create(data=self.d1, aula=1, tipo='SALA', professor=self.prof1, turma=self.turma, sala=self.sala, observacao='Obs 1', relacao=self.r1)
+        self.ag2 = Agendamento.objects.create(data=self.d2, aula=2, tipo='SALA', professor=self.prof2, turma=self.turma, sala=self.sala, observacao='Obs 2', relacao=self.r2)
+        self.ag3 = Agendamento.objects.create(data=self.d3, aula=3, tipo='SALA', professor=self.prof1, turma=self.turma, sala=self.sala, observacao='Obs 3', relacao=self.r3)
+
+    def test_navbar_possui_calendario_e_relacao(self):
+        """Navbar possui itens separados para Calendário e Relação com suas respectivas rotas."""
         self.client.force_login(self.prof1)
         resp = self.client.get(reverse('home'))
         self.assertEqual(resp.status_code, 200)
         content = resp.content.decode('utf-8')
         self.assertIn(f'<a href="{reverse("agendamentos")}">Calendário</a>', content)
+        self.assertIn(f'<a href="{reverse("relacoes_lista")}">Relação</a>', content)
 
-    def test_aba_relacao_listagem_e_ordenacao(self):
-        """Aba Relação exibe agendamentos ordenados de forma decrescente por data."""
+    def test_calendario_sem_aba_relacao(self):
+        """Página do Calendário contém apenas a visualização de agendamentos, sem aba Relação."""
         self.client.force_login(self.prof1)
-        resp = self.client.get(reverse('agendamentos'), {'aba': 'relacao'})
+        resp = self.client.get(reverse('agendamentos'))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['aba_ativa'], 'relacao')
+        content = resp.content.decode('utf-8')
+        self.assertNotIn('id="tab-relacao"', content)
+        self.assertNotIn('role="tablist"', content)
 
-        agendamentos = list(resp.context['agendamentos_relacao'])
-        # Ordenação decrescente: ag3 (10/09), ag2 (05/09), ag1 (01/09)
-        self.assertEqual([a.id for a in agendamentos], [self.ag3.id, self.ag2.id, self.ag1.id])
+    def test_tela_relacoes_listagem_e_ordenacao_por_preenchimento(self):
+        """Nova tela de Relação ordena relações preenchidas recentemente no topo e vazias depois."""
+        from django.utils import timezone
+        agora = timezone.now()
+        self.r2.preenchido_em = agora - timedelta(hours=1)
+        self.r2.save()
+        self.r1.preenchido_em = agora
+        self.r1.save()
+        self.r3.preenchido_em = None
+        self.r3.save()
 
-    def test_aba_relacao_filtros(self):
-        """Filtros por período, aula e professor funcionam corretamente na relação."""
+        self.client.force_login(self.prof1)
+        resp = self.client.get(reverse('relacoes_lista'))
+        self.assertEqual(resp.status_code, 200)
+        relacoes_retornadas = [item['rel'].id for item in resp.context['relacoes']]
+        # Ordenação esperada: r1 (preenchido agora), r2 (preenchido 1h atrás), r3 (pendente)
+        self.assertEqual(relacoes_retornadas, [self.r1.id, self.r2.id, self.r3.id])
+
+    def test_tela_relacoes_filtros(self):
+        """Filtros por período, aula e professor funcionam na tela dedicada de relações."""
         self.client.force_login(self.prof1)
 
         # Filtro por professor prof1
-        resp = self.client.get(reverse('agendamentos'), {'usuario': str(self.prof1.id)})
-        self.assertEqual(resp.context['aba_ativa'], 'relacao')
-        self.assertEqual(resp.context['total_relacao'], 2)
+        resp_prof = self.client.get(reverse('relacoes_lista'), {'usuario': str(self.prof1.id)})
+        self.assertEqual(resp_prof.context['total_relacoes'], 2)
 
         # Filtro por aula 2
-        resp_aula = self.client.get(reverse('agendamentos'), {'aula': '2'})
-        self.assertEqual(resp_aula.context['total_relacao'], 1)
-        self.assertEqual(resp_aula.context['agendamentos_relacao'][0].id, self.ag2.id)
+        resp_aula = self.client.get(reverse('relacoes_lista'), {'aula': '2'})
+        self.assertEqual(resp_aula.context['total_relacoes'], 1)
+        self.assertEqual(resp_aula.context['relacoes'][0]['rel'].id, self.r2.id)
 
         # Filtro por período
-        resp_periodo = self.client.get(reverse('agendamentos'), {
+        resp_periodo = self.client.get(reverse('relacoes_lista'), {
             'data_inicio': '2026-09-02',
             'data_fim': '2026-09-06'
         })
-        self.assertEqual(resp_periodo.context['total_relacao'], 1)
-        self.assertEqual(resp_periodo.context['agendamentos_relacao'][0].id, self.ag2.id)
+        self.assertEqual(resp_periodo.context['total_relacoes'], 1)
+        self.assertEqual(resp_periodo.context['relacoes'][0]['rel'].id, self.r2.id)
 
-    def test_exportar_agendamentos_sem_selecao(self):
-        """Tentar exportar sem registros selecionados redireciona e exibe mensagem de aviso."""
+    def test_vinculo_obrigatorio_e_compartilhamento_aulas_consecutivas(self):
+        """Aulas seguidas com mesmo professor e mesma turma compartilham a mesma instância de Relacao."""
+        d_nova = date(2026, 9, 20)
+        # 1ª aula agendada via detalhe
         self.client.force_login(self.prof1)
-        resp = self.client.post(reverse('exportar_agendamentos'), {'formato': 'csv'})
-        self.assertEqual(resp.status_code, 302)
-        self.assertIn('aba=relacao', resp['Location'])
+        self.client.post(reverse('agendamento_detalhe', args=[d_nova.year, d_nova.month, d_nova.day]), {
+            'tipo': 'sala',
+            'turma': self.turma.id,
+            'reserva': [f'1:{self.sala.id}'],
+        })
+        ag_aula1 = Agendamento.objects.get(data=d_nova, aula=1, professor=self.prof1, turma=self.turma)
+        self.assertIsNotNone(ag_aula1.relacao)
 
-    def test_exportar_agendamentos_csv(self):
+        # 2ª aula (consecutiva) agendada
+        self.client.post(reverse('agendamento_detalhe', args=[d_nova.year, d_nova.month, d_nova.day]), {
+            'tipo': 'sala',
+            'turma': self.turma.id,
+            'reserva': [f'2:{self.sala.id}'],
+        })
+        ag_aula2 = Agendamento.objects.get(data=d_nova, aula=2, professor=self.prof1, turma=self.turma)
+        self.assertIsNotNone(ag_aula2.relacao)
+
+        # Ambas devem compartilhar a mesma instância de Relacao
+        self.assertEqual(ag_aula1.relacao.id, ag_aula2.relacao.id)
+        self.assertEqual(ag_aula1.relacao.aulas_formatadas(), '1ª e 2ª Aula')
+
+    def test_alerta_visual_preencher_relacao_no_calendario(self):
+        """Card do agendamento exibe badge 'preencher relação!' se a aula já encerrou e a relação está pendente."""
+        # Data no passado (horário de término garantidamente já passou)
+        data_passada = date(2026, 9, 1)
+        ag_passado = Agendamento.objects.get(id=self.ag1.id)
+        ag_passado.data = data_passada
+        ag_passado.save()
+
+        # Relação está vazia
+        self.assertTrue(ag_passado.relacao_pendente)
+        self.assertTrue(ag_passado.aula_ja_passou)
+        self.assertTrue(ag_passado.deve_exibir_alerta_relacao)
+
+        # Preenche a relação
+        aluno = Aluno.objects.create(nome='Lucas Lima', ra='999', turma=self.turma)
+        RelacaoAlunoEquipamento.objects.create(
+            agendamento=ag_passado, aluno=aluno, equipamento='NOTE-01', relacao=ag_passado.relacao
+        )
+        ag_passado.relacao.atualizar_status_preenchimento()
+
+        # Agora não deve mais exibir o alerta
+        self.assertFalse(ag_passado.relacao_pendente)
+        self.assertFalse(ag_passado.deve_exibir_alerta_relacao)
+
+    def test_exportar_relacoes_sem_selecao(self):
+        """Tentar exportar sem registros selecionados redireciona para relacoes_lista com aviso."""
+        self.client.force_login(self.prof1)
+        resp = self.client.post(reverse('exportar_relacoes'), {'formato': 'csv'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(reverse('relacoes_lista'), resp['Location'])
+
+    def test_exportar_relacoes_csv(self):
         """Exportação para CSV gera arquivo válido com delimitador ';' e BOM UTF-8."""
         self.client.force_login(self.prof1)
-        resp = self.client.post(reverse('exportar_agendamentos'), {
+        resp = self.client.post(reverse('exportar_relacoes'), {
             'formato': 'csv',
             'ids': [str(self.ag1.id), str(self.ag3.id)],
         })
@@ -800,10 +874,10 @@ class AgendamentosRelacaoExportTest(TestCase):
         self.assertIn('Obs 3', conteudo)
         self.assertNotIn('Obs 2', conteudo)
 
-    def test_exportar_agendamentos_pdf(self):
+    def test_exportar_relacoes_pdf(self):
         """Exportação para PDF gera arquivo application/pdf válido com ReportLab."""
         self.client.force_login(self.prof1)
-        resp = self.client.post(reverse('exportar_agendamentos'), {
+        resp = self.client.post(reverse('exportar_relacoes'), {
             'formato': 'pdf',
             'ids': [str(self.ag1.id), str(self.ag2.id)],
         })
@@ -812,33 +886,27 @@ class AgendamentosRelacaoExportTest(TestCase):
         self.assertIn('attachment; filename="relacao_agendamentos_', resp['Content-Disposition'])
         self.assertTrue(resp.content.startswith(b'%PDF'))
 
-    def test_relacao_alunos_equipamentos_exibicao_e_exportacao(self):
-        """Aba Relação exibe resumo dos aparelhos atribuídos e os exporta para CSV."""
-        aluno1 = Aluno.objects.create(nome='Carlos Silva', ra='12345', turma=self.turma)
-        aluno2 = Aluno.objects.create(nome='Ana Souza', ra='67890', turma=self.turma)
-        RelacaoAlunoEquipamento.objects.create(agendamento=self.ag1, aluno=aluno1, equipamento='NOTE-01')
-        RelacaoAlunoEquipamento.objects.create(agendamento=self.ag1, aluno=aluno2, equipamento='NOTE-02')
+    def test_sincronizacao_equipamentos_aulas_consecutivas(self):
+        """Salvar equipamentos em uma aula consecutiva sincroniza os registros na mesma relação."""
+        d_nova = date(2026, 9, 21)
+        r_comp = Relacao.objects.create()
+        ag_c1 = Agendamento.objects.create(data=d_nova, aula=1, tipo='SALA', professor=self.prof1, turma=self.turma, sala=self.sala, relacao=r_comp)
+        ag_c2 = Agendamento.objects.create(data=d_nova, aula=2, tipo='SALA', professor=self.prof1, turma=self.turma, sala=self.sala, relacao=r_comp)
+
+        aluno = Aluno.objects.create(nome='Marina Santos', ra='333', turma=self.turma)
 
         self.client.force_login(self.prof1)
-        resp = self.client.get(reverse('agendamentos'), {'aba': 'relacao'})
-        self.assertEqual(resp.status_code, 200)
-        content = resp.content.decode('utf-8')
-
-        # Verifica se o resumo de aparelhos aparece no card/tabela e o detalhe do aluno
-        self.assertIn('2 aparelhos entregues', content)
-        self.assertIn('NOTE-01', content)
-        self.assertIn('Carlos Silva', content)
-
-        # Verifica se o CSV gerado contém a relação de aparelhos entregues
-        resp_csv = self.client.post(reverse('exportar_agendamentos'), {
-            'formato': 'csv',
-            'ids': [str(self.ag1.id)],
+        resp = self.client.post(reverse('relacao_agendamento', args=[ag_c1.id]), {
+            'acao': 'relacao',
+            f'equip_{aluno.id}': 'NOTE-55',
         })
-        self.assertEqual(resp_csv.status_code, 200)
-        conteudo_csv = resp_csv.content.decode('utf-8')
-        self.assertIn('Aparelhos atribuídos (2)', conteudo_csv)
-        self.assertIn('Carlos Silva (NOTE-01)', conteudo_csv)
-        self.assertIn('Ana Souza (NOTE-02)', conteudo_csv)
+        self.assertEqual(resp.status_code, 302)
+
+        # Verifica se ambos os agendamentos e a relação possuem o equipamento
+        self.assertTrue(RelacaoAlunoEquipamento.objects.filter(agendamento=ag_c1, aluno=aluno, equipamento='NOTE-55').exists())
+        self.assertTrue(RelacaoAlunoEquipamento.objects.filter(agendamento=ag_c2, aluno=aluno, equipamento='NOTE-55').exists())
+        self.assertTrue(RelacaoAlunoEquipamento.objects.filter(relacao=r_comp, aluno=aluno, equipamento='NOTE-55').exists())
+        self.assertTrue(r_comp.esta_preenchida)
 
     def test_salvar_relacao_atualiza_sem_duplicar_e_limpa_vazios(self):
         """Salvar a relação de alunos atualiza os registros existentes e remove entradas vazias sem criar duplicatas."""
@@ -926,10 +994,11 @@ class AgendamentosRelacaoExportTest(TestCase):
         # ag_futuro NÃO deve ter recebido a relação
         self.assertFalse(RelacaoAlunoEquipamento.objects.filter(agendamento=ag_futuro).exists())
 
-    def test_aba_relacao_exclui_placeholders_fixos_futuros_sem_relacao(self):
-        """A aba Relação sem filtros exclui agendamentos fixos futuros que não possuem relação preenchida."""
+    def test_tela_relacoes_exclui_placeholders_fixos_futuros_sem_relacao(self):
+        """A tela Relação sem filtros exclui agendamentos fixos futuros que não possuem relação preenchida."""
         hoje = date.today()
         # Agendamento de hoje
+        rel_hoje = Relacao.objects.create()
         ag_hoje = Agendamento.objects.create(
             data=hoje,
             aula=2,
@@ -937,8 +1006,10 @@ class AgendamentosRelacaoExportTest(TestCase):
             sala=self.sala,
             professor=self.prof1,
             turma=self.turma,
+            relacao=rel_hoje,
         )
         # Agendamento fixo futuro vazio (placeholder)
+        rel_futuro = Relacao.objects.create()
         ag_fixo_futuro = Agendamento.objects.create(
             data=hoje + timedelta(days=30),
             aula=2,
@@ -948,14 +1019,202 @@ class AgendamentosRelacaoExportTest(TestCase):
             turma=self.turma,
             fixo=True,
             fixo_grupo_id='grupo-placeholder',
+            relacao=rel_futuro,
         )
 
         self.client.force_login(self.prof1)
-        resp = self.client.get(f"{reverse('agendamentos')}?aba=relacao")
+        resp = self.client.get(reverse('relacoes_lista'))
         self.assertEqual(resp.status_code, 200)
-        relacao_list = resp.context['agendamentos_relacao']
-        # ag_hoje deve estar na listagem
-        self.assertIn(ag_hoje, relacao_list)
-        # ag_fixo_futuro (sem relação) NÃO deve poluir a listagem padrão
-        self.assertNotIn(ag_fixo_futuro, relacao_list)
+        rel_ids = [item['rel'].id for item in resp.context['relacoes']]
+        # rel_hoje deve estar na listagem
+        self.assertIn(rel_hoje.id, rel_ids)
+        # rel_futuro (sem relação preenchida) NÃO deve poluir a listagem padrão
+        self.assertNotIn(rel_futuro.id, rel_ids)
+
+
+class OcorrenciasTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        # Admin
+        self.admin = User.objects.create_user(
+            username='admin_oco',
+            email='admin_oco@teste.com',
+            password='senha_admin_123'
+        )
+        self.admin.perfil.tipo = 'ADMINISTRADOR'
+        self.admin.perfil.aprovado = True
+        self.admin.perfil.save()
+
+        # Professor comum
+        self.prof = User.objects.create_user(
+            username='prof_oco',
+            email='prof_oco@teste.com',
+            password='senha_prof_123'
+        )
+        self.prof.perfil.tipo = 'PROFESSOR'
+        self.prof.perfil.aprovado = True
+        self.prof.perfil.save()
+
+        # Sala e Turma
+        self.sala = Sala.objects.create(nome='Sala Info 1', capacidade=30, ativo=True)
+        self.turma = Turma.objects.create(nome='7º B', turno='MANHA')
+        self.aluno1 = Aluno.objects.create(nome='Lucas Silva', ra='111222', digito='1', uf='SP', turma=self.turma)
+        self.aluno2 = Aluno.objects.create(nome='Mariana Lima', ra='333444', digito='2', uf='SP', turma=self.turma)
+
+        # Equipamentos
+        self.equip1 = Equipamento.objects.create(apelido='NOTE-01', categoria='NOTEBOOK', status='ATIVO')
+        self.equip2 = Equipamento.objects.create(apelido='NOTE-02', categoria='NOTEBOOK', status='ATIVO')
+
+        # Agendamento
+        self.relacao = Relacao.objects.create()
+        self.ag = Agendamento.objects.create(
+            data=date.today(),
+            aula=3,
+            tipo='DISPOSITIVO',
+            professor=self.prof,
+            turma=self.turma,
+            relacao=self.relacao,
+        )
+        # Associa alunos e equipamentos na relação
+        RelacaoAlunoEquipamento.objects.create(
+            agendamento=self.ag,
+            relacao=self.relacao,
+            aluno=self.aluno1,
+            equipamento='NOTE-01'
+        )
+
+    def _gerar_foto_teste(self, nome='evidencia.jpg'):
+        import io
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        buf = io.BytesIO()
+        img = Image.new('RGB', (100, 100), color='orange')
+        img.save(buf, 'JPEG')
+        buf.seek(0)
+        return SimpleUploadedFile(nome, buf.read(), content_type='image/jpeg')
+
+    def test_permissao_acesso_bloqueia_nao_admin(self):
+        """Usuário comum ou deslogado não pode acessar views ou APIs de ocorrências."""
+        # Não logado
+        resp = self.client.get(reverse('ocorrencia_criar'))
+        self.assertEqual(resp.status_code, 302)
+
+        # Logado como professor
+        self.client.force_login(self.prof)
+        resp_lista = self.client.get(reverse('ocorrencias_lista'))
+        self.assertEqual(resp_lista.status_code, 302)  # Redireciona para home
+
+        resp_criar = self.client.get(reverse('ocorrencia_criar'))
+        self.assertEqual(resp_criar.status_code, 302)
+
+        # API bloqueada para professor
+        resp_api = self.client.get(reverse('api_agendamentos_por_data') + f'?data={date.today():%Y-%m-%d}')
+        self.assertEqual(resp_api.status_code, 403)
+
+        resp_ctx = self.client.get(reverse('api_agendamento_contexto', args=[self.ag.id]))
+        self.assertEqual(resp_ctx.status_code, 403)
+
+    def test_cenario_a_abrir_com_agendamento(self):
+        """Cenário A: Admin abre o formulário a partir de um agendamento pré-existente."""
+        self.client.force_login(self.admin)
+        url = reverse('ocorrencia_criar') + f'?agendamento_id={self.ag.id}'
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['ag_selecionado'].id, self.ag.id)
+        self.assertEqual(len(resp.context['alunos_disponiveis']), 2)
+        # Equipamento da relação NOTE-01 deve estar na lista de relacionados
+        apelidos_rel = [e.apelido for e in resp.context['equipamentos_relacionados']]
+        self.assertIn('NOTE-01', apelidos_rel)
+
+    def test_cenario_b_api_e_selecao_dinamica(self):
+        """Cenário B: Admin consulta agendamentos por data e contexto assíncrono."""
+        self.client.force_login(self.admin)
+        # 1. API agendamentos por data
+        url_api = reverse('api_agendamentos_por_data') + f'?data={self.ag.data:%Y-%m-%d}'
+        resp_api = self.client.get(url_api)
+        self.assertEqual(resp_api.status_code, 200)
+        data_json = resp_api.json()
+        self.assertTrue(data_json['sucesso'])
+        self.assertEqual(len(data_json['agendamentos']), 1)
+        self.assertEqual(data_json['agendamentos'][0]['id'], self.ag.id)
+
+        # 2. API contexto do agendamento
+        url_ctx = reverse('api_agendamento_contexto', args=[self.ag.id])
+        resp_ctx = self.client.get(url_ctx)
+        self.assertEqual(resp_ctx.status_code, 200)
+        ctx_json = resp_ctx.json()
+        self.assertTrue(ctx_json['sucesso'])
+        self.assertEqual(ctx_json['agendamento']['professor_id'], self.prof.id)
+        # Aluno 1 deve ter NOTE-01 indicado
+        aluno1_json = next(a for a in ctx_json['alunos'] if a['id'] == self.aluno1.id)
+        self.assertEqual(aluno1_json['equipamento'], 'NOTE-01')
+
+    def test_criar_ocorrencia_com_multiplas_fotos_e_envolvidos(self):
+        """Criação completa de ocorrência com múltiplos alunos, equipamentos e fotos."""
+        self.client.force_login(self.admin)
+        foto1 = self._gerar_foto_teste('dano_tela.jpg')
+        foto2 = self._gerar_foto_teste('teclado_quebrado.jpg')
+
+        dados = {
+            'agendamento': self.ag.id,
+            'data_hora_fato': f'{self.ag.data:%Y-%m-%d}T08:40',
+            'professor': self.prof.id,
+            'descricao': 'Queda acidental do notebook durante a troca de exercícios.',
+            'alunos': [self.aluno1.id],
+            'equipamentos': [self.equip1.id],
+            'fotos': [foto1, foto2],
+        }
+
+        resp = self.client.post(reverse('ocorrencia_criar'), dados)
+        self.assertEqual(resp.status_code, 302)
+
+        # Verifica no banco de dados
+        oco = Ocorrencia.objects.filter(agendamento=self.ag).first()
+        self.assertIsNotNone(oco)
+        self.assertEqual(oco.professor, self.prof)
+        self.assertEqual(oco.criado_por, self.admin)
+        self.assertIn(self.aluno1, oco.alunos.all())
+        self.assertIn(self.equip1, oco.equipamentos.all())
+        # Verifica fotos vinculadas
+        self.assertEqual(oco.fotos.count(), 2)
+
+        # Detalhe da ocorrência
+        resp_detalhe = self.client.get(reverse('ocorrencia_detalhe', args=[oco.id]))
+        self.assertEqual(resp_detalhe.status_code, 200)
+        self.assertContains(resp_detalhe, 'Queda acidental')
+        self.assertContains(resp_detalhe, self.aluno1.nome)
+        self.assertContains(resp_detalhe, self.equip1.apelido)
+
+    def test_excluir_ocorrencia_admin(self):
+        """Admin pode excluir uma ocorrência registrada."""
+        self.client.force_login(self.admin)
+        oco = Ocorrencia.objects.create(
+            data_hora_fato=timezone.now(),
+            descricao='Teste exclusao',
+            professor=self.prof,
+            criado_por=self.admin
+        )
+        self.assertEqual(Ocorrencia.objects.filter(id=oco.id).count(), 1)
+
+        resp = self.client.post(reverse('ocorrencia_excluir', args=[oco.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Ocorrencia.objects.filter(id=oco.id).count(), 0)
+
+    def test_visibilidade_gatilhos_ui_admin_vs_professor(self):
+        """Verifica se os elementos visuais aparecem para admin e não aparecem para professor."""
+        # 1. Admin na visualização do agendamento / relação
+        self.client.force_login(self.admin)
+        resp_rel_admin = self.client.get(reverse('relacao_agendamento', args=[self.ag.id]))
+        self.assertEqual(resp_rel_admin.status_code, 200)
+        self.assertContains(resp_rel_admin, 'Ocorrência')
+        self.assertContains(resp_rel_admin, 'ocorrenciaIcon')
+
+        # 2. Professor comum na visualização do agendamento
+        self.client.force_login(self.prof)
+        resp_rel_prof = self.client.get(reverse('relacao_agendamento', args=[self.ag.id]))
+        self.assertEqual(resp_rel_prof.status_code, 200)
+        # O botão Ocorrência NÃO deve aparecer no topo à direita para professor comum
+        self.assertNotContains(resp_rel_prof, reverse('ocorrencia_criar') + f'?agendamento_id={self.ag.id}')
+        self.assertNotContains(resp_rel_prof, 'id="ocorrenciaIcon"')
+
 

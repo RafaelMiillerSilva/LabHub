@@ -1,0 +1,837 @@
+{% extends "app/layout.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    .oc-container {
+        max-width: 1000px;
+        margin: 0 auto 40px;
+    }
+
+    .oc-hero {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(239, 68, 68, 0.08));
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: var(--lh-radius);
+        padding: 24px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .oc-hero-icon {
+        font-size: 38px;
+        width: 60px;
+        height: 60px;
+        background: rgba(245, 158, 11, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .oc-hero-title {
+        margin: 0 0 6px 0;
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--lh-text);
+    }
+
+    .oc-hero-desc {
+        margin: 0;
+        font-size: 13.5px;
+        color: var(--lh-text-muted);
+        line-height: 1.5;
+    }
+
+    .oc-step-card {
+        background: var(--lh-surface);
+        border: 1px solid var(--lh-border);
+        border-radius: var(--lh-radius);
+        box-shadow: var(--lh-shadow-sm);
+        padding: 22px;
+        margin-bottom: 22px;
+        transition: border-color 0.2s ease;
+    }
+
+    .oc-step-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--lh-border-subtle);
+    }
+
+    .oc-step-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--lh-text);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+    }
+
+    .oc-aula-info-card {
+        background: var(--lh-surface-subtle);
+        border: 1px solid var(--lh-border);
+        border-left: 4px solid #F59E0B;
+        border-radius: var(--lh-radius-sm);
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    .oc-check-list {
+        max-height: 240px;
+        overflow-y: auto;
+        border: 1px solid var(--lh-border);
+        border-radius: var(--lh-radius-sm);
+        padding: 10px 14px;
+        background: var(--lh-surface-subtle);
+    }
+
+    .oc-check-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 4px;
+        border-bottom: 1px solid var(--lh-border-subtle);
+        cursor: pointer;
+        font-size: 13.5px;
+        color: var(--lh-text);
+        user-select: none;
+    }
+
+    .oc-check-item:last-child {
+        border-bottom: none;
+    }
+
+    .oc-check-item:hover {
+        background: rgba(245, 158, 11, 0.08);
+        border-radius: 4px;
+    }
+
+    .oc-check-item input[type="checkbox"] {
+        width: 17px;
+        height: 17px;
+        accent-color: #F59E0B;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .oc-search-input {
+        border: 1px solid var(--lh-border);
+        border-radius: var(--lh-radius-sm);
+        background: var(--lh-surface);
+        color: var(--lh-text);
+        padding: 7px 12px;
+        font-size: 13px;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .oc-search-input:focus {
+        border-color: #F59E0B;
+        outline: none;
+    }
+
+    /* Upload de Fotos & Preview */
+    .oc-dropzone {
+        border: 2px dashed var(--lh-border);
+        border-radius: var(--lh-radius-sm);
+        padding: 24px;
+        text-align: center;
+        background: var(--lh-surface-subtle);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-bottom: 16px;
+    }
+
+    .oc-dropzone:hover {
+        border-color: #F59E0B;
+        background: rgba(245, 158, 11, 0.04);
+    }
+
+    .oc-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+    }
+
+    .oc-preview-item {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--lh-border);
+        box-shadow: var(--lh-shadow-sm);
+        background: #000;
+    }
+
+    .oc-preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .oc-preview-remover {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.9);
+        color: #fff;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        line-height: 1;
+        transition: transform 0.15s ease;
+    }
+
+    .oc-preview-remover:hover {
+        transform: scale(1.15);
+    }
+
+    .oc-badge-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11.5px;
+        font-weight: 600;
+        background: var(--lh-border);
+        color: var(--lh-text-muted);
+    }
+
+    .oc-badge-rel {
+        background: rgba(245, 158, 11, 0.15);
+        color: #D97706;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    [data-theme="dark"] .oc-badge-rel {
+        color: #FBBF24;
+    }
+
+    .oc-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(245, 158, 11, 0.3);
+        border-radius: 50%;
+        border-top-color: #F59E0B;
+        animation: ocSpin 0.8s linear infinite;
+    }
+
+    .oc-hidden {
+        display: none !important;
+    }
+</style>
+
+<div class="oc-container">
+    <div style="margin-bottom: 16px;">
+        <a href="{% url 'ocorrencias_lista' %}" class="lh-back-link">
+            ← Voltar para Ocorrências
+        </a>
+    </div>
+
+    <!-- Hero Header -->
+    <div class="oc-hero">
+        <div class="oc-hero-icon">⚠️</div>
+        <div>
+            <h1 class="oc-hero-title">Registrar Nova Ocorrência</h1>
+            <p class="oc-hero-desc">
+                Preencha as informações detalhadas sobre a avaria, dano a equipamento ou incidente ocorrido em aula.
+                Você pode associar a aula agendada, os alunos da relação, equipamentos afetados e fotos comprobatórias.
+            </p>
+        </div>
+    </div>
+
+    <!-- Formulário Principal -->
+    <form method="post" action="{% url 'ocorrencia_criar' %}" enctype="multipart/form-data" id="formOcorrencia">
+        {% csrf_token %}
+
+        <!-- Campo hidden para agendamento selecionado -->
+        <input type="hidden" name="agendamento" id="id_agendamento" value="{{ ag_selecionado.id|default:'' }}">
+
+        <!-- ETAPA 1: SELEÇÃO DA AULA AGENDADA -->
+        <div class="oc-step-card">
+            <div class="oc-step-header">
+                <h3 class="oc-step-title">
+                    <span>1.</span> Aula Agendada / Contexto
+                </h3>
+                <div id="loadingAgendamentos" style="display:none; align-items:center; gap:6px; font-size:12px; color:var(--lh-text-muted);">
+                    <span class="oc-spinner"></span> Carregando aulas...
+                </div>
+            </div>
+
+            <!-- Se aberto via Cenário A (Agendamento já definido) -->
+            <div id="cardCenarioA" class="{% if not ag_selecionado %}oc-hidden{% endif %}">
+                <div class="oc-aula-info-card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <span class="lh-badge lh-badge--warning" style="margin-bottom:6px; display:inline-block; font-size:12px;">
+                                Aula Vinculada
+                            </span>
+                            <div style="font-size:16px; font-weight:800; color:var(--lh-text);" id="cenarioA_titulo">
+                                {% if ag_selecionado %}
+                                {{ ag_selecionado.aula }}ª Aula — {{ ag_selecionado.turma.nome }} ({{ ag_selecionado.data|date:"d/m/Y" }})
+                                {% endif %}
+                            </div>
+                            <div style="font-size:13px; color:var(--lh-text-muted); margin-top:4px;" id="cenarioA_detalhe">
+                                {% if ag_selecionado %}
+                                <strong>Local:</strong> {% if ag_selecionado.tipo == 'SALA' %}{{ ag_selecionado.sala.nome }}{% else %}Dispositivos Móveis{% endif %} |
+                                <strong>Professor:</strong> {{ ag_selecionado.professor.get_full_name|default:ag_selecionado.professor.username }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <button type="button" class="lh-btn lh-btn--xs lh-btn--outline" id="btnTrocarAula" style="font-size:12px;">
+                            🔄 Trocar aula / Outra data
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Se aberto via Cenário B (Seleção livre de Data e Aula) -->
+            <div id="cardCenarioB" class="{% if ag_selecionado %}oc-hidden{% endif %}">
+                <div class="row">
+                    <div class="col-sm-4 col-xs-12" style="margin-bottom:14px;">
+                        <label for="campoData" style="font-size:13px; font-weight:700; color:var(--lh-text); display:block; margin-bottom:6px;">
+                            📅 Data da Aula
+                        </label>
+                        <input type="date" id="campoData" class="form-control" value="{{ hoje }}">
+                    </div>
+                    <div class="col-sm-8 col-xs-12" style="margin-bottom:14px;">
+                        <label for="selectAgendamento" style="font-size:13px; font-weight:700; color:var(--lh-text); display:block; margin-bottom:6px;">
+                            🏫 Selecione a Aula Agendada
+                        </label>
+                        <select id="selectAgendamento" class="form-control">
+                            <option value="">-- Selecione uma aula agendada --</option>
+                        </select>
+                        <small style="color:var(--lh-text-muted); font-size:11.5px; display:block; margin-top:4px;">
+                            Ao selecionar uma aula, os alunos e equipamentos da relação serão carregados automaticamente.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ETAPA 2: DADOS BÁSICOS DA OCORRÊNCIA -->
+        <div class="oc-step-card">
+            <div class="oc-step-header">
+                <h3 class="oc-step-title">
+                    <span>2.</span> Dados da Ocorrência
+                </h3>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-6 col-xs-12" style="margin-bottom:16px;">
+                    <label for="id_data_hora_fato" style="font-size:13px; font-weight:700; color:var(--lh-text); display:block; margin-bottom:6px;">
+                        ⏰ Data e Horário do Fato <span style="color:#EF4444;">*</span>
+                    </label>
+                    {{ form.data_hora_fato }}
+                    {% if form.data_hora_fato.errors %}
+                    <div style="color:#EF4444; font-size:12px; margin-top:4px;">{{ form.data_hora_fato.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-sm-6 col-xs-12" style="margin-bottom:16px;">
+                    <label for="id_professor" style="font-size:13px; font-weight:700; color:var(--lh-text); display:block; margin-bottom:6px;">
+                        👨‍🏫 Professor Responsável <span style="color:#EF4444;">*</span>
+                    </label>
+                    {{ form.professor }}
+                    {% if form.professor.errors %}
+                    <div style="color:#EF4444; font-size:12px; margin-top:4px;">{{ form.professor.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div style="margin-bottom: 8px;">
+                <label for="id_descricao" style="font-size:13px; font-weight:700; color:var(--lh-text); display:block; margin-bottom:6px;">
+                    📝 Descrição Detalhada do Ocorrido <span style="color:#EF4444;">*</span>
+                </label>
+                {{ form.descricao }}
+                {% if form.descricao.errors %}
+                <div style="color:#EF4444; font-size:12px; margin-top:4px;">{{ form.descricao.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ETAPA 3: ALUNOS ENVOLVIDOS -->
+        <div class="oc-step-card">
+            <div class="oc-step-header">
+                <h3 class="oc-step-title">
+                    <span>3.</span> Alunos Envolvidos
+                </h3>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="oc-badge-pill" id="contadorAlunos">0 selecionado(s)</span>
+                    <button type="button" class="lh-btn lh-btn--xs lh-btn--ghost" id="btnMarcarTodosAlunos" style="font-size:11.5px;">
+                        Marcar todos
+                    </button>
+                    <button type="button" class="lh-btn lh-btn--xs lh-btn--ghost" id="btnDesmarcarAlunos" style="font-size:11.5px;">
+                        Limpar
+                    </button>
+                </div>
+            </div>
+
+            <input type="text" class="oc-search-input" id="buscaAluno" placeholder="🔍 Filtrar aluno por nome ou RA...">
+
+            <div class="oc-check-list" id="listaAlunosContainer">
+                {% if ag_selecionado and alunos_disponiveis %}
+                    {% for al in alunos_disponiveis %}
+                    <label class="oc-check-item item-aluno" data-texto="{{ al.nome|lower }} {{ al.ra_formatado|lower }}">
+                        <input type="checkbox" name="alunos" value="{{ al.id }}">
+                        <div style="flex:1;">
+                            <span style="font-weight:600;">{{ al.nome }}</span>
+                            <span style="color:var(--lh-text-muted); font-size:12px; margin-left:6px;">RA: {{ al.ra_formatado }}</span>
+                        </div>
+                    </label>
+                    {% endfor %}
+                {% else %}
+                    <div id="alunosVazioMsg" style="text-align:center; padding:18px; color:var(--lh-text-muted); font-size:13px;">
+                        ℹ️ Selecione uma aula agendada acima para carregar a lista de alunos da turma.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ETAPA 4: EQUIPAMENTOS ENVOLVIDOS -->
+        <div class="oc-step-card">
+            <div class="oc-step-header">
+                <h3 class="oc-step-title">
+                    <span>4.</span> Equipamentos Envolvidos
+                </h3>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="oc-badge-pill" id="contadorEquipamentos">0 selecionado(s)</span>
+                    <button type="button" class="lh-btn lh-btn--xs lh-btn--ghost" id="btnLimparEquipamentos" style="font-size:11.5px;">
+                        Limpar
+                    </button>
+                </div>
+            </div>
+
+            <input type="text" class="oc-search-input" id="buscaEquipamento" placeholder="🔍 Filtrar equipamento por apelido, modelo ou categoria...">
+
+            <!-- Equipamentos da Relação (destacados) -->
+            <div id="secaoEquipsRelacao" style="margin-bottom:12px;" class="{% if not equipamentos_relacionados %}oc-hidden{% endif %}">
+                <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#F59E0B; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                    <span>⭐</span> Equipamentos Vinculados a Esta Aula / Relação:
+                </div>
+                <div class="oc-check-list" id="listaEquipsRelacaoContainer" style="max-height:160px; border-color:rgba(245,158,11,0.4);">
+                    {% for eq in equipamentos_relacionados %}
+                    <label class="oc-check-item item-equipamento" data-texto="{{ eq.apelido|lower }} {{ eq.modelo|lower }} {{ eq.get_categoria_display|lower }}">
+                        <input type="checkbox" name="equipamentos" value="{{ eq.id }}">
+                        <div style="flex:1;">
+                            <span style="font-weight:700; color:#F59E0B;">{{ eq.apelido }}</span>
+                            <span style="font-size:12px; color:var(--lh-text-muted); margin-left:6px;">({{ eq.get_categoria_display }}{% if eq.modelo %} — {{ eq.modelo }}{% endif %})</span>
+                        </div>
+                        <span class="oc-badge-pill oc-badge-rel">Aula</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Todos os Equipamentos Ativos -->
+            <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--lh-text-muted);">
+                        Outros Equipamentos da Escola:
+                    </span>
+                </div>
+                <div class="oc-check-list" id="listaTodosEquipsContainer">
+                    {% for eq in todos_equipamentos %}
+                    <label class="oc-check-item item-equipamento" data-texto="{{ eq.apelido|lower }} {{ eq.modelo|lower }} {{ eq.get_categoria_display|lower }}">
+                        <input type="checkbox" name="equipamentos" value="{{ eq.id }}">
+                        <div style="flex:1;">
+                            <span style="font-weight:600;">{{ eq.apelido }}</span>
+                            <span style="font-size:12px; color:var(--lh-text-muted); margin-left:6px;">({{ eq.get_categoria_display }}{% if eq.modelo %} — {{ eq.modelo }}{% endif %})</span>
+                        </div>
+                        <span class="oc-badge-pill">{{ eq.get_status_display }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ETAPA 5: FOTOS E ANEXOS COMPROBATÓRIOS -->
+        <div class="oc-step-card">
+            <div class="oc-step-header">
+                <h3 class="oc-step-title">
+                    <span>5.</span> Fotos Comprobatórias (Múltiplos Arquivos)
+                </h3>
+                <span class="oc-badge-pill" id="contadorFotos">0 foto(s) anexada(s)</span>
+            </div>
+
+            <div class="oc-dropzone" id="dropzoneFotos">
+                <div style="font-size:32px; margin-bottom:8px;">📷</div>
+                <div style="font-weight:700; font-size:14px; color:var(--lh-text); margin-bottom:4px;">
+                    Clique ou arraste fotos aqui para anexar
+                </div>
+                <div style="font-size:12.5px; color:var(--lh-text-muted);">
+                    Suporte a múltiplos arquivos (JPG, PNG, WebP — até 10MB cada)
+                </div>
+                <input type="file" name="fotos" id="inputFotos" multiple accept="image/*" style="display:none;">
+            </div>
+
+            <!-- Grade de Pré-visualização -->
+            <div class="oc-preview-grid" id="previewFotosContainer"></div>
+        </div>
+
+        <!-- Ações do Formulário -->
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px; padding-bottom:40px;">
+            <a href="{% url 'ocorrencias_lista' %}" class="lh-btn lh-btn--ghost" style="padding:12px 24px;">
+                Cancelar
+            </a>
+            <button type="submit" class="lh-btn lh-btn--primary" id="btnSalvarOcorrencia" style="background:#F59E0B; border:none; color:#fff; font-weight:700; font-size:15px; padding:12px 32px; box-shadow:0 2px 6px rgba(245,158,11,0.3);">
+                💾 Salvar Ocorrência
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inputAgendamento = document.getElementById('id_agendamento');
+    const campoData = document.getElementById('campoData');
+    const selectAgendamento = document.getElementById('selectAgendamento');
+    const loadingAgendamentos = document.getElementById('loadingAgendamentos');
+    const cardCenarioA = document.getElementById('cardCenarioA');
+    const cardCenarioB = document.getElementById('cardCenarioB');
+    const btnTrocarAula = document.getElementById('btnTrocarAula');
+
+    const campoProfessor = document.getElementById('id_professor');
+    const campoDataHora = document.getElementById('id_data_hora_fato');
+
+    const listaAlunosContainer = document.getElementById('listaAlunosContainer');
+    const buscaAluno = document.getElementById('buscaAluno');
+    const contadorAlunos = document.getElementById('contadorAlunos');
+    const btnMarcarTodosAlunos = document.getElementById('btnMarcarTodosAlunos');
+    const btnDesmarcarAlunos = document.getElementById('btnDesmarcarAlunos');
+
+    const buscaEquipamento = document.getElementById('buscaEquipamento');
+    const contadorEquipamentos = document.getElementById('contadorEquipamentos');
+    const btnLimparEquipamentos = document.getElementById('btnLimparEquipamentos');
+    const secaoEquipsRelacao = document.getElementById('secaoEquipsRelacao');
+    const listaEquipsRelacaoContainer = document.getElementById('listaEquipsRelacaoContainer');
+
+    const dropzoneFotos = document.getElementById('dropzoneFotos');
+    const inputFotos = document.getElementById('inputFotos');
+    const previewFotosContainer = document.getElementById('previewFotosContainer');
+    const contadorFotos = document.getElementById('contadorFotos');
+
+    // Data Transfer para gerenciar múltiplos uploads no input
+    let dtFotos = new DataTransfer();
+
+    // ----------------------------------------------------
+    // Contadores e filtros de Alunos
+    // ----------------------------------------------------
+    function atualizarContadorAlunos() {
+        const checks = listaAlunosContainer.querySelectorAll('input[type="checkbox"]:checked');
+        contadorAlunos.textContent = `${checks.length} selecionado(s)`;
+    }
+
+    listaAlunosContainer.addEventListener('change', atualizarContadorAlunos);
+    atualizarContadorAlunos();
+
+    if (buscaAluno) {
+        buscaAluno.addEventListener('input', function() {
+            const termo = this.value.toLowerCase().trim();
+            const itens = listaAlunosContainer.querySelectorAll('.item-aluno');
+            itens.forEach(item => {
+                const texto = item.getAttribute('data-texto') || '';
+                item.style.display = texto.includes(termo) ? 'flex' : 'none';
+            });
+        });
+    }
+
+    if (btnMarcarTodosAlunos) {
+        btnMarcarTodosAlunos.addEventListener('click', function() {
+            const itens = listaAlunosContainer.querySelectorAll('.item-aluno');
+            itens.forEach(item => {
+                if (item.style.display !== 'none') {
+                    const chk = item.querySelector('input[type="checkbox"]');
+                    if (chk) chk.checked = true;
+                }
+            });
+            atualizarContadorAlunos();
+        });
+    }
+
+    if (btnDesmarcarAlunos) {
+        btnDesmarcarAlunos.addEventListener('click', function() {
+            const chks = listaAlunosContainer.querySelectorAll('input[type="checkbox"]');
+            chks.forEach(chk => chk.checked = false);
+            atualizarContadorAlunos();
+        });
+    }
+
+    // ----------------------------------------------------
+    // Contadores e filtros de Equipamentos
+    // ----------------------------------------------------
+    function atualizarContadorEquipamentos() {
+        const selecionados = document.querySelectorAll('input[name="equipamentos"]:checked');
+        contadorEquipamentos.textContent = `${selecionados.length} selecionado(s)`;
+    }
+
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.name === 'equipamentos') {
+            atualizarContadorEquipamentos();
+        }
+    });
+    atualizarContadorEquipamentos();
+
+    if (buscaEquipamento) {
+        buscaEquipamento.addEventListener('input', function() {
+            const termo = this.value.toLowerCase().trim();
+            const itens = document.querySelectorAll('.item-equipamento');
+            itens.forEach(item => {
+                const texto = item.getAttribute('data-texto') || '';
+                item.style.display = texto.includes(termo) ? 'flex' : 'none';
+            });
+        });
+    }
+
+    if (btnLimparEquipamentos) {
+        btnLimparEquipamentos.addEventListener('click', function() {
+            const chks = document.querySelectorAll('input[name="equipamentos"]');
+            chks.forEach(chk => chk.checked = false);
+            atualizarContadorEquipamentos();
+        });
+    }
+
+    // ----------------------------------------------------
+    // Upload e Preview de Múltiplas Fotos
+    // ----------------------------------------------------
+    dropzoneFotos.addEventListener('click', () => inputFotos.click());
+
+    dropzoneFotos.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzoneFotos.style.borderColor = '#F59E0B';
+    });
+
+    dropzoneFotos.addEventListener('dragleave', () => {
+        dropzoneFotos.style.borderColor = 'var(--lh-border)';
+    });
+
+    dropzoneFotos.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzoneFotos.style.borderColor = 'var(--lh-border)';
+        if (e.dataTransfer && e.dataTransfer.files.length) {
+            adicionarArquivos(e.dataTransfer.files);
+        }
+    });
+
+    inputFotos.addEventListener('change', () => {
+        if (inputFotos.files && inputFotos.files.length) {
+            adicionarArquivos(inputFotos.files);
+        }
+    });
+
+    function adicionarArquivos(files) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.type.startsWith('image/')) {
+                dtFotos.items.add(file);
+            }
+        }
+        inputFotos.files = dtFotos.files;
+        renderizarPreviews();
+    }
+
+    function renderizarPreviews() {
+        previewFotosContainer.innerHTML = '';
+        const files = dtFotos.files;
+        contadorFotos.textContent = `${files.length} foto(s) anexada(s)`;
+
+        Array.from(files).forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement('div');
+                div.className = 'oc-preview-item';
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="${file.name}">
+                    <button type="button" class="oc-preview-remover" data-index="${index}" title="Remover foto">×</button>
+                `;
+                div.querySelector('.oc-preview-remover').addEventListener('click', function(ev) {
+                    ev.stopPropagation();
+                    const idx = parseInt(this.getAttribute('data-index'), 10);
+                    removerFoto(idx);
+                });
+                previewFotosContainer.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removerFoto(index) {
+        const novoDt = new DataTransfer();
+        const files = dtFotos.files;
+        for (let i = 0; i < files.length; i++) {
+            if (i !== index) {
+                novoDt.items.add(files[i]);
+            }
+        }
+        dtFotos = novoDt;
+        inputFotos.files = dtFotos.files;
+        renderizarPreviews();
+    }
+
+    // ----------------------------------------------------
+    // Lógica Dinâmica: Alternar entre Cenários A e B
+    // ----------------------------------------------------
+    if (btnTrocarAula) {
+        btnTrocarAula.addEventListener('click', function() {
+            cardCenarioA.classList.add('oc-hidden');
+            cardCenarioA.style.display = 'none';
+            cardCenarioB.classList.remove('oc-hidden');
+            cardCenarioB.style.display = 'block';
+            inputAgendamento.value = '';
+            carregarAgendamentosPorData(campoData.value);
+        });
+    }
+
+    if (campoData) {
+        campoData.addEventListener('change', function() {
+            carregarAgendamentosPorData(this.value);
+        });
+    }
+
+    if (selectAgendamento) {
+        selectAgendamento.addEventListener('change', function() {
+            const agId = this.value;
+            if (agId) {
+                inputAgendamento.value = agId;
+                carregarContextoAgendamento(agId);
+            } else {
+                inputAgendamento.value = '';
+            }
+        });
+    }
+
+    function carregarAgendamentosPorData(dataStr) {
+        if (!dataStr) return;
+        loadingAgendamentos.style.display = 'flex';
+        selectAgendamento.innerHTML = '<option value="">Carregando aulas...</option>';
+        selectAgendamento.disabled = true;
+
+        fetch(`/ocorrencias/api/agendamentos-por-data/?data=${dataStr}`)
+            .then(res => res.json())
+            .then(data => {
+                loadingAgendamentos.style.display = 'none';
+                selectAgendamento.disabled = false;
+                selectAgendamento.innerHTML = '<option value="">-- Selecione uma aula agendada --</option>';
+
+                if (data.sucesso && data.agendamentos.length > 0) {
+                    data.agendamentos.forEach(ag => {
+                        const opt = document.createElement('option');
+                        opt.value = ag.id;
+                        opt.textContent = `${ag.aula_rotulo} — ${ag.turma_nome} (${ag.local}) — Prof. ${ag.professor_nome}`;
+                        selectAgendamento.appendChild(opt);
+                    });
+                } else {
+                    selectAgendamento.innerHTML = '<option value="">Nenhuma aula agendada nesta data</option>';
+                }
+            })
+            .catch(err => {
+                loadingAgendamentos.style.display = 'none';
+                selectAgendamento.disabled = false;
+                selectAgendamento.innerHTML = '<option value="">Erro ao carregar aulas</option>';
+                console.error('Erro ao buscar agendamentos:', err);
+            });
+    }
+
+    function carregarContextoAgendamento(agendamentoId) {
+        loadingAgendamentos.style.display = 'flex';
+
+        fetch(`/ocorrencias/api/agendamento/${agendamentoId}/contexto/`)
+            .then(res => res.json())
+            .then(data => {
+                loadingAgendamentos.style.display = 'none';
+                if (!data.sucesso) return;
+
+                const ag = data.agendamento;
+
+                // Pré-seleciona professor
+                if (ag.professor_id && campoProfessor) {
+                    campoProfessor.value = ag.professor_id;
+                }
+
+                // Ajusta data e hora sugerida
+                if (ag.data_hora_sugerida && campoDataHora) {
+                    campoDataHora.value = ag.data_hora_sugerida;
+                }
+
+                // Popula alunos da turma
+                listaAlunosContainer.innerHTML = '';
+                if (data.alunos && data.alunos.length > 0) {
+                    data.alunos.forEach(al => {
+                        const lbl = document.createElement('label');
+                        lbl.className = 'oc-check-item item-aluno';
+                        lbl.setAttribute('data-texto', `${al.nome.toLowerCase()} ${al.ra.toLowerCase()}`);
+                        let extraEquip = al.equipamento ? ` <span class="oc-badge-pill oc-badge-rel" style="margin-left:6px;">${al.equipamento}</span>` : '';
+                        lbl.innerHTML = `
+                            <input type="checkbox" name="alunos" value="${al.id}">
+                            <div style="flex:1;">
+                                <span style="font-weight:600;">${al.nome}</span>
+                                <span style="color:var(--lh-text-muted); font-size:12px; margin-left:6px;">RA: ${al.ra}</span>
+                                ${extraEquip}
+                            </div>
+                        `;
+                        listaAlunosContainer.appendChild(lbl);
+                    });
+                } else {
+                    listaAlunosContainer.innerHTML = `
+                        <div style="text-align:center; padding:18px; color:var(--lh-text-muted); font-size:13px;">
+                            Nenhum aluno cadastrado nesta turma.
+                        </div>
+                    `;
+                }
+                atualizarContadorAlunos();
+
+                // Popula equipamentos relacionados da aula
+                if (data.equipamentos_relacionados && data.equipamentos_relacionados.length > 0) {
+                    secaoEquipsRelacao.classList.remove('oc-hidden');
+                    secaoEquipsRelacao.style.display = 'block';
+                    listaEquipsRelacaoContainer.innerHTML = '';
+                    data.equipamentos_relacionados.forEach(eq => {
+                        const lbl = document.createElement('label');
+                        lbl.className = 'oc-check-item item-equipamento';
+                        lbl.setAttribute('data-texto', `${eq.apelido.toLowerCase()} ${eq.modelo.toLowerCase()} ${eq.categoria.toLowerCase()}`);
+                        lbl.innerHTML = `
+                            <input type="checkbox" name="equipamentos" value="${eq.id}">
+                            <div style="flex:1;">
+                                <span style="font-weight:700; color:#F59E0B;">${eq.apelido}</span>
+                                <span style="font-size:12px; color:var(--lh-text-muted); margin-left:6px;">(${eq.categoria}${eq.modelo ? ' — ' + eq.modelo : ''})</span>
+                            </div>
+                            <span class="oc-badge-pill oc-badge-rel">Aula</span>
+                        `;
+                        listaEquipsRelacaoContainer.appendChild(lbl);
+                    });
+                } else {
+                    secaoEquipsRelacao.classList.add('oc-hidden');
+                    secaoEquipsRelacao.style.display = 'none';
+                }
+                atualizarContadorEquipamentos();
+            })
+            .catch(err => {
+                loadingAgendamentos.style.display = 'none';
+                console.error('Erro ao carregar contexto do agendamento:', err);
+            });
+    }
+
+    // Se iniciado no Cenário B sem agendamento pré-selecionado, busca agendamentos da data inicial
+    if (!inputAgendamento.value && campoData && campoData.value) {
+        carregarAgendamentosPorData(campoData.value);
+    }
+});
+</script>
+{% endblock %}
