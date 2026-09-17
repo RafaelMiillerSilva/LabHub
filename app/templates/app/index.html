@@ -146,6 +146,48 @@
         background: rgba(249, 115, 22, 0.26);
     }
 
+    /* ── Grade do Painel Diário: Linhas e Colunas Evidentes ── */
+    #tabelaPainelDiario {
+        border-collapse: collapse !important;
+        border: 1.5px solid #CBD5E1 !important;
+    }
+
+    #tabelaPainelDiario thead th {
+        border-bottom: 2px solid #CBD5E1 !important;
+        border-right: 1px solid #CBD5E1 !important;
+    }
+
+    #tabelaPainelDiario thead th:last-child {
+        border-right: none !important;
+    }
+
+    #tabelaPainelDiario tbody td {
+        border-bottom: 1px solid #CBD5E1 !important;
+        border-right: 1px solid #CBD5E1 !important;
+    }
+
+    #tabelaPainelDiario tbody td:last-child {
+        border-right: none !important;
+    }
+
+    #tabelaPainelDiario tbody tr:last-child td {
+        border-bottom: none !important;
+    }
+
+    [data-theme="dark"] #tabelaPainelDiario {
+        border-color: #334155 !important;
+    }
+
+    [data-theme="dark"] #tabelaPainelDiario thead th {
+        border-bottom-color: #475569 !important;
+        border-right-color: #334155 !important;
+    }
+
+    [data-theme="dark"] #tabelaPainelDiario tbody td {
+        border-bottom-color: #334155 !important;
+        border-right-color: #334155 !important;
+    }
+
     .slot-celula-diaria {
         vertical-align: top;
         padding: 6px;

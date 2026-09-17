@@ -177,16 +177,19 @@
 
     [data-theme="dark"] .cal-table {
         background: var(--lh-surface);
+        border-color: #334155;
     }
 
     [data-theme="dark"] .cal-table th {
         background: var(--lh-surface-subtle);
         color: var(--lh-text-muted);
-        border-bottom-color: var(--lh-border);
+        border-bottom-color: #475569;
+        border-right-color: #334155;
     }
 
     [data-theme="dark"] .cal-table td {
-        border-bottom-color: var(--lh-border-subtle);
+        border-bottom-color: #334155;
+        border-right-color: #334155;
     }
 
     [data-theme="dark"] .cal-dia {
@@ -343,6 +346,7 @@
         margin: 0;
         background: var(--lh-surface);
         border-collapse: collapse;
+        border: 1.5px solid #CBD5E1;
     }
 
     .cal-table th {
@@ -353,14 +357,80 @@
         letter-spacing: .06em;
         padding: 12px 0;
         background: var(--lh-surface-subtle);
-        border-bottom: 1px solid var(--lh-border);
+        border-bottom: 2px solid #CBD5E1;
+        border-right: 1px solid #CBD5E1;
+    }
+
+    .cal-table th:last-child {
+        border-right: none;
     }
 
     .cal-table td {
         padding: 6px;
         height: 64px;
         vertical-align: middle;
-        border-bottom: 1px solid var(--lh-border-subtle);
+        border-bottom: 1px solid #CBD5E1;
+        border-right: 1px solid #CBD5E1;
+    }
+
+    .cal-table td:last-child {
+        border-right: none;
+    }
+
+    .cal-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* ── Grade Semanal: Linhas e Colunas Bem Evidentes ── */
+    #tabelaAgendaSemanal {
+        border-collapse: collapse !important;
+        border: 1.5px solid #CBD5E1 !important;
+    }
+
+    #tabelaAgendaSemanal thead th {
+        border-bottom: 2px solid #CBD5E1 !important;
+        border-right: 1px solid #CBD5E1 !important;
+        background: var(--lh-surface-subtle);
+    }
+
+    #tabelaAgendaSemanal thead th:last-child {
+        border-right: none !important;
+    }
+
+    #tabelaAgendaSemanal tbody td {
+        border-bottom: 1px solid #CBD5E1 !important;
+        border-right: 1px solid #CBD5E1 !important;
+    }
+
+    #tabelaAgendaSemanal tbody td:last-child {
+        border-right: none !important;
+    }
+
+    #tabelaAgendaSemanal tbody tr:last-child td {
+        border-bottom: none !important;
+    }
+
+    #tabelaAgendaSemanal tbody td:first-child {
+        background: var(--lh-surface-subtle);
+        border-right: 2px solid #CBD5E1 !important;
+    }
+
+    [data-theme="dark"] #tabelaAgendaSemanal {
+        border-color: #334155 !important;
+    }
+
+    [data-theme="dark"] #tabelaAgendaSemanal thead th {
+        border-bottom-color: #475569 !important;
+        border-right-color: #334155 !important;
+    }
+
+    [data-theme="dark"] #tabelaAgendaSemanal tbody td {
+        border-bottom-color: #334155 !important;
+        border-right-color: #334155 !important;
+    }
+
+    [data-theme="dark"] #tabelaAgendaSemanal tbody td:first-child {
+        border-right-color: #475569 !important;
     }
 
     .cal-dia {

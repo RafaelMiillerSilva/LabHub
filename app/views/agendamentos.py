@@ -588,11 +588,19 @@ def agendamentos(request):
     else:
         aba_ativa = 'agendamentos'
 
+    # Limpa eventuais relações indevidamente propagadas para agendamentos fixos futuros
+    RelacaoAlunoEquipamento.objects.filter(agendamento__fixo=True, agendamento__data__gt=hoje).delete()
+
     relacao_qs = (
         Agendamento.objects.select_related('sala', 'turma', 'professor')
         .prefetch_related('itens', 'relacoes', 'relacoes__aluno', 'turma__alunos')
         .order_by('-data', 'aula', '-criado_em')
     )
+
+    if not f_data_inicio and not f_data_fim:
+        # Quando nenhum período específico for filtrado, não polui a tabela com os
+        # agendamentos fixos futuros que ainda não possuem relação preenchida
+        relacao_qs = relacao_qs.exclude(fixo=True, data__gt=hoje, relacoes__isnull=True)
 
     if f_data_inicio:
         try:
@@ -1485,24 +1493,6 @@ def relacao_agendamento(request, agendamento_id):
                 )
             else:
                 RelacaoAlunoEquipamento.objects.filter(agendamento=ag, aluno=aluno).delete()
-
-        # Se for agendamento fixo, propaga a relação atualizada para agendamentos futuros da mesma turma e série fixa
-        if ag.fixo and ag.fixo_grupo_id:
-            futuros_rel = Agendamento.objects.filter(
-                fixo_grupo_id=ag.fixo_grupo_id,
-                data__gt=ag.data,
-                turma=ag.turma,
-            )
-            for f in futuros_rel:
-                for aluno in alunos:
-                    valor = request.POST.get(f'equip_{aluno.id}', '').strip()
-                    if valor:
-                        RelacaoAlunoEquipamento.objects.update_or_create(
-                            agendamento=f, aluno=aluno,
-                            defaults={'equipamento': valor},
-                        )
-                    else:
-                        RelacaoAlunoEquipamento.objects.filter(agendamento=f, aluno=aluno).delete()
 
         messages.success(request, 'Relação de alunos e equipamentos salva com sucesso!')
         return redirect('relacao_agendamento', agendamento_id=ag.id)

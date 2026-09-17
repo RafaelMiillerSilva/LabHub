@@ -899,3 +899,63 @@ class AgendamentosRelacaoExportTest(TestCase):
         self.assertEqual(ag.observacao, 'Obs atualizada')
         self.assertEqual(ag.itens.get(categoria='NOTEBOOK').quantidade, 2)
 
+    def test_salvar_relacao_fixo_nao_propaga_para_futuros(self):
+        """Salvar a relação em um agendamento fixo não deve propagar a relação para datas futuras da série."""
+        aluno = Aluno.objects.create(nome='Diego Santos', ra='333', turma=self.turma)
+        ag_futuro = Agendamento.objects.create(
+            data=date.today() + timedelta(days=7),
+            aula=1,
+            tipo='DISPOSITIVO',
+            professor=self.prof1,
+            turma=self.turma,
+            fixo=True,
+            fixo_grupo_id='grupo-fixo-teste-123',
+        )
+        self.ag1.fixo = True
+        self.ag1.fixo_grupo_id = 'grupo-fixo-teste-123'
+        self.ag1.save()
+
+        self.client.force_login(self.prof1)
+        resp = self.client.post(reverse('relacao_agendamento', args=[self.ag1.id]), {
+            'acao': 'relacao',
+            f'equip_{aluno.id}': 'NOTE-55',
+        })
+        self.assertEqual(resp.status_code, 302)
+        # self.ag1 deve ter a relação
+        self.assertTrue(RelacaoAlunoEquipamento.objects.filter(agendamento=self.ag1, aluno=aluno, equipamento='NOTE-55').exists())
+        # ag_futuro NÃO deve ter recebido a relação
+        self.assertFalse(RelacaoAlunoEquipamento.objects.filter(agendamento=ag_futuro).exists())
+
+    def test_aba_relacao_exclui_placeholders_fixos_futuros_sem_relacao(self):
+        """A aba Relação sem filtros exclui agendamentos fixos futuros que não possuem relação preenchida."""
+        hoje = date.today()
+        # Agendamento de hoje
+        ag_hoje = Agendamento.objects.create(
+            data=hoje,
+            aula=2,
+            tipo='SALA',
+            sala=self.sala,
+            professor=self.prof1,
+            turma=self.turma,
+        )
+        # Agendamento fixo futuro vazio (placeholder)
+        ag_fixo_futuro = Agendamento.objects.create(
+            data=hoje + timedelta(days=30),
+            aula=2,
+            tipo='SALA',
+            sala=self.sala,
+            professor=self.prof1,
+            turma=self.turma,
+            fixo=True,
+            fixo_grupo_id='grupo-placeholder',
+        )
+
+        self.client.force_login(self.prof1)
+        resp = self.client.get(f"{reverse('agendamentos')}?aba=relacao")
+        self.assertEqual(resp.status_code, 200)
+        relacao_list = resp.context['agendamentos_relacao']
+        # ag_hoje deve estar na listagem
+        self.assertIn(ag_hoje, relacao_list)
+        # ag_fixo_futuro (sem relação) NÃO deve poluir a listagem padrão
+        self.assertNotIn(ag_fixo_futuro, relacao_list)
+
