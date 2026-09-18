@@ -11,6 +11,14 @@
             var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             var theme = saved ? saved : (prefersDark ? 'dark' : 'light');
             document.documentElement.setAttribute('data-theme', theme);
+
+            // Trava Global de Quiosque: se a guia estiver travada na relação, não permite navegar para outra página
+            try {
+                var urlTravada = sessionStorage.getItem('labhub_relacao_bloqueada_url');
+                if (urlTravada && !window.location.pathname.startsWith(urlTravada.split('?')[0].split('#')[0])) {
+                    window.location.replace(urlTravada);
+                }
+            } catch (e) {}
         })();
     </script>
     {% load static %}

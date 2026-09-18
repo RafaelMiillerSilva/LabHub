@@ -600,6 +600,9 @@
             }
         });
 
+        var storageKeyUrlTravada = 'labhub_relacao_bloqueada_url';
+        var storageKeyIdTravada = 'labhub_relacao_bloqueada_id';
+
         // Funções do Modo Travado (Cadeado)
         function ativarModoTravado() {
             modoTravado = true;
@@ -619,9 +622,12 @@
                 bannerTravado.style.display = 'flex';
             }
 
+            // Armazena no sessionStorage para persistir mesmo após salvar a relação
             sessionStorage.setItem(storageKeyTravado, 'true');
+            sessionStorage.setItem(storageKeyUrlTravada, window.location.pathname);
+            sessionStorage.setItem(storageKeyIdTravada, agId);
 
-            // Armadilha de histórico no celular para capturar o botão voltar
+            // Armadilha profunda de histórico para prender a navegação do celular/navegador
             armarArmadilhaHistorico();
         }
 
@@ -641,22 +647,35 @@
         }
 
         function armarArmadilhaHistorico() {
-            window.history.pushState({ labhub_kiosk: true }, '', window.location.href);
+            var urlBase = window.location.pathname + window.location.search;
+            if (window.location.hash !== '#travado') {
+                window.history.pushState({ labhub_kiosk: true, step: 'base' }, '', urlBase + '#travado');
+            }
+            // Empilha múltiplos estados no histórico para criar uma barreira contra o botão voltar
+            for (var i = 1; i <= 6; i++) {
+                window.history.pushState({ labhub_kiosk: true, step: i }, '', urlBase + '#travado');
+            }
         }
 
+        // Intercepta qualquer tentativa de voltar histórico enquanto travado
         window.addEventListener('popstate', function(e) {
             if (modoTravado) {
-                // Repõe o estado no histórico imediatamente para impedir saída
-                armarArmadilhaHistorico();
+                var urlBase = window.location.pathname + window.location.search;
+                for (var i = 1; i <= 3; i++) {
+                    window.history.pushState({ labhub_kiosk: true, step: i }, '', urlBase + '#travado');
+                }
                 abrirModalDesbloqueio();
             }
         });
 
-        window.addEventListener('beforeunload', function(e) {
+        // Intercepta alteração do hash
+        window.addEventListener('hashchange', function(e) {
             if (modoTravado) {
-                e.preventDefault();
-                e.returnValue = 'A tela está travada na relação. Desbloqueie com sua senha para sair.';
-                return e.returnValue;
+                var urlBase = window.location.pathname + window.location.search;
+                if (window.location.hash !== '#travado') {
+                    window.history.pushState({ labhub_kiosk: true }, '', urlBase + '#travado');
+                }
+                abrirModalDesbloqueio();
             }
         });
 
@@ -739,6 +758,12 @@
                     }
 
                     sessionStorage.removeItem(storageKeyTravado);
+                    sessionStorage.removeItem(storageKeyUrlTravada);
+                    sessionStorage.removeItem(storageKeyIdTravada);
+
+                    if (window.location.hash === '#travado') {
+                        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                    }
                 } else {
                     var erroTexto = (result.data && result.data.erro) ? result.data.erro : 'Senha incorreta. Tente novamente.';
                     if (msgErro) {
@@ -778,7 +803,7 @@
         }
 
         // Restauração automática de estado caso a página recarregue (ex: após salvar relação)
-        if (sessionStorage.getItem(storageKeyTravado) === 'true') {
+        if (sessionStorage.getItem(storageKeyTravado) === 'true' || sessionStorage.getItem(storageKeyUrlTravada) === window.location.pathname) {
             ativarModoTravado();
         } else if (sessionStorage.getItem(storageKeyFullscreen) === 'true') {
             entrarFullscreen();

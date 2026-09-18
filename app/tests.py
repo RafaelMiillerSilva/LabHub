@@ -1328,6 +1328,14 @@ class RelacaoKioskETravaSenhaTest(TestCase):
         self.assertContains(resp, 'id="btnCadeadoTrava"')
         self.assertContains(resp, 'id="modalDesbloquearRelacao"')
         self.assertContains(resp, 'id="bannerKioskTravado"')
+        self.assertContains(resp, 'labhub_relacao_bloqueada_url')
+
+    def test_trava_global_quiosque_no_layout(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('home'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'labhub_relacao_bloqueada_url')
+
 
 
 
