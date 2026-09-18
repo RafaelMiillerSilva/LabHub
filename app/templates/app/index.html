@@ -459,9 +459,11 @@
                                             </div>
 
                                             {% if r.deve_exibir_alerta_relacao %}
-                                            <div style="margin-bottom: 5px;">
-                                                <span class="badge-alerta-relacao" title="Horário já encerrado e relação ainda pendente de preenchimento!">⚠️ preencher relação!</span>
-                                            </div>
+                                                {% if is_admin or r.professor == request.user %}
+                                                <div style="margin-bottom: 5px;">
+                                                    <span class="badge-alerta-relacao" title="Horário já encerrado e relação ainda pendente de preenchimento!">⚠️ preencher relação!</span>
+                                                </div>
+                                                {% endif %}
                                             {% endif %}
 
                                             <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap;">

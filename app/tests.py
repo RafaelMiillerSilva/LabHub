@@ -727,6 +727,11 @@ class AgendamentosRelacaoExportTest(TestCase):
         self.prof2.perfil.aprovado = True
         self.prof2.perfil.save()
 
+        self.admin = User.objects.create_user(username='admin_rel', email='admin@rel.com', password='Password@123', is_staff=True)
+        self.admin.perfil.tipo = 'ADMINISTRADOR'
+        self.admin.perfil.aprovado = True
+        self.admin.perfil.save()
+
         self.turma = Turma.objects.create(nome='1º Ano EM', turno='MANHA')
         self.sala = Sala.objects.create(nome='Lab Multiuso')
 
@@ -845,12 +850,27 @@ class AgendamentosRelacaoExportTest(TestCase):
         self.assertTrue(ag_passado.aula_ja_passou)
         self.assertTrue(ag_passado.deve_exibir_alerta_relacao)
 
-        # Na tela inicial (index.html), no calendário do dia correspondente, deve exibir o alerta para dispositivos
+        # Na tela inicial (index.html), no calendário do dia correspondente:
+        # 1) Deve exibir o alerta para o professor dono do agendamento (prof1)
         self.client.force_login(self.prof1)
         resp_index = self.client.get(reverse('home') + f'?data={data_passada:%Y-%m-%d}')
         self.assertEqual(resp_index.status_code, 200)
         self.assertContains(resp_index, 'badge-alerta-relacao')
         self.assertContains(resp_index, 'preencher relação!')
+
+        # 2) Deve exibir o alerta para administradores
+        self.client.force_login(self.admin)
+        resp_admin = self.client.get(reverse('home') + f'?data={data_passada:%Y-%m-%d}')
+        self.assertEqual(resp_admin.status_code, 200)
+        self.assertContains(resp_admin, 'badge-alerta-relacao')
+        self.assertContains(resp_admin, 'preencher relação!')
+
+        # 3) NÃO deve exibir o alerta para outro usuário que não seja dono nem administrador (prof2)
+        self.client.force_login(self.prof2)
+        resp_outro = self.client.get(reverse('home') + f'?data={data_passada:%Y-%m-%d}')
+        self.assertEqual(resp_outro.status_code, 200)
+        self.assertNotContains(resp_outro, '<span class="badge-alerta-relacao"')
+        self.assertNotContains(resp_outro, 'preencher relação!')
 
         # Verifica que a coluna 'Equipamentos Móveis' aparece ANTES do nome da sala (colunas invertidas)
         conteudo = resp_index.content.decode('utf-8')
@@ -1248,5 +1268,66 @@ class OcorrenciasTests(TestCase):
         # O botão Ocorrência NÃO deve aparecer no topo à direita para professor comum
         self.assertNotContains(resp_rel_prof, reverse('ocorrencia_criar') + f'?agendamento_id={self.ag.id}')
         self.assertNotContains(resp_rel_prof, 'id="ocorrenciaIcon"')
+
+
+class RelacaoKioskETravaSenhaTest(TestCase):
+    def setUp(self):
+        self.senha_padrao = 'SenhaForte123!'
+        self.user = User.objects.create_user(
+            username='prof_kiosk',
+            email='kiosk@escola.com',
+            password=self.senha_padrao
+        )
+        self.user.perfil.tipo = 'PROFESSOR'
+        self.user.perfil.aprovado = True
+        self.user.perfil.save()
+        self.turma = Turma.objects.create(nome='3º Info', turno='MANHA')
+        self.ag = Agendamento.objects.create(
+            data=date(2026, 9, 20),
+            aula=1,
+            professor=self.user,
+            turma=self.turma,
+            tipo='DISPOSITIVO'
+        )
+
+    def test_verificar_senha_correta(self):
+        self.client.force_login(self.user)
+        resp = self.client.post(reverse('verificar_senha'), {'senha': self.senha_padrao})
+        self.assertEqual(resp.status_code, 200)
+        dados = resp.json()
+        self.assertTrue(dados.get('valida'))
+
+    def test_verificar_senha_incorreta(self):
+        self.client.force_login(self.user)
+        resp = self.client.post(reverse('verificar_senha'), {'senha': 'senha_errada'})
+        self.assertEqual(resp.status_code, 400)
+        dados = resp.json()
+        self.assertFalse(dados.get('valida'))
+
+    def test_verificar_senha_vazia(self):
+        self.client.force_login(self.user)
+        resp = self.client.post(reverse('verificar_senha'), {'senha': ''})
+        self.assertEqual(resp.status_code, 400)
+        dados = resp.json()
+        self.assertFalse(dados.get('valida'))
+
+    def test_verificar_senha_metodo_get(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('verificar_senha'))
+        self.assertEqual(resp.status_code, 405)
+
+    def test_verificar_senha_anonimo(self):
+        resp = self.client.post(reverse('verificar_senha'), {'senha': self.senha_padrao})
+        self.assertEqual(resp.status_code, 302)
+
+    def test_elementos_tela_cheia_e_cadeado_na_relacao(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('relacao_agendamento', args=[self.ag.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'id="btnModoTelaCheia"')
+        self.assertContains(resp, 'id="btnCadeadoTrava"')
+        self.assertContains(resp, 'id="modalDesbloquearRelacao"')
+        self.assertContains(resp, 'id="bannerKioskTravado"')
+
 
 

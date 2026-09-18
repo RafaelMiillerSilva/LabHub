@@ -2,12 +2,13 @@
 Views de perfil/conta do usuário.
 """
 
+import json
 import re
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import render, redirect
 
 from app.models import Perfil
@@ -143,3 +144,27 @@ def foto_perfil(request, user_id):
         bytes(perfil.foto_dados),
         content_type=perfil.foto_mime or 'image/jpeg',
     )
+
+
+@login_required
+def verificar_senha(request):
+    """Valida a senha do usuário autenticado para operações sensíveis como destravamento de tela."""
+    if request.method != 'POST':
+        return JsonResponse({'valida': False, 'erro': 'Método não permitido.'}, status=405)
+
+    senha = request.POST.get('senha', '')
+    if not senha and not request.POST:
+        try:
+            dados = json.loads(request.body.decode('utf-8'))
+            senha = dados.get('senha', '')
+        except Exception:
+            pass
+
+    if not senha:
+        return JsonResponse({'valida': False, 'erro': 'A senha é obrigatória.'}, status=400)
+
+    if request.user.check_password(senha):
+        return JsonResponse({'valida': True, 'mensagem': 'Senha correta.'})
+
+    return JsonResponse({'valida': False, 'erro': 'Senha incorreta.'}, status=400)
+

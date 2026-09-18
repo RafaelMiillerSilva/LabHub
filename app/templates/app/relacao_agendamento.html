@@ -1,15 +1,187 @@
 {% extends "app/layout.html" %}
+
+{% block styles %}
+<style>
+    /* ── Barra de Ferramentas / Ações da Relação ── */
+    .relacao-header-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+
+    .relacao-botoes-acao {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    /* Botões de Ação do Modo Quiosque / Foco */
+    .btn-kiosk-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-weight: 700;
+        font-size: 13px;
+        padding: 8px 14px;
+        border-radius: var(--lh-radius-sm);
+        border: 1px solid var(--lh-border);
+        background: var(--lh-surface);
+        color: var(--lh-text);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: var(--lh-shadow-sm);
+        text-decoration: none !important;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-kiosk-action:hover {
+        background: var(--lh-surface-subtle);
+        border-color: var(--lh-primary-border);
+        transform: translateY(-1px);
+    }
+
+    .btn-kiosk-action:active {
+        transform: scale(0.97);
+    }
+
+    /* Botão Cadeado - Estado Normal e Travado */
+    .btn-cadeado-trava.travado {
+        background: #FEF2F2 !important;
+        border-color: #EF4444 !important;
+        color: #DC2626 !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+        animation: pulseLock 2s infinite ease-in-out;
+    }
+
+    [data-theme="dark"] .btn-cadeado-trava.travado {
+        background: rgba(239, 68, 68, 0.18) !important;
+        border-color: #EF4444 !important;
+        color: #FCA5A5 !important;
+    }
+
+    /* Banner de Aviso quando Travado */
+    .banner-kiosk-travado {
+        background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+        color: #ffffff;
+        border-radius: var(--lh-radius);
+        padding: 10px 16px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.25);
+        animation: fadeInKiosk 0.3s ease;
+    }
+
+    /* ── Estilos de Tela Cheia (Desktop & Mobile 100dvh) ── */
+    body.modo-relacao-fullscreen {
+        overflow-x: hidden;
+    }
+
+    body.modo-relacao-fullscreen .navbar-custom,
+    body.modo-relacao-fullscreen footer,
+    body.modo-relacao-fullscreen .push,
+    body.modo-relacao-fullscreen .lh-hero,
+    body.modo-relacao-fullscreen #cardGerenciarReserva {
+        display: none !important;
+    }
+
+    body.modo-relacao-fullscreen .wrapper {
+        padding-top: 14px !important;
+        margin-bottom: 0 !important;
+        min-height: 100vh !important;
+        min-height: 100dvh !important;
+    }
+
+    body.modo-relacao-fullscreen .body-content {
+        max-width: 100% !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+
+    /* Quando travado, oculta links e botões de saída */
+    body.modo-relacao-travado #linkVoltarRelacao,
+    body.modo-relacao-travado .btn-ocorrencia-link,
+    body.modo-relacao-travado #btnModoTelaCheia {
+        display: none !important;
+    }
+
+    /* Animações */
+    @keyframes pulseLock {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+        }
+    }
+
+    @keyframes fadeInKiosk {
+        from { opacity: 0; transform: translateY(-6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes shakeModal {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-6px); }
+        40%, 80% { transform: translateX(6px); }
+    }
+
+    .shake-animation {
+        animation: shakeModal 0.35s ease;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-    <a href="javascript:history.back()" class="lh-back-link" style="margin-bottom:0;">
-        ← Voltar
-    </a>
-    {% if is_admin or user.is_staff or user.perfil.tipo == 'ADMINISTRADOR' %}
-    <a href="{% url 'ocorrencia_criar' %}?agendamento_id={{ ag.id }}" class="lh-btn lh-btn--warning" style="background:#F59E0B; color:#ffffff; border:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:13px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(245,158,11,0.25);">
-        ⚠️ Ocorrência
-    </a>
-    {% endif %}
+<div class="relacao-header-toolbar">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <a href="javascript:history.back()" class="lh-back-link" id="linkVoltarRelacao" style="margin-bottom:0;">
+            ← Voltar
+        </a>
+    </div>
+
+    <div class="relacao-botoes-acao">
+        <!-- Botão Modo Tela Cheia -->
+        <button type="button" class="btn-kiosk-action" id="btnModoTelaCheia" title="Expandir em Tela Cheia">
+            <span id="iconeTelaCheia" style="font-size: 15px;">⛶</span>
+            <span id="textoTelaCheia">Tela Cheia</span>
+        </button>
+
+        <!-- Botão Cadeado Trava -->
+        <button type="button" class="btn-kiosk-action btn-cadeado-trava" id="btnCadeadoTrava" title="Travar tela na relação para entrega aos alunos">
+            <span id="iconeCadeado" style="font-size: 15px;">🔓</span>
+            <span id="textoCadeado">Travar</span>
+        </button>
+
+        {% if is_admin or user.is_staff or user.perfil.tipo == 'ADMINISTRADOR' %}
+        <a href="{% url 'ocorrencia_criar' %}?agendamento_id={{ ag.id }}" class="lh-btn lh-btn--warning btn-ocorrencia-link" style="background:#F59E0B; color:#ffffff; border:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:13px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(245,158,11,0.25);">
+            ⚠️ Ocorrência
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Banner de Modo Travado Ativo -->
+<div id="bannerKioskTravado" class="banner-kiosk-travado" style="display: none;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 20px;">🔒</span>
+        <div>
+            <strong style="display: block; font-size: 13.5px; font-weight: 700;">Modo Travado Ativo</strong>
+            <span style="font-size: 11.5px; opacity: 0.95;">Apenas a relação está disponível. Para sair ou destravar a tela, utilize a senha do usuário.</span>
+        </div>
+    </div>
+    <button type="button" class="lh-btn lh-btn--sm" id="btnDestravarBanner" style="background: #ffffff; color: #DC2626; border: none; font-weight: 700; border-radius: 6px; padding: 5px 12px; font-size: 12px; cursor: pointer; flex-shrink: 0;">
+        🔑 Destravar
+    </button>
 </div>
 
 <div class="lh-hero">
@@ -62,7 +234,7 @@
 
 {% if pode_editar %}
 <!-- Card de Edição dos Parâmetros da Reserva -->
-<div class="lh-card" style="border-top:4px solid var(--lh-warning);">
+<div class="lh-card" id="cardGerenciarReserva" style="border-top:4px solid var(--lh-warning);">
     <div class="lh-card-header">
         <h3 class="lh-card-title">⚙️ Gerenciar Reserva</h3>
     </div>
@@ -249,6 +421,44 @@
     {% endif %}
 </form>
 
+<!-- Modal de Desbloqueio com Senha -->
+<div class="modal fade" id="modalDesbloquearRelacao" tabindex="-1" role="dialog" aria-labelledby="modalDesbloquearRelacaoLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-sm" role="document" style="max-width: 380px; margin: 40px auto;">
+        <div class="modal-content" style="border-radius: var(--lh-radius); overflow: hidden; border: 1px solid var(--lh-border);">
+            <div class="modal-header" style="background: var(--lh-gradient-primary); color: #ffffff; padding: 16px 20px;">
+                <h4 class="modal-title" id="modalDesbloquearRelacaoLabel" style="font-weight: 800; font-size: 16px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <span>🔐</span> Desbloquear Tela
+                </h4>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <p style="font-size: 13.5px; color: var(--lh-text); margin-bottom: 14px; line-height: 1.45;">
+                    Para sair do modo travado, digite a senha da conta de <strong>{{ request.user.username }}</strong>:
+                </p>
+
+                <div style="position: relative; margin-bottom: 8px;">
+                    <input type="password" id="inputSenhaDesbloqueio" class="form-control" placeholder="Digite sua senha..." style="padding-right: 42px; font-size: 15px; height: 42px; border-radius: 8px;">
+                    <button type="button" id="btnToggleVisibilidadeSenha" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--lh-text-muted); cursor: pointer; font-size: 17px; padding: 4px;" title="Mostrar ou ocultar senha">
+                        👁️
+                    </button>
+                </div>
+
+                <div id="msgErroDesbloqueio" style="display: none; color: var(--lh-danger); font-size: 12.5px; font-weight: 600; margin-top: 8px; line-height: 1.3;">
+                    ⚠️ Senha incorreta. Tente novamente.
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="lh-btn lh-btn--ghost lh-btn--sm" id="btnCancelarDesbloqueio">
+                    Continuar Travado
+                </button>
+                <button type="button" class="lh-btn lh-btn--primary lh-btn--sm" id="btnConfirmarDesbloqueio" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <span id="spinnerDesbloqueio" style="display: none;">⏳</span>
+                    <span>Desbloquear</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -287,4 +497,292 @@
     });
 </script>
 {% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var agId = "{{ ag.id }}";
+        var storageKeyTravado = 'labhub_relacao_travada_' + agId;
+        var storageKeyFullscreen = 'labhub_relacao_fullscreen_' + agId;
+
+        var modoTravado = false;
+        var modoFullscreen = false;
+
+        var btnTelaCheia = document.getElementById('btnModoTelaCheia');
+        var iconeTelaCheia = document.getElementById('iconeTelaCheia');
+        var textoTelaCheia = document.getElementById('textoTelaCheia');
+
+        var btnCadeado = document.getElementById('btnCadeadoTrava');
+        var iconeCadeado = document.getElementById('iconeCadeado');
+        var textoCadeado = document.getElementById('textoCadeado');
+
+        var bannerTravado = document.getElementById('bannerKioskTravado');
+        var btnDestravarBanner = document.getElementById('btnDestravarBanner');
+
+        var modalEl = $('#modalDesbloquearRelacao');
+        var inputSenha = document.getElementById('inputSenhaDesbloqueio');
+        var btnToggleVis = document.getElementById('btnToggleVisibilidadeSenha');
+        var msgErro = document.getElementById('msgErroDesbloqueio');
+        var btnConfirmar = document.getElementById('btnConfirmarDesbloqueio');
+        var btnCancelar = document.getElementById('btnCancelarDesbloqueio');
+        var spinner = document.getElementById('spinnerDesbloqueio');
+
+        // Toggle visibilidade da senha
+        if (btnToggleVis && inputSenha) {
+            btnToggleVis.addEventListener('click', function() {
+                if (inputSenha.type === 'password') {
+                    inputSenha.type = 'text';
+                    btnToggleVis.textContent = '🙈';
+                } else {
+                    inputSenha.type = 'password';
+                    btnToggleVis.textContent = '👁️';
+                }
+            });
+        }
+
+        // Funções de Tela Cheia
+        function entrarFullscreen() {
+            modoFullscreen = true;
+            document.body.classList.add('modo-relacao-fullscreen');
+            if (textoTelaCheia) textoTelaCheia.textContent = 'Sair Tela Cheia';
+            if (iconeTelaCheia) iconeTelaCheia.textContent = '🗗';
+            sessionStorage.setItem(storageKeyFullscreen, 'true');
+
+            // Tenta ativar a Fullscreen API nativa se suportado
+            var docEl = document.documentElement;
+            try {
+                if (docEl.requestFullscreen && !document.fullscreenElement) {
+                    docEl.requestFullscreen().catch(function() {});
+                } else if (docEl.webkitRequestFullscreen && !document.webkitFullscreenElement) {
+                    docEl.webkitRequestFullscreen();
+                }
+            } catch (err) {}
+        }
+
+        function sairFullscreen() {
+            if (modoTravado) {
+                abrirModalDesbloqueio();
+                return;
+            }
+            modoFullscreen = false;
+            document.body.classList.remove('modo-relacao-fullscreen');
+            if (textoTelaCheia) textoTelaCheia.textContent = 'Tela Cheia';
+            if (iconeTelaCheia) iconeTelaCheia.textContent = '⛶';
+            sessionStorage.removeItem(storageKeyFullscreen);
+
+            try {
+                if (document.exitFullscreen && document.fullscreenElement) {
+                    document.exitFullscreen().catch(function() {});
+                } else if (document.webkitExitFullscreen && document.webkitFullscreenElement) {
+                    document.webkitExitFullscreen();
+                }
+            } catch (err) {}
+        }
+
+        if (btnTelaCheia) {
+            btnTelaCheia.addEventListener('click', function() {
+                if (modoFullscreen) {
+                    sairFullscreen();
+                } else {
+                    entrarFullscreen();
+                }
+            });
+        }
+
+        // Sincroniza saída manual de fullscreen do navegador (tecla ESC no PC)
+        document.addEventListener('fullscreenchange', function() {
+            if (!document.fullscreenElement && modoFullscreen && !modoTravado) {
+                sairFullscreen();
+            }
+        });
+        document.addEventListener('webkitfullscreenchange', function() {
+            if (!document.webkitFullscreenElement && modoFullscreen && !modoTravado) {
+                sairFullscreen();
+            }
+        });
+
+        // Funções do Modo Travado (Cadeado)
+        function ativarModoTravado() {
+            modoTravado = true;
+            document.body.classList.add('modo-relacao-travado');
+
+            // Obrigatoriamente entra em tela cheia ao travar
+            entrarFullscreen();
+
+            if (btnCadeado) {
+                btnCadeado.classList.add('travado');
+                if (iconeCadeado) iconeCadeado.textContent = '🔒';
+                if (textoCadeado) textoCadeado.textContent = 'Travado';
+                btnCadeado.setAttribute('title', 'Tela travada. Clique para desbloquear com sua senha.');
+            }
+
+            if (bannerTravado) {
+                bannerTravado.style.display = 'flex';
+            }
+
+            sessionStorage.setItem(storageKeyTravado, 'true');
+
+            // Armadilha de histórico no celular para capturar o botão voltar
+            armarArmadilhaHistorico();
+        }
+
+        function abrirModalDesbloqueio() {
+            if (msgErro) msgErro.style.display = 'none';
+            if (inputSenha) {
+                inputSenha.value = '';
+                inputSenha.type = 'password';
+            }
+            if (btnToggleVis) btnToggleVis.textContent = '👁️';
+            if (spinner) spinner.style.display = 'none';
+            if (btnConfirmar) btnConfirmar.disabled = false;
+            modalEl.modal('show');
+            setTimeout(function() {
+                if (inputSenha) inputSenha.focus();
+            }, 300);
+        }
+
+        function armarArmadilhaHistorico() {
+            window.history.pushState({ labhub_kiosk: true }, '', window.location.href);
+        }
+
+        window.addEventListener('popstate', function(e) {
+            if (modoTravado) {
+                // Repõe o estado no histórico imediatamente para impedir saída
+                armarArmadilhaHistorico();
+                abrirModalDesbloqueio();
+            }
+        });
+
+        window.addEventListener('beforeunload', function(e) {
+            if (modoTravado) {
+                e.preventDefault();
+                e.returnValue = 'A tela está travada na relação. Desbloqueie com sua senha para sair.';
+                return e.returnValue;
+            }
+        });
+
+        if (btnCadeado) {
+            btnCadeado.addEventListener('click', function() {
+                if (modoTravado) {
+                    abrirModalDesbloqueio();
+                } else {
+                    ativarModoTravado();
+                }
+            });
+        }
+
+        if (btnDestravarBanner) {
+            btnDestravarBanner.addEventListener('click', function() {
+                abrirModalDesbloqueio();
+            });
+        }
+
+        if (btnCancelar) {
+            btnCancelar.addEventListener('click', function() {
+                modalEl.modal('hide');
+            });
+        }
+
+        // Submissão do desbloqueio via AJAX
+        function submeterDesbloqueio() {
+            var senha = inputSenha ? inputSenha.value : '';
+            if (!senha) {
+                if (msgErro) {
+                    msgErro.textContent = '⚠️ Digite sua senha para desbloquear.';
+                    msgErro.style.display = 'block';
+                    msgErro.classList.remove('shake-animation');
+                    void msgErro.offsetWidth;
+                    msgErro.classList.add('shake-animation');
+                }
+                if (inputSenha) inputSenha.focus();
+                return;
+            }
+
+            if (spinner) spinner.style.display = 'inline';
+            if (btnConfirmar) btnConfirmar.disabled = true;
+            if (msgErro) msgErro.style.display = 'none';
+
+            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            var tokenVal = csrfToken ? csrfToken.value : '';
+
+            fetch("{% url 'verificar_senha' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': tokenVal,
+                },
+                body: 'senha=' + encodeURIComponent(senha)
+            })
+            .then(function(resp) {
+                return resp.json().then(function(data) {
+                    return { ok: resp.ok, data: data };
+                });
+            })
+            .then(function(result) {
+                if (spinner) spinner.style.display = 'none';
+                if (btnConfirmar) btnConfirmar.disabled = false;
+
+                if (result.ok && result.data && result.data.valida) {
+                    // Desbloqueio com sucesso!
+                    modalEl.modal('hide');
+                    modoTravado = false;
+                    document.body.classList.remove('modo-relacao-travado');
+
+                    if (btnCadeado) {
+                        btnCadeado.classList.remove('travado');
+                        if (iconeCadeado) iconeCadeado.textContent = '🔓';
+                        if (textoCadeado) textoCadeado.textContent = 'Travar';
+                        btnCadeado.setAttribute('title', 'Travar tela na relação para entrega aos alunos');
+                    }
+
+                    if (bannerTravado) {
+                        bannerTravado.style.display = 'none';
+                    }
+
+                    sessionStorage.removeItem(storageKeyTravado);
+                } else {
+                    var erroTexto = (result.data && result.data.erro) ? result.data.erro : 'Senha incorreta. Tente novamente.';
+                    if (msgErro) {
+                        msgErro.textContent = '⚠️ ' + erroTexto;
+                        msgErro.style.display = 'block';
+                        msgErro.classList.remove('shake-animation');
+                        void msgErro.offsetWidth;
+                        msgErro.classList.add('shake-animation');
+                    }
+                    if (inputSenha) {
+                        inputSenha.select();
+                        inputSenha.focus();
+                    }
+                }
+            })
+            .catch(function(err) {
+                if (spinner) spinner.style.display = 'none';
+                if (btnConfirmar) btnConfirmar.disabled = false;
+                if (msgErro) {
+                    msgErro.textContent = '⚠️ Erro ao verificar senha. Tente novamente.';
+                    msgErro.style.display = 'block';
+                }
+            });
+        }
+
+        if (btnConfirmar) {
+            btnConfirmar.addEventListener('click', submeterDesbloqueio);
+        }
+
+        if (inputSenha) {
+            inputSenha.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    submeterDesbloqueio();
+                }
+            });
+        }
+
+        // Restauração automática de estado caso a página recarregue (ex: após salvar relação)
+        if (sessionStorage.getItem(storageKeyTravado) === 'true') {
+            ativarModoTravado();
+        } else if (sessionStorage.getItem(storageKeyFullscreen) === 'true') {
+            entrarFullscreen();
+        }
+    });
+</script>
 {% endblock %}

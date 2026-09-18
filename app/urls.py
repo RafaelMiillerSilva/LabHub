@@ -78,6 +78,7 @@ urlpatterns = [
     # Perfil / Conta
     path('conta/', views.minha_conta, name='minha_conta'),
     path('conta/senha/', views.alterar_senha, name='alterar_senha'),
+    path('conta/verificar-senha/', views.verificar_senha, name='verificar_senha'),
     path('perfil/<int:user_id>/foto/', views.foto_perfil, name='foto_perfil'),
 
     # Autenticação e Senha

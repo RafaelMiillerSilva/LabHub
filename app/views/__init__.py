@@ -67,6 +67,7 @@ from .perfil import (
     minha_conta,
     alterar_senha,
     foto_perfil,
+    verificar_senha,
 )
 from .ocorrencias import (
     ocorrencias_lista,
@@ -126,6 +127,7 @@ __all__ = [
     'minha_conta',
     'alterar_senha',
     'foto_perfil',
+    'verificar_senha',
     'ocorrencias_lista',
     'ocorrencia_criar',
     'ocorrencia_detalhe',
