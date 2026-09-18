@@ -831,19 +831,34 @@ class AgendamentosRelacaoExportTest(TestCase):
         data_passada = date(2026, 9, 1)
         ag_passado = Agendamento.objects.get(id=self.ag1.id)
         ag_passado.data = data_passada
-        ag_passado.save()
 
-        # Relação está vazia
+        # Agendamento em SALA não deve exibir alerta
+        ag_passado.tipo = 'SALA'
+        ag_passado.save()
+        self.assertFalse(ag_passado.deve_exibir_alerta_relacao)
+
+        # Agendamento em DISPOSITIVOS com relação vazia DEVE exibir alerta
+        ag_passado.tipo = 'DISPOSITIVO'
+        ag_passado.save()
+        ItemDispositivo.objects.create(agendamento=ag_passado, categoria='NOTEBOOK', quantidade=1)
         self.assertTrue(ag_passado.relacao_pendente)
         self.assertTrue(ag_passado.aula_ja_passou)
         self.assertTrue(ag_passado.deve_exibir_alerta_relacao)
 
-        # Na tela inicial (index.html), no calendário do dia correspondente, deve exibir o alerta
+        # Na tela inicial (index.html), no calendário do dia correspondente, deve exibir o alerta para dispositivos
         self.client.force_login(self.prof1)
         resp_index = self.client.get(reverse('home') + f'?data={data_passada:%Y-%m-%d}')
         self.assertEqual(resp_index.status_code, 200)
         self.assertContains(resp_index, 'badge-alerta-relacao')
         self.assertContains(resp_index, 'preencher relação!')
+
+        # Verifica que a coluna 'Equipamentos Móveis' aparece ANTES do nome da sala (colunas invertidas)
+        conteudo = resp_index.content.decode('utf-8')
+        pos_equip = conteudo.find('Equipamentos Móveis')
+        pos_sala = conteudo.find(self.sala.nome)
+        self.assertNotEqual(pos_equip, -1)
+        self.assertNotEqual(pos_sala, -1)
+        self.assertLess(pos_equip, pos_sala)
 
         # Na tela do calendário mensal (agendamentos.html), o alerta NÃO deve ser exibido
         resp_cal = self.client.get(reverse('agendamentos') + f'?ano={data_passada.year}&mes={data_passada.month}')

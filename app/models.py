@@ -391,7 +391,9 @@ class Agendamento(models.Model):
 
     @property
     def deve_exibir_alerta_relacao(self):
-        """Ativa tag/badge 'preencher relação!' em vermelho se a aula já encerrou e a relação está pendente."""
+        """Ativa tag/badge 'preencher relação!' em vermelho se a aula já encerrou e a relação está pendente (apenas para dispositivos)."""
+        if self.tipo != 'DISPOSITIVO':
+            return False
         return self.aula_ja_passou and self.relacao_pendente
 
     def __str__(self):

@@ -412,6 +412,9 @@
                 <thead>
                     <tr>
                         <th class="text-center" style="width:70px; background:var(--lh-surface-subtle); border-right:1px solid var(--lh-border);">Aula</th>
+                        <th class="text-center" style="min-width:210px;">
+                            <span style="color:#B45309;">💻</span> Equipamentos Móveis
+                        </th>
                         {% for s in salas %}
                         <th class="text-center" style="min-width:180px;">
                             <div style="font-size:14px; font-weight:700;"><span style="color:#047857;">🏫</span> {{ s.nome }}</div>
@@ -420,9 +423,6 @@
                             </div>
                         </th>
                         {% endfor %}
-                        <th class="text-center" style="min-width:210px;">
-                            <span style="color:#B45309;">💻</span> Equipamentos Móveis
-                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -431,81 +431,6 @@
                         <td class="text-center" style="vertical-align:middle; background:var(--lh-surface-subtle); border-right:1px solid var(--lh-border);">
                             <span class="lh-badge lh-badge--primary" style="font-size:12px; font-weight:700;">{{ linha.aula }}ª</span>
                         </td>
-
-                        <!-- Colunas dos Laboratórios / Salas -->
-                        {% for col in linha.colunas_salas %}
-                        {% if not col.skip %}
-                        <td rowspan="{{ col.rowspan }}" class="slot-celula-diaria {% if col.dupla %}slot-dupla-sala{% endif %}">
-                            {% if col.reserva %}
-                                {% with r=col.reserva r2=col.reserva_segunda %}
-                                <div class="reserva-item reserva-base card-painel-diario {% if col.dupla %}card-painel-diario--duplo{% else %}card-painel-diario--simples{% endif %} {% if r.fixo %}reserva-fixo{% elif r.professor == request.user %}reserva-minha{% else %}reserva-outros{% endif %}"
-                                     data-usuario="{{ r.professor.username }}">
-                                    <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-link {% if is_admin or r.professor == request.user %}reserva-link-com-acoes{% endif %}" style="flex:1;">
-                                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:5px; gap:6px;">
-                                            <strong class="card-turma-nome">{{ r.turma.nome }}</strong>
-                                            <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
-                                                {% if col.dupla %}
-                                                <span class="lh-badge lh-badge--primary card-badge-dupla" title="Aula Dupla ({{ col.aula }}ª e {{ col.aula_fim }}ª aula)">⏱️ 2 aulas</span>
-                                                {% endif %}
-                                                {% if r.fixo %}
-                                                <span title="Agendamento Fixo" style="font-size:13px;">📌</span>
-                                                {% endif %}
-                                                {% if r.professor == request.user %}
-                                                <span title="Sua reserva" style="font-size:12px;">🟢</span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-
-                                        {% if r.deve_exibir_alerta_relacao %}
-                                        <div style="margin-bottom: 5px;">
-                                            <span class="badge-alerta-relacao" title="Horário já encerrado e relação ainda pendente de preenchimento!">⚠️ preencher relação!</span>
-                                        </div>
-                                        {% endif %}
-
-                                        <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap;">
-                                            {% with total_alunos=r.turma.alunos.all|length %}
-                                            <span class="lh-badge lh-badge--primary" style="font-size:11px; font-weight:600; padding:2px 7px; border-radius:5px;" title="Quantidade de alunos da turma">
-                                                👥 {{ total_alunos }} aluno{{ total_alunos|pluralize:"s" }}
-                                            </span>
-                                            {% endwith %}
-                                            {% if col.sala.capacidade %}
-                                            <span style="font-size:11px; color:var(--lh-text-muted); font-weight:500;" title="Capacidade máxima da sala">
-                                                / máx. {{ col.sala.capacidade }}
-                                            </span>
-                                            {% endif %}
-                                        </div>
-
-                                        <div class="card-professor-info">
-                                            <span style="font-size:14px;">👤</span> <span>{{ r.professor.get_full_name|default:r.professor.username }}</span>
-                                        </div>
-
-                                        {% if r.observacao %}
-                                        <div class="card-observacao-info" title="{{ r.observacao }}">
-                                            💬 {{ r.observacao }}
-                                        </div>
-                                        {% endif %}
-                                    </a>
-
-                                    {% if is_admin or r.professor == request.user %}
-                                    <button type="button" class="btn-cancelar-card"
-                                            data-id="{{ r.id }}"
-                                            {% if r2 %}data-id-segunda="{{ r2.id }}"{% endif %}
-                                            data-fixo="{% if r.fixo %}true{% else %}false{% endif %}"
-                                            title="Cancelar agendamento"
-                                            aria-label="Cancelar agendamento">
-                                        🗑️
-                                    </button>
-                                    {% endif %}
-                                </div>
-                                {% endwith %}
-                            {% else %}
-                                <a href="{% url 'agendamento_detalhe' data_atual.year data_atual.month data_atual.day %}?aula={{ linha.aula }}" class="slot-vazio" title="Agendar aula {{ linha.aula }} no {{ col.sala.nome }}">
-                                    +
-                                </a>
-                            {% endif %}
-                        </td>
-                        {% endif %}
-                        {% endfor %}
 
                         <!-- Coluna de Equipamentos Móveis -->
                         {% with col_eq=linha.coluna_equip %}
@@ -592,6 +517,74 @@
                         {% endif %}
                         {% endwith %}
 
+                        <!-- Colunas dos Laboratórios / Salas -->
+                        {% for col in linha.colunas_salas %}
+                        {% if not col.skip %}
+                        <td rowspan="{{ col.rowspan }}" class="slot-celula-diaria {% if col.dupla %}slot-dupla-sala{% endif %}">
+                            {% if col.reserva %}
+                                {% with r=col.reserva r2=col.reserva_segunda %}
+                                <div class="reserva-item reserva-base card-painel-diario {% if col.dupla %}card-painel-diario--duplo{% else %}card-painel-diario--simples{% endif %} {% if r.fixo %}reserva-fixo{% elif r.professor == request.user %}reserva-minha{% else %}reserva-outros{% endif %}"
+                                     data-usuario="{{ r.professor.username }}">
+                                    <a href="{% url 'relacao_agendamento' r.id %}" class="reserva-link {% if is_admin or r.professor == request.user %}reserva-link-com-acoes{% endif %}" style="flex:1;">
+                                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:5px; gap:6px;">
+                                            <strong class="card-turma-nome">{{ r.turma.nome }}</strong>
+                                            <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
+                                                {% if col.dupla %}
+                                                <span class="lh-badge lh-badge--primary card-badge-dupla" title="Aula Dupla ({{ col.aula }}ª e {{ col.aula_fim }}ª aula)">⏱️ 2 aulas</span>
+                                                {% endif %}
+                                                {% if r.fixo %}
+                                                <span title="Agendamento Fixo" style="font-size:13px;">📌</span>
+                                                {% endif %}
+                                                {% if r.professor == request.user %}
+                                                <span title="Sua reserva" style="font-size:12px;">🟢</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap;">
+                                            {% with total_alunos=r.turma.alunos.all|length %}
+                                            <span class="lh-badge lh-badge--primary" style="font-size:11px; font-weight:600; padding:2px 7px; border-radius:5px;" title="Quantidade de alunos da turma">
+                                                👥 {{ total_alunos }} aluno{{ total_alunos|pluralize:"s" }}
+                                            </span>
+                                            {% endwith %}
+                                            {% if col.sala.capacidade %}
+                                            <span style="font-size:11px; color:var(--lh-text-muted); font-weight:500;" title="Capacidade máxima da sala">
+                                                / máx. {{ col.sala.capacidade }}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="card-professor-info">
+                                            <span style="font-size:14px;">👤</span> <span>{{ r.professor.get_full_name|default:r.professor.username }}</span>
+                                        </div>
+
+                                        {% if r.observacao %}
+                                        <div class="card-observacao-info" title="{{ r.observacao }}">
+                                            💬 {{ r.observacao }}
+                                        </div>
+                                        {% endif %}
+                                    </a>
+
+                                    {% if is_admin or r.professor == request.user %}
+                                    <button type="button" class="btn-cancelar-card"
+                                            data-id="{{ r.id }}"
+                                            {% if r2 %}data-id-segunda="{{ r2.id }}"{% endif %}
+                                            data-fixo="{% if r.fixo %}true{% else %}false{% endif %}"
+                                            title="Cancelar agendamento"
+                                            aria-label="Cancelar agendamento">
+                                        🗑️
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                {% endwith %}
+                            {% else %}
+                                <a href="{% url 'agendamento_detalhe' data_atual.year data_atual.month data_atual.day %}?aula={{ linha.aula }}" class="slot-vazio" title="Agendar aula {{ linha.aula }} no {{ col.sala.nome }}">
+                                    +
+                                </a>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                        {% endfor %}
                     </tr>
                     {% endfor %}
                 </tbody>
