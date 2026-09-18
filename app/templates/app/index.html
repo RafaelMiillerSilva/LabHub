@@ -89,6 +89,31 @@
         background: #FEEBC8;
     }
 
+    /* ── Badge de Alerta: Preencher Relação no Painel Diário ── */
+    .badge-alerta-relacao {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background-color: #DC2626;
+        color: #FFFFFF !important;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 2.5px 7px;
+        border-radius: 4px;
+        line-height: 1.2;
+        box-shadow: 0 1px 4px rgba(220, 38, 38, 0.45);
+        border: 1px solid #B91C1C;
+        white-space: nowrap;
+        animation: pulseAlertaRelacao 2.5s infinite ease-in-out;
+    }
+
+    @keyframes pulseAlertaRelacao {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.88; transform: scale(0.98); }
+    }
+
     .slot-vazio {
         display: flex;
         height: 100%;
@@ -431,6 +456,12 @@
                                             </div>
                                         </div>
 
+                                        {% if r.deve_exibir_alerta_relacao %}
+                                        <div style="margin-bottom: 5px;">
+                                            <span class="badge-alerta-relacao" title="Horário já encerrado e relação ainda pendente de preenchimento!">⚠️ preencher relação!</span>
+                                        </div>
+                                        {% endif %}
+
                                         <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap;">
                                             {% with total_alunos=r.turma.alunos.all|length %}
                                             <span class="lh-badge lh-badge--primary" style="font-size:11px; font-weight:600; padding:2px 7px; border-radius:5px;" title="Quantidade de alunos da turma">
@@ -501,6 +532,12 @@
                                                     {% endif %}
                                                 </div>
                                             </div>
+
+                                            {% if r.deve_exibir_alerta_relacao %}
+                                            <div style="margin-bottom: 5px;">
+                                                <span class="badge-alerta-relacao" title="Horário já encerrado e relação ainda pendente de preenchimento!">⚠️ preencher relação!</span>
+                                            </div>
+                                            {% endif %}
 
                                             <div style="display:flex; align-items:center; gap:6px; margin-bottom:5px; flex-wrap:wrap;">
                                                 {% with total_alunos=r.turma.alunos.all|length %}

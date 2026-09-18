@@ -46,8 +46,8 @@ def _home_dashboard(request):
 
     reservas_dia = list(
         Agendamento.objects.filter(data=data_atual)
-        .select_related('sala', 'turma', 'professor')
-        .prefetch_related('itens', 'turma__alunos')
+        .select_related('sala', 'turma', 'professor', 'relacao')
+        .prefetch_related('itens', 'turma__alunos', 'relacao__itens')
     )
 
     # Mapear reservas de salas por (aula, sala_id)

@@ -552,29 +552,6 @@
             width: 100%;
         }
     }
-
-    /* ── Badge de Alerta: Preencher Relação ── */
-    .badge-alerta-relacao {
-        display: inline-block;
-        background-color: #DC2626;
-        color: #FFFFFF !important;
-        font-size: 8px;
-        font-weight: 800;
-        text-transform: lowercase;
-        letter-spacing: 0.02em;
-        padding: 1.5px 5px;
-        border-radius: 4px;
-        line-height: 1.15;
-        box-shadow: 0 1px 4px rgba(220, 38, 38, 0.45);
-        border: 1px solid #B91C1C;
-        white-space: nowrap;
-        animation: pulseAlerta 2.5s infinite ease-in-out;
-    }
-
-    @keyframes pulseAlerta {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.85; transform: scale(0.97); }
-    }
 </style>
 
 <div class="cal-container-wrap">
@@ -772,18 +749,13 @@
                                                 <span style="color:#B45309;" title="Equipamentos">Equip.</span>
                                                 {% endif %}
                                             </strong>
-                                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0;">
-                                                {% if r.deve_exibir_alerta_relacao %}
-                                                <span class="badge-alerta-relacao" title="Horário já encerrado e relação ainda pendente de preenchimento!">preencher relação!</span>
+                                            <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
+                                                {% if r.fixo %}
+                                                <span title="Agendamento Fixo" style="font-size:12px;">📌</span>
                                                 {% endif %}
-                                                <div style="display:flex; align-items:center; gap:3px;">
-                                                    {% if r.fixo %}
-                                                    <span title="Agendamento Fixo" style="font-size:12px;">📌</span>
-                                                    {% endif %}
-                                                    {% if r.professor == request.user %}
-                                                    <span title="Sua reserva" style="font-size:12px;">🟢</span>
-                                                    {% endif %}
-                                                </div>
+                                                {% if r.professor == request.user %}
+                                                <span title="Sua reserva" style="font-size:12px;">🟢</span>
+                                                {% endif %}
                                             </div>
                                         </div>
                                         <div style="color:var(--lh-text); font-size:13px; font-weight:700; letter-spacing:-0.15px; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ r.turma.nome }}">

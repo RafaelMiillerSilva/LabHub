@@ -838,6 +838,18 @@ class AgendamentosRelacaoExportTest(TestCase):
         self.assertTrue(ag_passado.aula_ja_passou)
         self.assertTrue(ag_passado.deve_exibir_alerta_relacao)
 
+        # Na tela inicial (index.html), no calendário do dia correspondente, deve exibir o alerta
+        self.client.force_login(self.prof1)
+        resp_index = self.client.get(reverse('home') + f'?data={data_passada:%Y-%m-%d}')
+        self.assertEqual(resp_index.status_code, 200)
+        self.assertContains(resp_index, 'badge-alerta-relacao')
+        self.assertContains(resp_index, 'preencher relação!')
+
+        # Na tela do calendário mensal (agendamentos.html), o alerta NÃO deve ser exibido
+        resp_cal = self.client.get(reverse('agendamentos') + f'?ano={data_passada.year}&mes={data_passada.month}')
+        self.assertEqual(resp_cal.status_code, 200)
+        self.assertNotContains(resp_cal, 'badge-alerta-relacao')
+
         # Preenche a relação
         aluno = Aluno.objects.create(nome='Lucas Lima', ra='999', turma=self.turma)
         RelacaoAlunoEquipamento.objects.create(
@@ -848,6 +860,11 @@ class AgendamentosRelacaoExportTest(TestCase):
         # Agora não deve mais exibir o alerta
         self.assertFalse(ag_passado.relacao_pendente)
         self.assertFalse(ag_passado.deve_exibir_alerta_relacao)
+
+        # E na tela index não deve mais exibir o alerta para esta aula
+        resp_index2 = self.client.get(reverse('home') + f'?data={data_passada:%Y-%m-%d}')
+        self.assertEqual(resp_index2.status_code, 200)
+        self.assertNotContains(resp_index2, 'preencher relação!')
 
     def test_exportar_relacoes_sem_selecao(self):
         """Tentar exportar sem registros selecionados redireciona para relacoes_lista com aviso."""
