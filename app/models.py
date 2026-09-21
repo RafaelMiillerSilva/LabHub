@@ -367,19 +367,19 @@ class Agendamento(models.Model):
             1: time(7, 50),
             2: time(8, 40),
             3: time(9, 30),
-            4: time(10, 40),
-            5: time(11, 30),
-            6: time(12, 20),
-            7: time(13, 50),
-            8: time(14, 40),
-            9: time(15, 30),
+            4: time(10, 35),
+            5: time(11, 25),
+            6: time(12, 15),
+            7: time(14, 15),
+            8: time(15, 5),
+            9: time(15, 55),
         }
         agora = timezone.localtime()
         if self.data < agora.date():
             return True
         if self.data > agora.date():
             return False
-        fim = horarios_fim.get(self.aula, time(15, 30))
+        fim = horarios_fim.get(self.aula, time(15, 55))
         return agora.time() >= fim
 
     @property

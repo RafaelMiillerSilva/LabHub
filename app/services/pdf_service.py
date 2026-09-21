@@ -217,8 +217,15 @@ def gerar_pdf_ocorrencia(ocorrencia, usuario_solicitante):
         elements.append(Paragraph("2. CONTEXTO DA AULA / AGENDAMENTO", section_heading))
         local_str = ag.sala.nome if (ag.tipo == 'SALA' and ag.sala) else "Sala de Aula"
         horarios_aulas = {
-            1: '07:00', 2: '07:50', 3: '08:40', 4: '09:50', 5: '10:40',
-            6: '11:30', 7: '13:00', 8: '13:50', 9: '14:40'
+            1: '07:00 - 07:50',
+            2: '07:50 - 08:40',
+            3: '08:40 - 09:30',
+            4: '09:45 - 10:35',
+            5: '10:35 - 11:25',
+            6: '11:25 - 12:15',
+            7: '13:25 - 14:15',
+            8: '14:15 - 15:05',
+            9: '15:05 - 15:55',
         }
         horario = horarios_aulas.get(ag.aula, '')
         aula_rotulo = f"{ag.aula}ª Aula" + (f" ({horario})" if horario else "")
