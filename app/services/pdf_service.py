@@ -6,8 +6,8 @@ tabelas, metadados institucionais e campos de assinatura.
 
 import io
 import os
-from datetime import datetime
 from PIL import Image as PILImage
+from django.utils import timezone
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -161,15 +161,18 @@ def gerar_pdf_ocorrencia(ocorrencia, usuario_solicitante):
 
     elements = []
 
+    dt_fato = timezone.localtime(ocorrencia.data_hora_fato) if timezone.is_aware(ocorrencia.data_hora_fato) else ocorrencia.data_hora_fato
+    dt_emissao = timezone.localtime(timezone.now())
+
     # 1. CABEÇALHO INSTITUCIONAL
     header_data = [
         [
-            Paragraph("LABHUB — SISTEMA DE GESTÃO DE LABORATÓRIO", title_style),
+            Paragraph("SISTEMA DE GESTÃO DE<br/>LABORATÓRIO", title_style),
             Paragraph(f"OCORRÊNCIA <b>#{ocorrencia.id}</b>", subtitle_style),
         ],
         [
-            Paragraph("Documento Oficial de Registro de Avaria, Dano ou Incidente Escolar", meta_style),
-            Paragraph(f"Emitido em: {datetime.now():%d/%m/%Y às %H:%M}", meta_style),
+            Paragraph("Documento gerado automaticamente pelo SISTEMA DE GESTÃO DE LABORATÓRIO, Registro permanente para controle de patrimônio escolar.", meta_style),
+            Paragraph(f"Emitido em: {dt_emissao:%d/%m/%Y às %H:%M}", meta_style),
         ]
     ]
     t_header = Table(header_data, colWidths=[360, 175])
@@ -185,22 +188,15 @@ def gerar_pdf_ocorrencia(ocorrencia, usuario_solicitante):
 
     # 2. DADOS PRINCIPAIS DO FATO E PROFESSOR
     elements.append(Paragraph("1. DADOS GERAIS DO FATO", section_heading))
-    criador_nome = ocorrencia.criado_por.get_full_name() or ocorrencia.criado_por.username
     prof_nome = ocorrencia.professor.get_full_name() or ocorrencia.professor.username
 
     info_fato_data = [
         [
             Paragraph("<b>Data e Horário do Fato:</b>", body_style),
-            Paragraph(f"{ocorrencia.data_hora_fato:%d/%m/%Y às %H:%M}", body_bold),
+            Paragraph(f"{dt_fato:%d/%m/%Y às %H:%M}", body_bold),
             Paragraph("<b>Professor Responsável:</b>", body_style),
             Paragraph(prof_nome, body_bold),
         ],
-        [
-            Paragraph("<b>Registrado no Sistema por:</b>", body_style),
-            Paragraph(f"{criador_nome}", body_style),
-            Paragraph("<b>Data do Registro no Sistema:</b>", body_style),
-            Paragraph(f"{ocorrencia.criado_em:%d/%m/%Y às %H:%M}", body_style),
-        ]
     ]
     t_info_fato = Table(info_fato_data, colWidths=[130, 140, 130, 135])
     t_info_fato.setStyle(TableStyle([
@@ -219,7 +215,7 @@ def gerar_pdf_ocorrencia(ocorrencia, usuario_solicitante):
     if ocorrencia.agendamento:
         ag = ocorrencia.agendamento
         elements.append(Paragraph("2. CONTEXTO DA AULA / AGENDAMENTO", section_heading))
-        local_str = ag.sala.nome if ag.tipo == 'SALA' and ag.sala else "Dispositivos Móveis"
+        local_str = ag.sala.nome if (ag.tipo == 'SALA' and ag.sala) else "Sala de Aula"
         horarios_aulas = {
             1: '07:00', 2: '07:50', 3: '08:40', 4: '09:50', 5: '10:40',
             6: '11:30', 7: '13:00', 8: '13:50', 9: '14:40'
@@ -408,26 +404,25 @@ def gerar_pdf_ocorrencia(ocorrencia, usuario_solicitante):
     else:
         elements.append(Paragraph("<i>Nenhuma foto ou imagem anexada a esta ocorrência.</i>", meta_style))
 
-    # 8. TERMO DE CIÊNCIA E ASSINATURAS
+    # 8. TERMO DE CIÊNCIA E ASSINATURA
     elements.append(Spacer(1, 15))
-    solicitante_nome = usuario_solicitante.get_full_name() or usuario_solicitante.username
     assinaturas_data = [
         [
-            Paragraph("____________________________________________<br/><b>Professor(a) Responsável</b><br/>" + prof_nome, ParagraphStyle('Ass1', parent=styles['Normal'], alignment=1, fontSize=8.5, leading=12)),
-            Paragraph("____________________________________________<br/><b>Administração / Coordenação LabHub</b><br/>" + solicitante_nome, ParagraphStyle('Ass2', parent=styles['Normal'], alignment=1, fontSize=8.5, leading=12)),
+            Paragraph("____________________________________________________<br/><b>Coordenação</b>", ParagraphStyle('AssCoord', parent=styles['Normal'], alignment=1, fontSize=9, leading=14)),
         ]
     ]
-    t_ass = Table(assinaturas_data, colWidths=[265, 265])
+    t_ass = Table(assinaturas_data, colWidths=[530])
     t_ass.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'BOTTOM'),
-        ('TOPPADDING', (0,0), (-1,-1), 10),
+        ('TOPPADDING', (0,0), (-1,-1), 12),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
     ]))
     elements.append(KeepTogether([
         HRFlowable(width="100%", thickness=0.5, color=border_color, spaceBefore=10, spaceAfter=14),
         t_ass,
         Spacer(1, 10),
-        Paragraph("Documento gerado automaticamente pelo LabHub. Registro permanente para controle de patrimônio escolar.", ParagraphStyle('Foot', parent=styles['Normal'], alignment=1, fontSize=7.5, leading=10, textColor=muted_text)),
+        Paragraph("Documento gerado automaticamente pelo SISTEMA DE GESTÃO DE LABORATÓRIO, Registro permanente para controle de patrimônio escolar.", ParagraphStyle('Foot', parent=styles['Normal'], alignment=1, fontSize=7.5, leading=10, textColor=muted_text)),
     ]))
 
     doc.build(elements)

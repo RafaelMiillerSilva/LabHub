@@ -72,7 +72,7 @@
         object-fit: cover;
     }
 
-    /* Modal de Zoom da Imagem */
+    /* Modal de Zoom Interativo da Imagem */
     .oc-modal {
         display: none;
         position: fixed;
@@ -81,30 +81,128 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.85);
+        background-color: rgba(10, 15, 30, 0.92);
+        backdrop-filter: blur(6px);
         align-items: center;
         justify-content: center;
-        padding: 20px;
+        flex-direction: column;
+        overflow: hidden;
+        user-select: none;
     }
 
-    .oc-modal img {
-        max-width: 90%;
-        max-height: 85vh;
-        border-radius: 8px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-
-    .oc-modal-close {
+    .oc-modal-toolbar {
         position: absolute;
         top: 20px;
-        right: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(30, 41, 59, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 30px;
+        padding: 6px 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        z-index: 10001;
+        backdrop-filter: blur(8px);
+    }
+
+    .oc-modal-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         color: #fff;
-        font-size: 32px;
-        font-weight: bold;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
         cursor: pointer;
-        background: none;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .oc-modal-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-1px);
+    }
+
+    .oc-modal-btn:active {
+        transform: translateY(1px);
+    }
+
+    .oc-modal-badge {
+        color: #94A3B8;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 0 6px;
+        min-width: 48px;
+        text-align: center;
+    }
+
+    .oc-modal-close-btn {
+        background: #EF4444;
         border: none;
-        padding: 4px 12px;
+        color: #fff;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+    .oc-modal-close-btn:hover {
+        background: #DC2626;
+    }
+
+    .oc-modal-hint {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(15, 23, 42, 0.75);
+        color: #E2E8F0;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        z-index: 10001;
+        pointer-events: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .oc-modal-viewport {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .oc-modal-img {
+        max-width: 88vw;
+        max-height: 80vh;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        cursor: zoom-in;
+        transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+        transform-origin: center center;
+        will-change: transform;
+    }
+
+    .oc-modal-img.is-zoomed {
+        cursor: grab;
+    }
+
+    .oc-modal-img.is-dragging {
+        cursor: grabbing;
+        transition: none;
     }
 </style>
 
@@ -176,7 +274,7 @@
                     {% if ocorrencia.agendamento.tipo == 'SALA' and ocorrencia.agendamento.sala %}
                         Sala: {{ ocorrencia.agendamento.sala.nome }}
                     {% else %}
-                        Dispositivos Móveis
+                        Sala de Aula
                     {% endif %}
                 </span>
             </div>
@@ -284,29 +382,214 @@
     </div>
 </div>
 
-<!-- Modal para Visualização em Tamanho Grande da Imagem -->
-<div id="modalFoto" class="oc-modal" onclick="fecharFotoModal()">
-    <button type="button" class="oc-modal-close" onclick="fecharFotoModal()">&times;</button>
-    <img id="imgModalFoto" src="" alt="Ampliação da Foto">
+<!-- Modal Interativo de Zoom da Imagem -->
+<div id="modalFoto" class="oc-modal">
+    <div class="oc-modal-toolbar">
+        <button type="button" class="oc-modal-btn" onclick="zoomIn()" title="Aumentar Zoom (+)">
+            🔍+ Zoom
+        </button>
+        <button type="button" class="oc-modal-btn" onclick="zoomOut()" title="Diminuir Zoom (-)">
+            🔍- Reduzir
+        </button>
+        <span id="zoomBadge" class="oc-modal-badge">100%</span>
+        <button type="button" class="oc-modal-btn" onclick="resetZoom()" title="Ajustar à tela">
+            🔄 100%
+        </button>
+        <button type="button" class="oc-modal-close-btn" onclick="fecharFotoModal()" title="Fechar (Esc)">
+            ✕ Fechar
+        </button>
+    </div>
+
+    <div id="modalViewport" class="oc-modal-viewport" onclick="onBackdropClick(event)">
+        <img id="imgModalFoto" class="oc-modal-img" src="" alt="Evidência Fotográfica Ampliada" onclick="toggleZoom(event)">
+    </div>
+
+    <div class="oc-modal-hint">
+        <span>💡</span> Clique na foto para dar zoom &bull; Use o scroll para aproximar &bull; Arraste quando ampliada
+    </div>
 </div>
 
 <script>
+let currentScale = 1.0;
+let translateX = 0;
+let translateY = 0;
+let isMouseDown = false;
+let startMouseX = 0;
+let startMouseY = 0;
+let prevTransX = 0;
+let prevTransY = 0;
+let hasDragged = false;
+
+function atualizarTransformacao(comTransicao = true) {
+    const img = document.getElementById('imgModalFoto');
+    const badge = document.getElementById('zoomBadge');
+    if (!img) return;
+
+    if (comTransicao) {
+        img.style.transition = 'transform 0.2s cubic-bezier(0.2, 0, 0.2, 1)';
+    } else {
+        img.style.transition = 'none';
+    }
+
+    img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
+
+    if (currentScale > 1.05) {
+        img.classList.add('is-zoomed');
+        img.style.cursor = isMouseDown ? 'grabbing' : 'grab';
+    } else {
+        img.classList.remove('is-zoomed');
+        img.style.cursor = 'zoom-in';
+        translateX = 0;
+        translateY = 0;
+    }
+
+    if (badge) {
+        badge.textContent = Math.round(currentScale * 100) + '%';
+    }
+}
+
+function zoomIn() {
+    currentScale = Math.min(currentScale + 0.5, 4.5);
+    atualizarTransformacao(true);
+}
+
+function zoomOut() {
+    currentScale = Math.max(currentScale - 0.5, 1.0);
+    if (currentScale <= 1.0) {
+        translateX = 0;
+        translateY = 0;
+    }
+    atualizarTransformacao(true);
+}
+
+function resetZoom() {
+    currentScale = 1.0;
+    translateX = 0;
+    translateY = 0;
+    atualizarTransformacao(true);
+}
+
+function toggleZoom(e) {
+    if (hasDragged) {
+        hasDragged = false;
+        return;
+    }
+
+    const img = document.getElementById('imgModalFoto');
+    if (currentScale <= 1.05) {
+        // Dá zoom in no ponto clicado
+        const rect = img.getBoundingClientRect();
+        const clickX = e.clientX - rect.left - rect.width / 2;
+        const clickY = e.clientY - rect.top - rect.height / 2;
+        currentScale = 2.4;
+        translateX = -clickX * 0.7;
+        translateY = -clickY * 0.7;
+    } else {
+        currentScale = 1.0;
+        translateX = 0;
+        translateY = 0;
+    }
+    atualizarTransformacao(true);
+}
+
+function onBackdropClick(e) {
+    if (e.target.id === 'modalViewport') {
+        fecharFotoModal();
+    }
+}
+
 function abrirFotoModal(url) {
     const modal = document.getElementById('modalFoto');
     const img = document.getElementById('imgModalFoto');
+    currentScale = 1.0;
+    translateX = 0;
+    translateY = 0;
+    isMouseDown = false;
+    hasDragged = false;
     img.src = url;
+    atualizarTransformacao(false);
     modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
 
 function fecharFotoModal() {
     const modal = document.getElementById('modalFoto');
     modal.style.display = 'none';
-    document.getElementById('imgModalFoto').src = '';
+    document.body.style.overflow = '';
+    const img = document.getElementById('imgModalFoto');
+    img.src = '';
+    currentScale = 1.0;
+    translateX = 0;
+    translateY = 0;
 }
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         fecharFotoModal();
+    } else if (e.key === '+' || e.key === '=') {
+        zoomIn();
+    } else if (e.key === '-') {
+        zoomOut();
+    } else if (e.key === '0') {
+        resetZoom();
+    }
+});
+
+// Suporte a arraste com o mouse (pan) e scroll para zoom
+document.addEventListener('DOMContentLoaded', function() {
+    const imgModal = document.getElementById('imgModalFoto');
+    const viewport = document.getElementById('modalViewport');
+
+    if (imgModal) {
+        imgModal.addEventListener('mousedown', function(e) {
+            if (e.button !== 0) return; // apenas clique esquerdo
+            isMouseDown = true;
+            hasDragged = false;
+            startMouseX = e.clientX;
+            startMouseY = e.clientY;
+            prevTransX = translateX;
+            prevTransY = translateY;
+            if (currentScale > 1.05) {
+                imgModal.classList.add('is-dragging');
+            }
+        });
+
+        window.addEventListener('mousemove', function(e) {
+            if (!isMouseDown) return;
+            const dx = e.clientX - startMouseX;
+            const dy = e.clientY - startMouseY;
+            if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+                hasDragged = true;
+                if (currentScale > 1.05) {
+                    translateX = prevTransX + dx;
+                    translateY = prevTransY + dy;
+                    atualizarTransformacao(false);
+                }
+            }
+        });
+
+        window.addEventListener('mouseup', function() {
+            if (isMouseDown) {
+                isMouseDown = false;
+                imgModal.classList.remove('is-dragging');
+                if (currentScale > 1.05) {
+                    atualizarTransformacao(true);
+                }
+            }
+        });
+    }
+
+    if (viewport) {
+        viewport.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? 0.3 : -0.3;
+            currentScale = Math.min(Math.max(currentScale + delta, 1.0), 4.5);
+            if (currentScale <= 1.0) {
+                translateX = 0;
+                translateY = 0;
+            }
+            atualizarTransformacao(true);
+        }, { passive: false });
     }
 });
 </script>

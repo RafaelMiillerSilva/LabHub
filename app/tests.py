@@ -1410,6 +1410,12 @@ class OcorrenciasTests(TestCase):
         # Verifica se o arquivo gerado é um PDF válido
         self.assertTrue(resp_admin.content.startswith(b'%PDF'))
 
+        # Teste direto do gerador de PDF
+        from app.services.pdf_service import gerar_pdf_ocorrencia
+        buf = gerar_pdf_ocorrencia(oco, self.admin)
+        self.assertTrue(buf.getvalue().startswith(b'%PDF'))
+        self.assertGreater(len(buf.getvalue()), 1000)
+
 
 class ImagemServiceTest(TestCase):
     def setUp(self):
