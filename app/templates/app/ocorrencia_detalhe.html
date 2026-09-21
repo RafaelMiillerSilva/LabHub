@@ -117,9 +117,9 @@
             <a href="{% url 'ocorrencia_editar' ocorrencia.id %}" class="lh-btn lh-btn--primary lh-btn--sm" style="font-size:12.5px; text-decoration:none;">
                 ✏️ Editar
             </a>
-            <button type="button" class="lh-btn lh-btn--ghost lh-btn--sm" onclick="window.print()" style="font-size:12.5px;">
-                🖨️ Imprimir
-            </button>
+            <a href="{% url 'ocorrencia_pdf' ocorrencia.id %}" class="lh-btn lh-btn--ghost lh-btn--sm" style="font-size:12.5px; text-decoration:none;">
+                📄 Baixar PDF
+            </a>
             <form method="post" action="{% url 'ocorrencia_excluir' ocorrencia.id %}" style="display:inline;" onsubmit="return confirm('Deseja realmente excluir esta ocorrência permanentemente?');">
                 {% csrf_token %}
                 <button type="submit" class="lh-btn lh-btn--danger lh-btn--sm" style="font-size:12.5px;">
@@ -273,8 +273,8 @@
         {% if ocorrencia.fotos.exists %}
         <div class="oc-gallery-grid">
             {% for f in ocorrencia.fotos.all %}
-            <div class="oc-gallery-item" onclick="abrirFotoModal('{{ f.foto.url }}')">
-                <img src="{{ f.foto.url }}" alt="Foto da Ocorrência">
+            <div class="oc-gallery-item" onclick="abrirFotoModal('{% url 'foto_ocorrencia' f.id %}')">
+                <img src="{% url 'foto_ocorrencia' f.id %}" alt="Foto da Ocorrência" loading="lazy" onerror="this.onerror=null; this.src='{{ f.foto.url }}';">
             </div>
             {% endfor %}
         </div>

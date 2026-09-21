@@ -3,18 +3,20 @@ Views e endpoints para o módulo de Ocorrências do LabHub.
 Acesso restrito exclusivamente a administradores aprovados.
 """
 
+import os
 from datetime import date, datetime
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponse, Http404, FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from app.forms import OcorrenciaForm
 from app.models import Agendamento, Aluno, Equipamento, Ocorrencia, OcorrenciaFoto, Turma
 from app.services.imagem_service import processar_foto_para_storage
+from app.services.pdf_service import gerar_pdf_ocorrencia
 from .common import is_admin_aprovado
 
 HORARIOS_INICIO_AULAS = {
@@ -182,9 +184,19 @@ def ocorrencia_criar(request):
             fotos = request.FILES.getlist('fotos')
             for foto in fotos:
                 try:
-                    foto_proc = processar_foto_para_storage(foto, max_lado=1920, qualidade=85)
+                    foto_proc = processar_foto_para_storage(
+                        foto,
+                        nome_original=getattr(foto, 'name', ''),
+                        max_lado=1920,
+                        qualidade=85
+                    )
                     OcorrenciaFoto.objects.create(ocorrencia=ocorrencia, foto=foto_proc)
                 except Exception:
+                    if hasattr(foto, 'seek'):
+                        try:
+                            foto.seek(0)
+                        except Exception:
+                            pass
                     OcorrenciaFoto.objects.create(ocorrencia=ocorrencia, foto=foto)
 
             messages.success(
@@ -325,9 +337,19 @@ def ocorrencia_editar(request, ocorrencia_id):
             novas_fotos = request.FILES.getlist('fotos')
             for foto in novas_fotos:
                 try:
-                    foto_proc = processar_foto_para_storage(foto, max_lado=1920, qualidade=85)
+                    foto_proc = processar_foto_para_storage(
+                        foto,
+                        nome_original=getattr(foto, 'name', ''),
+                        max_lado=1920,
+                        qualidade=85
+                    )
                     OcorrenciaFoto.objects.create(ocorrencia=ocorrencia_salva, foto=foto_proc)
                 except Exception:
+                    if hasattr(foto, 'seek'):
+                        try:
+                            foto.seek(0)
+                        except Exception:
+                            pass
                     OcorrenciaFoto.objects.create(ocorrencia=ocorrencia_salva, foto=foto)
 
             messages.success(request, f'Ocorrência #{ocorrencia_salva.id} atualizada com sucesso!')
@@ -400,6 +422,53 @@ def ocorrencia_excluir(request, ocorrencia_id):
 
     messages.error(request, 'Método de exclusão inválido.')
     return redirect('ocorrencia_detalhe', ocorrencia_id=ocorrencia.id)
+
+
+@login_required
+def foto_ocorrencia(request, foto_id):
+    """Serve a foto da ocorrência garantindo content-type correto, cache e permissão de administrador."""
+    if not is_admin_aprovado(request.user):
+        return HttpResponseForbidden("Acesso restrito a administradores.")
+
+    foto_obj = get_object_or_404(OcorrenciaFoto, id=foto_id)
+    if not foto_obj.foto:
+        raise Http404("Foto não vinculada.")
+
+    try:
+        if os.path.exists(foto_obj.foto.path):
+            response = FileResponse(open(foto_obj.foto.path, 'rb'), content_type='image/jpeg')
+            response['Cache-Control'] = 'private, max-age=86400'
+            return response
+    except Exception:
+        pass
+
+    try:
+        foto_obj.foto.seek(0)
+        response = FileResponse(foto_obj.foto.open('rb'), content_type='image/jpeg')
+        response['Cache-Control'] = 'private, max-age=86400'
+        return response
+    except Exception:
+        raise Http404("Arquivo de imagem não encontrado.")
+
+
+@login_required
+def ocorrencia_pdf(request, ocorrencia_id):
+    """Gera e retorna o documento PDF oficial detalhado da ocorrência com ReportLab."""
+    if not is_admin_aprovado(request.user):
+        messages.error(request, 'Acesso restrito a administradores.')
+        return redirect('home')
+
+    ocorrencia = get_object_or_404(
+        Ocorrencia.objects
+        .select_related('agendamento', 'professor', 'criado_por', 'agendamento__turma', 'agendamento__sala', 'agendamento__relacao')
+        .prefetch_related('alunos', 'equipamentos', 'fotos'),
+        id=ocorrencia_id
+    )
+
+    pdf_buffer = gerar_pdf_ocorrencia(ocorrencia, request.user)
+    response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="ocorrencia_{ocorrencia.id}.pdf"'
+    return response
 
 
 # ---------------------------------------------------------------------------

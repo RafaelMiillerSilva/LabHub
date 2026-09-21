@@ -488,7 +488,7 @@
                 <div class="oc-preview-grid">
                     {% for f in ocorrencia.fotos.all %}
                     <div class="oc-preview-item" id="foto-existente-{{ f.id }}" style="position:relative;">
-                        <img src="{{ f.foto.url }}" alt="Foto da ocorrência">
+                        <img src="{% url 'foto_ocorrencia' f.id %}" alt="Foto da ocorrência" loading="lazy" onerror="this.onerror=null; this.src='{{ f.foto.url }}';">
                         <label style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.75); color:#fff; font-size:11px; padding:4px 6px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0; cursor:pointer; user-select:none;">
                             <input type="checkbox" name="remover_fotos" value="{{ f.id }}" style="accent-color:#EF4444;" onchange="toggleRemoverFoto(this, 'foto-existente-{{ f.id }}')">
                             <span>Excluir</span>
@@ -677,7 +677,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.dataTransfer && e.dataTransfer.files.length) {
             adicionarArquivos(e.dataTransfer.files);
         }
-    });
+    const formOcorrencia = document.getElementById('formOcorrencia');
+    let fotosSelecionadas = [];
 
     inputFotos.addEventListener('change', () => {
         if (inputFotos.files && inputFotos.files.length) {
@@ -692,19 +693,28 @@ document.addEventListener('DOMContentLoaded', function() {
             const ext = file.name ? file.name.split('.').pop().toLowerCase() : '';
             const isImageExt = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'jfif'].includes(ext);
             if (isImageMime || isImageExt) {
-                dtFotos.items.add(file);
+                fotosSelecionadas.push(file);
             }
         }
-        inputFotos.files = dtFotos.files;
+        sincronizarInputFotos();
         renderizarPreviews();
+    }
+
+    function sincronizarInputFotos() {
+        try {
+            const dt = new DataTransfer();
+            fotosSelecionadas.forEach(f => dt.items.add(f));
+            inputFotos.files = dt.files;
+        } catch (e) {
+            console.warn('DataTransfer não suportado pelo navegador:', e);
+        }
     }
 
     function renderizarPreviews() {
         previewFotosContainer.innerHTML = '';
-        const files = dtFotos.files;
-        contadorFotos.textContent = `${files.length} foto(s) anexada(s)`;
+        contadorFotos.textContent = `${fotosSelecionadas.length} foto(s) anexada(s)`;
 
-        Array.from(files).forEach((file, index) => {
+        fotosSelecionadas.forEach((file, index) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const div = document.createElement('div');
@@ -725,16 +735,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function removerFoto(index) {
-        const novoDt = new DataTransfer();
-        const files = dtFotos.files;
-        for (let i = 0; i < files.length; i++) {
-            if (i !== index) {
-                novoDt.items.add(files[i]);
-            }
-        }
-        dtFotos = novoDt;
-        inputFotos.files = dtFotos.files;
+        fotosSelecionadas.splice(index, 1);
+        sincronizarInputFotos();
         renderizarPreviews();
+    }
+
+    if (formOcorrencia) {
+        formOcorrencia.addEventListener('submit', function(e) {
+            // Se o navegador perdeu os arquivos no inputFotos durante manipulações do DOM
+            if (fotosSelecionadas.length > 0 && (!inputFotos.files || inputFotos.files.length !== fotosSelecionadas.length)) {
+                e.preventDefault();
+                const btnSalvar = document.getElementById('btnSalvarOcorrencia');
+                if (btnSalvar) {
+                    btnSalvar.disabled = true;
+                    btnSalvar.textContent = 'Enviando dados...';
+                }
+                const fd = new FormData(formOcorrencia);
+                fd.delete('fotos');
+                fotosSelecionadas.forEach(f => fd.append('fotos', f));
+
+                fetch(formOcorrencia.action, {
+                    method: 'POST',
+                    body: fd
+                }).then(resp => {
+                    if (resp.redirected) {
+                        window.location.href = resp.url;
+                    } else {
+                        return resp.text().then(html => {
+                            document.open();
+                            document.write(html);
+                            document.close();
+                        });
+                    }
+                }).catch(err => {
+                    console.error('Erro no envio via FormData:', err);
+                    formOcorrencia.submit();
+                });
+            }
+        });
     }
 
     // ----------------------------------------------------

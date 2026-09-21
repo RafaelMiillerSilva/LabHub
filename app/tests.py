@@ -1355,6 +1355,61 @@ class OcorrenciasTests(TestCase):
         self.assertEqual(resp_lista.status_code, 200)
         self.assertContains(resp_lista, reverse('ocorrencia_editar', args=[oco.id]))
 
+    def test_foto_ocorrencia_endpoint(self):
+        """Endpoint foto_ocorrencia serve foto com cabeçalhos corretos para admin e restringe professor."""
+        foto = self._gerar_foto_teste('foto_teste.jpg')
+        oco = Ocorrencia.objects.create(
+            data_hora_fato=timezone.now(),
+            descricao='Teste foto endpoint',
+            professor=self.prof,
+            criado_por=self.admin
+        )
+        foto_obj = OcorrenciaFoto.objects.create(ocorrencia=oco, foto=foto)
+
+        # Não logado -> redirect login
+        self.client.logout()
+        resp_anon = self.client.get(reverse('foto_ocorrencia', args=[foto_obj.id]))
+        self.assertEqual(resp_anon.status_code, 302)
+
+        # Professor comum -> 403 Forbidden
+        self.client.force_login(self.prof)
+        resp_prof = self.client.get(reverse('foto_ocorrencia', args=[foto_obj.id]))
+        self.assertEqual(resp_prof.status_code, 403)
+
+        # Admin -> 200 OK com content_type image/jpeg
+        self.client.force_login(self.admin)
+        resp_admin = self.client.get(reverse('foto_ocorrencia', args=[foto_obj.id]))
+        self.assertEqual(resp_admin.status_code, 200)
+        self.assertEqual(resp_admin['Content-Type'], 'image/jpeg')
+
+    def test_ocorrencia_pdf_download(self):
+        """Geração e download de documento PDF oficial com ReportLab contendo dados e fotos."""
+        foto = self._gerar_foto_teste('evidencia_pdf.jpg')
+        oco = Ocorrencia.objects.create(
+            agendamento=self.ag,
+            data_hora_fato=timezone.now(),
+            descricao='Cabo de carregador cortado e tela trincada no tablet durante atividade.',
+            professor=self.prof,
+            criado_por=self.admin
+        )
+        oco.alunos.add(self.aluno1)
+        oco.equipamentos.add(self.equip1)
+        OcorrenciaFoto.objects.create(ocorrencia=oco, foto=foto)
+
+        # Professor comum -> redirect home
+        self.client.force_login(self.prof)
+        resp_prof = self.client.get(reverse('ocorrencia_pdf', args=[oco.id]))
+        self.assertEqual(resp_prof.status_code, 302)
+
+        # Admin -> 200 OK, application/pdf
+        self.client.force_login(self.admin)
+        resp_admin = self.client.get(reverse('ocorrencia_pdf', args=[oco.id]))
+        self.assertEqual(resp_admin.status_code, 200)
+        self.assertEqual(resp_admin['Content-Type'], 'application/pdf')
+        self.assertIn(f'ocorrencia_{oco.id}.pdf', resp_admin['Content-Disposition'])
+        # Verifica se o arquivo gerado é um PDF válido
+        self.assertTrue(resp_admin.content.startswith(b'%PDF'))
+
 
 class ImagemServiceTest(TestCase):
     def setUp(self):
@@ -1429,6 +1484,37 @@ class ImagemServiceTest(TestCase):
         self.assertEqual(resp_foto.status_code, 200)
         self.assertEqual(resp_foto['Content-Type'], 'image/jpeg')
         self.assertEqual(bytes(resp_foto.content), bytes(self.user.perfil.foto_dados))
+
+    def test_processar_imagem_jpeg_progressivo_e_exif(self):
+        """processar_imagem processa JPEGs progressivos com metadados EXIF sem corromper."""
+        from PIL import Image
+        import io
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from app.services.imagem_service import processar_imagem, processar_foto_para_storage
+
+        # Cria JPEG progressivo com orientação EXIF
+        buf = io.BytesIO()
+        im = Image.new('RGB', (1600, 1200), color=(50, 100, 150))
+        exif = im.getexif()
+        exif[0x0112] = 6
+        im.save(buf, 'JPEG', quality=90, progressive=True, exif=exif)
+        buf.seek(0)
+
+        upload_file = SimpleUploadedFile('foto_camera.jpg', buf.read(), content_type='image/jpeg')
+
+        dados, mime = processar_imagem(upload_file, max_lado=1200, qualidade=85)
+        self.assertIsInstance(dados, bytes)
+        self.assertEqual(mime, 'image/jpeg')
+
+        img_res = Image.open(io.BytesIO(dados))
+        self.assertEqual(img_res.format, 'JPEG')
+        self.assertLessEqual(max(img_res.size), 1200)
+
+        # Testa também com processar_foto_para_storage preservando nome
+        upload_file.seek(0)
+        c_file = processar_foto_para_storage(upload_file, nome_original=upload_file.name)
+        self.assertTrue(c_file.name.startswith('foto_camera'))
+        self.assertTrue(c_file.name.endswith('.jpg'))
 
 
 class RelacaoKioskETravaSenhaTest(TestCase):
