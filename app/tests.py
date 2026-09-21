@@ -1416,6 +1416,39 @@ class OcorrenciasTests(TestCase):
         self.assertTrue(buf.getvalue().startswith(b'%PDF'))
         self.assertGreater(len(buf.getvalue()), 1000)
 
+    def test_ocorrencia_foto_cortar_endpoint(self):
+        """Endpoint de corte de foto atualiza arquivo da foto para admin e bloqueia professor."""
+        foto = self._gerar_foto_teste('foto_original.jpg')
+        oco = Ocorrencia.objects.create(
+            data_hora_fato=timezone.now(),
+            descricao='Teste corte foto',
+            professor=self.prof,
+            criado_por=self.admin
+        )
+        foto_obj = OcorrenciaFoto.objects.create(ocorrencia=oco, foto=foto)
+
+        # Não logado -> 302 redirect
+        self.client.logout()
+        resp_anon = self.client.post(reverse('ocorrencia_foto_cortar', args=[foto_obj.id]))
+        self.assertEqual(resp_anon.status_code, 302)
+
+        # Professor comum -> 403
+        self.client.force_login(self.prof)
+        resp_prof = self.client.post(reverse('ocorrencia_foto_cortar', args=[foto_obj.id]))
+        self.assertEqual(resp_prof.status_code, 403)
+
+        # Admin envia foto cortada -> 200 OK com sucesso
+        self.client.force_login(self.admin)
+        foto_cortada = self._gerar_foto_teste('foto_cortada.jpg')
+        resp_admin = self.client.post(reverse('ocorrencia_foto_cortar', args=[foto_obj.id]), {
+            'foto': foto_cortada
+        })
+        self.assertEqual(resp_admin.status_code, 200)
+        dados = resp_admin.json()
+        self.assertTrue(dados['sucesso'])
+        foto_obj.refresh_from_db()
+        self.assertIn('recorte', foto_obj.foto.name)
+
 
 class ImagemServiceTest(TestCase):
     def setUp(self):

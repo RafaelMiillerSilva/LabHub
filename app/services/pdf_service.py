@@ -24,8 +24,8 @@ from reportlab.platypus import (
 )
 
 
-def _calcular_dimensoes_imagem(caminho_ou_buffer, max_w=235, max_h=165):
-    """Calcula largura e altura proporcionais para imagem caber no PDF."""
+def _calcular_dimensoes_imagem(caminho_ou_buffer, max_w=515, max_h=350):
+    """Calcula largura e altura proporcionais para imagem caber em tamanho grande no PDF."""
     try:
         if isinstance(caminho_ou_buffer, io.BytesIO):
             caminho_ou_buffer.seek(0)
@@ -347,11 +347,10 @@ def gerar_pdf_ocorrencia(ocorrencia, usuario_solicitante):
     else:
         elements.append(Paragraph("<i>Nenhum equipamento listado diretamente nesta ocorrência.</i>", meta_style))
 
-    # 7. EVIDÊNCIAS FOTOGRÁFICAS (Fotos embutidas no documento)
+    # 7. EVIDÊNCIAS FOTOGRÁFICAS (Fotos embutidas em tamanho grande)
     fotos = list(ocorrencia.fotos.all())
     elements.append(Paragraph(f"6. EVIDÊNCIAS FOTOGRÁFICAS ({len(fotos)})", section_heading))
     if fotos:
-        foto_celulas = []
         for idx, f in enumerate(fotos, start=1):
             try:
                 img_source = None
@@ -371,43 +370,24 @@ def gerar_pdf_ocorrencia(ocorrencia, usuario_solicitante):
                         img_source = buf_img
 
                 if img_source:
-                    w, h = _calcular_dimensoes_imagem(img_source, max_w=240, max_h=160)
+                    w, h = _calcular_dimensoes_imagem(img_source, max_w=515, max_h=350)
                     rl_img = RLImage(img_source, width=w, height=h)
+                    dt_foto = timezone.localtime(f.criado_em) if timezone.is_aware(f.criado_em) else f.criado_em
                     sub_t = Table([
                         [rl_img],
-                        [Paragraph(f"<b>Evidência #{idx}</b> — {f.criado_em:%d/%m/%Y %H:%M}", caption_style)]
-                    ], colWidths=[255])
+                        [Paragraph(f"<b>Evidência #{idx}</b> — Registrada em {dt_foto:%d/%m/%Y às %H:%M}", caption_style)]
+                    ], colWidths=[530])
                     sub_t.setStyle(TableStyle([
                         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
                         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-                        ('TOPPADDING', (0,0), (-1,-1), 3),
-                        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+                        ('TOPPADDING', (0,0), (-1,-1), 8),
+                        ('BOTTOMPADDING', (0,0), (-1,-1), 8),
                         ('BOX', (0,0), (-1,-1), 0.5, border_color),
                         ('BACKGROUND', (0,0), (-1,-1), bg_subtle),
                     ]))
-                    foto_celulas.append(sub_t)
+                    elements.append(KeepTogether([sub_t, Spacer(1, 14)]))
             except Exception:
                 continue
-
-        # Organiza as fotos em grade de 2 colunas
-        grade_fotos = []
-        for i in range(0, len(foto_celulas), 2):
-            linha = [foto_celulas[i]]
-            if i + 1 < len(foto_celulas):
-                linha.append(foto_celulas[i + 1])
-            else:
-                linha.append("") # Célula vazia para alinhar
-            grade_fotos.append(linha)
-
-        if grade_fotos:
-            t_grade = Table(grade_fotos, colWidths=[265, 265])
-            t_grade.setStyle(TableStyle([
-                ('VALIGN', (0,0), (-1,-1), 'TOP'),
-                ('BOTTOMPADDING', (0,0), (-1,-1), 8),
-                ('LEFTPADDING', (0,0), (-1,-1), 0),
-                ('RIGHTPADDING', (0,0), (-1,-1), 0),
-            ]))
-            elements.append(t_grade)
     else:
         elements.append(Paragraph("<i>Nenhuma foto ou imagem anexada a esta ocorrência.</i>", meta_style))
 

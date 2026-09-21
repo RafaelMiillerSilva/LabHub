@@ -77,6 +77,7 @@ from .ocorrencias import (
     ocorrencia_excluir,
     ocorrencia_pdf,
     foto_ocorrencia,
+    ocorrencia_foto_cortar,
     api_agendamentos_por_data,
     api_agendamento_contexto,
 )
@@ -138,6 +139,7 @@ __all__ = [
     'ocorrencia_excluir',
     'ocorrencia_pdf',
     'foto_ocorrencia',
+    'ocorrencia_foto_cortar',
     'api_agendamentos_por_data',
     'api_agendamento_contexto',
 ]

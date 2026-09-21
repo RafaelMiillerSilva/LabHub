@@ -11,7 +11,9 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse, Http404, FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from app.forms import OcorrenciaForm
 from app.models import Agendamento, Aluno, Equipamento, Ocorrencia, OcorrenciaFoto, Turma
@@ -601,3 +603,33 @@ def api_agendamento_contexto(request, agendamento_id):
         'alunos': alunos_data,
         'equipamentos_relacionados': equips_data,
     })
+
+
+@login_required
+@require_POST
+def ocorrencia_foto_cortar(request, foto_id):
+    """
+    Recebe uma imagem recortada para substituir a foto existente de uma ocorrência.
+    Acesso restrito a administradores aprovados.
+    """
+    if not is_admin_aprovado(request.user):
+        return JsonResponse({'sucesso': False, 'erro': 'Acesso negado.'}, status=403)
+
+    foto_obj = get_object_or_404(OcorrenciaFoto, id=foto_id)
+    arquivo = request.FILES.get('foto') or request.FILES.get('imagem')
+
+    if not arquivo:
+        return JsonResponse({'sucesso': False, 'erro': 'Nenhum arquivo de imagem enviado.'}, status=400)
+
+    try:
+        nome_orig = getattr(arquivo, 'name', '') or f"recorte_{foto_obj.id}.jpg"
+        novo_conteudo = processar_foto_para_storage(arquivo, nome_original=nome_orig)
+        nome_final = f"recorte_{foto_obj.id}_{timezone.now():%Y%m%d%H%M%S}.jpg"
+        foto_obj.foto.save(nome_final, novo_conteudo, save=True)
+        return JsonResponse({
+            'sucesso': True,
+            'url': reverse('foto_ocorrencia', args=[foto_obj.id]),
+            'mensagem': 'Foto recortada com sucesso!',
+        })
+    except Exception as e:
+        return JsonResponse({'sucesso': False, 'erro': f'Erro ao processar corte: {str(e)}'}, status=500)
