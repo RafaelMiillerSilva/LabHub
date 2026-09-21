@@ -806,7 +806,7 @@ class AgendamentosRelacaoExportTest(TestCase):
 
     def test_vinculo_obrigatorio_e_compartilhamento_aulas_consecutivas(self):
         """Aulas seguidas com mesmo professor e mesma turma compartilham a mesma instância de Relacao."""
-        d_nova = date(2026, 9, 20)
+        d_nova = date.today() + timedelta(days=2)
         # 1ª aula agendada via detalhe
         self.client.force_login(self.prof1)
         self.client.post(reverse('agendamento_detalhe', args=[d_nova.year, d_nova.month, d_nova.day]), {
@@ -1268,6 +1268,167 @@ class OcorrenciasTests(TestCase):
         # O botão Ocorrência NÃO deve aparecer no topo à direita para professor comum
         self.assertNotContains(resp_rel_prof, reverse('ocorrencia_criar') + f'?agendamento_id={self.ag.id}')
         self.assertNotContains(resp_rel_prof, 'id="ocorrenciaIcon"')
+
+    def test_editar_ocorrencia_permissao(self):
+        """Apenas administradores aprovados podem acessar a tela de edição."""
+        oco = Ocorrencia.objects.create(
+            data_hora_fato=timezone.now(),
+            descricao='Dano inicial',
+            professor=self.prof,
+            criado_por=self.admin
+        )
+
+        # Não autenticado -> redirect login
+        self.client.logout()
+        resp_anon = self.client.get(reverse('ocorrencia_editar', args=[oco.id]))
+        self.assertEqual(resp_anon.status_code, 302)
+
+        # Professor comum -> redirect home
+        self.client.force_login(self.prof)
+        resp_prof = self.client.get(reverse('ocorrencia_editar', args=[oco.id]))
+        self.assertEqual(resp_prof.status_code, 302)
+
+        # Admin -> 200 OK
+        self.client.force_login(self.admin)
+        resp_admin = self.client.get(reverse('ocorrencia_editar', args=[oco.id]))
+        self.assertEqual(resp_admin.status_code, 200)
+        self.assertTrue(resp_admin.context['editando'])
+        self.assertEqual(resp_admin.context['ocorrencia'].id, oco.id)
+
+    def test_editar_ocorrencia_campos_e_fotos(self):
+        """Admin edita dados da ocorrência, remove foto antiga e anexa nova foto."""
+        foto1 = self._gerar_foto_teste('foto1.jpg')
+        foto2 = self._gerar_foto_teste('foto2.jpg')
+
+        oco = Ocorrencia.objects.create(
+            data_hora_fato=timezone.now(),
+            descricao='Dano leve inicial',
+            professor=self.prof,
+            criado_por=self.admin
+        )
+        oco_foto1 = OcorrenciaFoto.objects.create(ocorrencia=oco, foto=foto1)
+        oco_foto2 = OcorrenciaFoto.objects.create(ocorrencia=oco, foto=foto2)
+
+        self.client.force_login(self.admin)
+        nova_foto = self._gerar_foto_teste('foto3_nova.png')
+
+        resp = self.client.post(reverse('ocorrencia_editar', args=[oco.id]), {
+            'data_hora_fato': timezone.now().strftime('%Y-%m-%dT%H:%M'),
+            'professor': self.prof.id,
+            'descricao': 'Descrição editada com sucesso e novos detalhes.',
+            'equipamentos': [self.equip1.id],
+            'alunos': [self.aluno1.id],
+            'remover_fotos': [oco_foto1.id],
+            'fotos': [nova_foto],
+        })
+        self.assertEqual(resp.status_code, 302)
+
+        oco.refresh_from_db()
+        self.assertEqual(oco.descricao, 'Descrição editada com sucesso e novos detalhes.')
+        self.assertIn(self.equip1, oco.equipamentos.all())
+        self.assertIn(self.aluno1, oco.alunos.all())
+
+        # Foto 1 deve ter sido removida, Foto 2 mantida, e uma nova foto adicionada
+        self.assertFalse(oco.fotos.filter(id=oco_foto1.id).exists())
+        self.assertTrue(oco.fotos.filter(id=oco_foto2.id).exists())
+        self.assertEqual(oco.fotos.count(), 2)
+
+    def test_botoes_editar_ocorrencia_na_ui(self):
+        """Verifica se o botão de editar aparece no detalhe da ocorrência e na listagem."""
+        oco = Ocorrencia.objects.create(
+            data_hora_fato=timezone.now(),
+            descricao='Teste botão editar',
+            professor=self.prof,
+            criado_por=self.admin
+        )
+
+        self.client.force_login(self.admin)
+
+        # 1. Tela de Detalhes
+        resp_detalhe = self.client.get(reverse('ocorrencia_detalhe', args=[oco.id]))
+        self.assertEqual(resp_detalhe.status_code, 200)
+        self.assertContains(resp_detalhe, reverse('ocorrencia_editar', args=[oco.id]))
+        self.assertContains(resp_detalhe, 'Editar')
+
+        # 2. Tela de Listagem
+        resp_lista = self.client.get(reverse('ocorrencias_lista'))
+        self.assertEqual(resp_lista.status_code, 200)
+        self.assertContains(resp_lista, reverse('ocorrencia_editar', args=[oco.id]))
+
+
+class ImagemServiceTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='user_foto',
+            email='foto@labhub.com',
+            password='SenhaForte123!'
+        )
+        self.user.perfil.aprovado = True
+        self.user.perfil.save()
+
+    def _criar_imagem_png_transparente(self, largura=1200, altura=800):
+        import io
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        buf = io.BytesIO()
+        img = Image.new('RGBA', (largura, altura), color=(255, 0, 0, 128))
+        img.save(buf, 'PNG')
+        buf.seek(0)
+        return SimpleUploadedFile('transparente.png', buf.read(), content_type='image/png')
+
+    def test_processar_imagem_rgba_e_redimensionamento(self):
+        """processar_imagem converte transparência para fundo branco e respeita max_lado."""
+        from PIL import Image
+        import io
+        from app.services.imagem_service import processar_imagem
+        arquivo = self._criar_imagem_png_transparente(largura=1200, altura=800)
+
+        dados, mime = processar_imagem(arquivo, max_lado=400, qualidade=80, formato='JPEG')
+        self.assertIsInstance(dados, bytes)
+        self.assertEqual(mime, 'image/jpeg')
+
+        img_result = Image.open(io.BytesIO(dados))
+        self.assertEqual(img_result.format, 'JPEG')
+        self.assertEqual(img_result.mode, 'RGB')
+        self.assertLessEqual(max(img_result.size), 400)
+
+    def test_processar_foto_para_storage(self):
+        """processar_foto_para_storage retorna ContentFile pronto para salvar em ImageField."""
+        from PIL import Image
+        from django.core.files.base import ContentFile
+        from app.services.imagem_service import processar_foto_para_storage
+        arquivo = self._criar_imagem_png_transparente(largura=500, altura=500)
+
+        conteudo = processar_foto_para_storage(arquivo, max_lado=500, qualidade=85)
+        self.assertIsInstance(conteudo, ContentFile)
+        self.assertTrue(conteudo.name.endswith('.jpg'))
+
+        # Confirma que é legível pelo Pillow
+        img = Image.open(conteudo)
+        self.assertEqual(img.format, 'JPEG')
+
+    def test_upload_foto_perfil_comprimida(self):
+        """Upload de foto de perfil comprime via processar_imagem e foto_perfil serve bytes."""
+        self.client.force_login(self.user)
+        foto = self._criar_imagem_png_transparente(largura=800, altura=800)
+
+        resp = self.client.post(reverse('minha_conta'), {
+            'acao': 'foto',
+            'foto': foto,
+        })
+        self.assertEqual(resp.status_code, 302)
+
+        self.user.perfil.refresh_from_db()
+        self.assertTrue(self.user.perfil.tem_foto)
+        self.assertIsNotNone(self.user.perfil.foto_dados)
+        self.assertEqual(self.user.perfil.foto_mime, 'image/jpeg')
+
+        # Testar visualização da foto de perfil
+        resp_foto = self.client.get(reverse('foto_perfil', args=[self.user.id]))
+        self.assertEqual(resp_foto.status_code, 200)
+        self.assertEqual(resp_foto['Content-Type'], 'image/jpeg')
+        self.assertEqual(bytes(resp_foto.content), bytes(self.user.perfil.foto_dados))
 
 
 class RelacaoKioskETravaSenhaTest(TestCase):

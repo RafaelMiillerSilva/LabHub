@@ -14,6 +14,7 @@ from django.utils import timezone
 
 from app.forms import OcorrenciaForm
 from app.models import Agendamento, Aluno, Equipamento, Ocorrencia, OcorrenciaFoto, Turma
+from app.services.imagem_service import processar_foto_para_storage
 from .common import is_admin_aprovado
 
 HORARIOS_INICIO_AULAS = {
@@ -180,7 +181,11 @@ def ocorrencia_criar(request):
             # Processamento das fotos enviadas
             fotos = request.FILES.getlist('fotos')
             for foto in fotos:
-                OcorrenciaFoto.objects.create(ocorrencia=ocorrencia, foto=foto)
+                try:
+                    foto_proc = processar_foto_para_storage(foto, max_lado=1920, qualidade=85)
+                    OcorrenciaFoto.objects.create(ocorrencia=ocorrencia, foto=foto_proc)
+                except Exception:
+                    OcorrenciaFoto.objects.create(ocorrencia=ocorrencia, foto=foto)
 
             messages.success(
                 request,
@@ -250,6 +255,125 @@ def ocorrencia_criar(request):
         'todos_equipamentos': todos_equipamentos,
         'professores': professores,
         'hoje': (ag_selecionado.data if ag_selecionado else timezone.localtime().date()).strftime('%Y-%m-%d'),
+    })
+
+
+@login_required
+def ocorrencia_editar(request, ocorrencia_id):
+    """
+    Edição de uma ocorrência existente (acesso exclusivo para administradores).
+    Permite atualizar dados, professor, agendamento, alunos, equipamentos,
+    remover fotos existentes e anexar novas fotos com processamento otimizado.
+    """
+    if not is_admin_aprovado(request.user):
+        messages.error(request, 'Acesso restrito a administradores.')
+        return redirect('home')
+
+    ocorrencia = get_object_or_404(
+        Ocorrencia.objects
+        .select_related('agendamento', 'professor', 'agendamento__turma', 'agendamento__sala')
+        .prefetch_related('alunos', 'equipamentos', 'fotos'),
+        id=ocorrencia_id
+    )
+
+    todos_equipamentos = list(
+        Equipamento.objects.filter(status='ATIVO').order_by('categoria', 'apelido')
+    )
+    professores = list(
+        User.objects.filter(is_active=True).order_by('first_name', 'username')
+    )
+
+    ag_atual = ocorrencia.agendamento
+
+    if request.method == 'POST':
+        form = OcorrenciaForm(request.POST, request.FILES, instance=ocorrencia)
+        agendamento_id = request.POST.get('agendamento') or request.POST.get('agendamento_id')
+        ag = None
+        if agendamento_id and str(agendamento_id).isdigit():
+            ag = Agendamento.objects.filter(id=int(agendamento_id)).first()
+        elif ag_atual:
+            ag = ag_atual
+
+        if ag and ag.turma_id:
+            form.fields['alunos'].queryset = Aluno.objects.filter(turma_id=ag.turma_id)
+        else:
+            form.fields['alunos'].queryset = Aluno.objects.all()
+        form.fields['equipamentos'].queryset = Equipamento.objects.all()
+
+        if form.is_valid():
+            ocorrencia_salva = form.save(commit=False)
+            if ag:
+                ocorrencia_salva.agendamento = ag
+            ocorrencia_salva.save()
+            form.save_m2m()
+
+            # 1. Remover fotos selecionadas para exclusão
+            fotos_para_remover = request.POST.getlist('remover_fotos')
+            if fotos_para_remover:
+                for foto_id in fotos_para_remover:
+                    if str(foto_id).isdigit():
+                        foto_obj = ocorrencia.fotos.filter(id=int(foto_id)).first()
+                        if foto_obj:
+                            if foto_obj.foto:
+                                try:
+                                    foto_obj.foto.delete(save=False)
+                                except Exception:
+                                    pass
+                            foto_obj.delete()
+
+            # 2. Processar e salvar novas fotos enviadas
+            novas_fotos = request.FILES.getlist('fotos')
+            for foto in novas_fotos:
+                try:
+                    foto_proc = processar_foto_para_storage(foto, max_lado=1920, qualidade=85)
+                    OcorrenciaFoto.objects.create(ocorrencia=ocorrencia_salva, foto=foto_proc)
+                except Exception:
+                    OcorrenciaFoto.objects.create(ocorrencia=ocorrencia_salva, foto=foto)
+
+            messages.success(request, f'Ocorrência #{ocorrencia_salva.id} atualizada com sucesso!')
+            return redirect('ocorrencia_detalhe', ocorrencia_id=ocorrencia_salva.id)
+        else:
+            messages.error(request, 'Por favor, corrija os erros no formulário.')
+            if ag:
+                alunos_disponiveis = list(ag.turma.alunos.all().order_by('nome'))
+                equipamentos_relacionados = _extrair_equipamentos_agendamento(ag)
+            else:
+                alunos_disponiveis = list(ocorrencia.alunos.all().order_by('nome'))
+                equipamentos_relacionados = []
+            return render(request, 'app/ocorrencia_form.html', {
+                'title': f'Editar Ocorrência #{ocorrencia.id}',
+                'editando': True,
+                'ocorrencia': ocorrencia,
+                'form': form,
+                'ag_selecionado': ag,
+                'alunos_disponiveis': alunos_disponiveis,
+                'equipamentos_relacionados': equipamentos_relacionados,
+                'todos_equipamentos': todos_equipamentos,
+                'professores': professores,
+                'hoje': ocorrencia.data_hora_fato.strftime('%Y-%m-%d'),
+            })
+
+    # GET
+    if ag_atual:
+        alunos_disponiveis = list(ag_atual.turma.alunos.all().order_by('nome'))
+        equipamentos_relacionados = _extrair_equipamentos_agendamento(ag_atual)
+    else:
+        alunos_disponiveis = list(ocorrencia.alunos.all().order_by('nome'))
+        equipamentos_relacionados = []
+
+    form = OcorrenciaForm(instance=ocorrencia)
+
+    return render(request, 'app/ocorrencia_form.html', {
+        'title': f'Editar Ocorrência #{ocorrencia.id}',
+        'editando': True,
+        'ocorrencia': ocorrencia,
+        'form': form,
+        'ag_selecionado': ag_atual,
+        'alunos_disponiveis': alunos_disponiveis,
+        'equipamentos_relacionados': equipamentos_relacionados,
+        'todos_equipamentos': todos_equipamentos,
+        'professores': professores,
+        'hoje': ocorrencia.data_hora_fato.strftime('%Y-%m-%d'),
     })
 
 

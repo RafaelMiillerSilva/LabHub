@@ -249,16 +249,24 @@
     <div class="oc-hero">
         <div class="oc-hero-icon">⚠️</div>
         <div>
+            {% if editando %}
+            <h1 class="oc-hero-title">Editar Ocorrência #{{ ocorrencia.id }}</h1>
+            <p class="oc-hero-desc">
+                Atualize as informações sobre a avaria, dano a equipamento ou incidente.
+                Você pode alterar a aula, os alunos e equipamentos envolvidos, remover fotos ou anexar novas.
+            </p>
+            {% else %}
             <h1 class="oc-hero-title">Registrar Nova Ocorrência</h1>
             <p class="oc-hero-desc">
                 Preencha as informações detalhadas sobre a avaria, dano a equipamento ou incidente ocorrido em aula.
                 Você pode associar a aula agendada, os alunos da relação, equipamentos afetados e fotos comprobatórias.
             </p>
+            {% endif %}
         </div>
     </div>
 
     <!-- Formulário Principal -->
-    <form method="post" action="{% url 'ocorrencia_criar' %}" enctype="multipart/form-data" id="formOcorrencia">
+    <form method="post" action="{% if editando %}{% url 'ocorrencia_editar' ocorrencia.id %}{% else %}{% url 'ocorrencia_criar' %}{% endif %}" enctype="multipart/form-data" id="formOcorrencia">
         {% csrf_token %}
 
         <!-- Campo hidden para agendamento selecionado -->
@@ -387,10 +395,10 @@
             <input type="text" class="oc-search-input" id="buscaAluno" placeholder="🔍 Filtrar aluno por nome ou RA...">
 
             <div class="oc-check-list" id="listaAlunosContainer">
-                {% if ag_selecionado and alunos_disponiveis %}
+                {% if alunos_disponiveis %}
                     {% for al in alunos_disponiveis %}
                     <label class="oc-check-item item-aluno" data-texto="{{ al.nome|lower }} {{ al.ra_formatado|lower }}">
-                        <input type="checkbox" name="alunos" value="{{ al.id }}">
+                        <input type="checkbox" name="alunos" value="{{ al.id }}" {% if editando and al in ocorrencia.alunos.all %}checked{% endif %}>
                         <div style="flex:1;">
                             <span style="font-weight:600;">{{ al.nome }}</span>
                             <span style="color:var(--lh-text-muted); font-size:12px; margin-left:6px;">RA: {{ al.ra_formatado }}</span>
@@ -429,7 +437,7 @@
                 <div class="oc-check-list" id="listaEquipsRelacaoContainer" style="max-height:160px; border-color:rgba(245,158,11,0.4);">
                     {% for eq in equipamentos_relacionados %}
                     <label class="oc-check-item item-equipamento" data-texto="{{ eq.apelido|lower }} {{ eq.modelo|lower }} {{ eq.get_categoria_display|lower }}">
-                        <input type="checkbox" name="equipamentos" value="{{ eq.id }}">
+                        <input type="checkbox" name="equipamentos" value="{{ eq.id }}" {% if editando and eq in ocorrencia.equipamentos.all %}checked{% endif %}>
                         <div style="flex:1;">
                             <span style="font-weight:700; color:#F59E0B;">{{ eq.apelido }}</span>
                             <span style="font-size:12px; color:var(--lh-text-muted); margin-left:6px;">({{ eq.get_categoria_display }}{% if eq.modelo %} — {{ eq.modelo }}{% endif %})</span>
@@ -450,7 +458,7 @@
                 <div class="oc-check-list" id="listaTodosEquipsContainer">
                     {% for eq in todos_equipamentos %}
                     <label class="oc-check-item item-equipamento" data-texto="{{ eq.apelido|lower }} {{ eq.modelo|lower }} {{ eq.get_categoria_display|lower }}">
-                        <input type="checkbox" name="equipamentos" value="{{ eq.id }}">
+                        <input type="checkbox" name="equipamentos" value="{{ eq.id }}" {% if editando and eq in ocorrencia.equipamentos.all %}checked{% endif %}>
                         <div style="flex:1;">
                             <span style="font-weight:600;">{{ eq.apelido }}</span>
                             <span style="font-size:12px; color:var(--lh-text-muted); margin-left:6px;">({{ eq.get_categoria_display }}{% if eq.modelo %} — {{ eq.modelo }}{% endif %})</span>
@@ -471,16 +479,36 @@
                 <span class="oc-badge-pill" id="contadorFotos">0 foto(s) anexada(s)</span>
             </div>
 
+            {% if editando and ocorrencia.fotos.all %}
+            <div style="margin-bottom: 20px; padding: 14px; background: var(--lh-surface-subtle); border-radius: var(--lh-radius-sm); border: 1px solid var(--lh-border);">
+                <div style="font-size:13px; font-weight:700; color:var(--lh-text); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                    <span>🖼️</span> Fotos Atualmente Anexadas
+                    <span style="font-size:11.5px; font-weight:normal; color:var(--lh-text-muted);">(Marque para remover ao salvar)</span>
+                </div>
+                <div class="oc-preview-grid">
+                    {% for f in ocorrencia.fotos.all %}
+                    <div class="oc-preview-item" id="foto-existente-{{ f.id }}" style="position:relative;">
+                        <img src="{{ f.foto.url }}" alt="Foto da ocorrência">
+                        <label style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.75); color:#fff; font-size:11px; padding:4px 6px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0; cursor:pointer; user-select:none;">
+                            <input type="checkbox" name="remover_fotos" value="{{ f.id }}" style="accent-color:#EF4444;" onchange="toggleRemoverFoto(this, 'foto-existente-{{ f.id }}')">
+                            <span>Excluir</span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
             <div class="oc-dropzone" id="dropzoneFotos">
                 <div style="font-size:32px; margin-bottom:8px;">📷</div>
                 <div style="font-weight:700; font-size:14px; color:var(--lh-text); margin-bottom:4px;">
                     Clique ou arraste fotos aqui para anexar
                 </div>
                 <div style="font-size:12.5px; color:var(--lh-text-muted);">
-                    Suporte a múltiplos arquivos (JPG, PNG, WebP — até 10MB cada)
+                    Suporte a múltiplos arquivos (JPG, PNG, WebP — até 15MB cada)
                 </div>
-                <input type="file" name="fotos" id="inputFotos" multiple accept="image/*" style="display:none;">
             </div>
+            <input type="file" name="fotos" id="inputFotos" multiple accept="image/*" style="display:none;">
 
             <!-- Grade de Pré-visualização -->
             <div class="oc-preview-grid" id="previewFotosContainer"></div>
@@ -488,11 +516,11 @@
 
         <!-- Ações do Formulário -->
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px; padding-bottom:40px;">
-            <a href="{% url 'ocorrencias_lista' %}" class="lh-btn lh-btn--ghost" style="padding:12px 24px;">
+            <a href="{% if editando %}{% url 'ocorrencia_detalhe' ocorrencia.id %}{% else %}{% url 'ocorrencias_lista' %}{% endif %}" class="lh-btn lh-btn--ghost" style="padding:12px 24px;">
                 Cancelar
             </a>
             <button type="submit" class="lh-btn lh-btn--primary" id="btnSalvarOcorrencia" style="background:#F59E0B; border:none; color:#fff; font-weight:700; font-size:15px; padding:12px 32px; box-shadow:0 2px 6px rgba(245,158,11,0.3);">
-                💾 Salvar Ocorrência
+                {% if editando %}💾 Salvar Alterações{% else %}💾 Salvar Ocorrência{% endif %}
             </button>
         </div>
     </form>
@@ -611,7 +639,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // ----------------------------------------------------
     // Upload e Preview de Múltiplas Fotos
     // ----------------------------------------------------
-    dropzoneFotos.addEventListener('click', () => inputFotos.click());
+    window.toggleRemoverFoto = function(checkbox, containerId) {
+        const el = document.getElementById(containerId);
+        if (el) {
+            if (checkbox.checked) {
+                el.style.opacity = '0.35';
+                el.style.filter = 'grayscale(100%)';
+            } else {
+                el.style.opacity = '1';
+                el.style.filter = 'none';
+            }
+        }
+    };
+
+    dropzoneFotos.addEventListener('click', (e) => {
+        if (e.target !== inputFotos) {
+            inputFotos.click();
+        }
+    });
+
+    inputFotos.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
 
     dropzoneFotos.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -639,7 +688,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function adicionarArquivos(files) {
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            if (file.type.startsWith('image/')) {
+            const isImageMime = file.type && file.type.startsWith('image/');
+            const ext = file.name ? file.name.split('.').pop().toLowerCase() : '';
+            const isImageExt = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'jfif'].includes(ext);
+            if (isImageMime || isImageExt) {
                 dtFotos.items.add(file);
             }
         }

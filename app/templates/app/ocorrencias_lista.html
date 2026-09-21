@@ -192,6 +192,9 @@
                 </div>
 
                 <div style="display:flex; align-items:center; gap:8px;">
+                    <a href="{% url 'ocorrencia_editar' oc.id %}" class="lh-btn lh-btn--sm lh-btn--ghost" style="font-size:12.5px; padding:6px 12px;" title="Editar Ocorrência">
+                        ✏️ Editar
+                    </a>
                     <a href="{% url 'ocorrencia_detalhe' oc.id %}" class="lh-btn lh-btn--sm lh-btn--outline" style="font-size:12.5px; padding:6px 14px;">
                         👁️ Detalhes
                     </a>

@@ -113,7 +113,10 @@
         <a href="{% url 'ocorrencias_lista' %}" class="lh-back-link">
             ← Voltar para Ocorrências
         </a>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; align-items:center;">
+            <a href="{% url 'ocorrencia_editar' ocorrencia.id %}" class="lh-btn lh-btn--primary lh-btn--sm" style="font-size:12.5px; text-decoration:none;">
+                ✏️ Editar
+            </a>
             <button type="button" class="lh-btn lh-btn--ghost lh-btn--sm" onclick="window.print()" style="font-size:12.5px;">
                 🖨️ Imprimir
             </button>

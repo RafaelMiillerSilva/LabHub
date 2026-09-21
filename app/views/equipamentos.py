@@ -127,7 +127,7 @@ def foto_equipamento(request, equip_id):
         raise Http404('Equipamento sem foto.')
 
     return HttpResponse(
-        equip.foto_dados,
+        bytes(equip.foto_dados),
         content_type=equip.foto_mime or 'image/jpeg'
     )
 

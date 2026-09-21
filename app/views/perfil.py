@@ -67,17 +67,19 @@ def minha_conta(request):
         elif acao == 'foto':
             foto = request.FILES.get('foto')
             if foto:
-                mime = foto.content_type
-                if mime not in ('image/jpeg', 'image/png', 'image/webp', 'image/gif'):
-                    messages.error(request, 'Formato de imagem inválido. Use JPG, PNG, WEBP ou GIF.')
-                elif foto.size > 2 * 1024 * 1024:
-                    messages.error(request, 'A foto deve ter no máximo 2 MB.')
+                if foto.size > 15 * 1024 * 1024:
+                    messages.error(request, 'A foto deve ter no máximo 15 MB.')
                 else:
-                    perfil.foto_dados = foto.read()
-                    perfil.foto_mime = mime
-                    perfil.tem_foto = True
-                    perfil.save()
-                    messages.success(request, 'Foto atualizada com sucesso!')
+                    try:
+                        from app.services.imagem_service import processar_imagem
+                        dados_processados, mime_processado = processar_imagem(foto, max_lado=500, qualidade=85)
+                        perfil.foto_dados = dados_processados
+                        perfil.foto_mime = mime_processado or 'image/jpeg'
+                        perfil.tem_foto = True
+                        perfil.save()
+                        messages.success(request, 'Foto atualizada com sucesso!')
+                    except Exception as e:
+                        messages.error(request, f'Erro ao processar a imagem: {e}')
             else:
                 messages.warning(request, 'Nenhuma foto selecionada.')
 

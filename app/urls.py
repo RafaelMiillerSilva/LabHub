@@ -58,6 +58,7 @@ urlpatterns = [
     path('ocorrencias/', views.ocorrencias_lista, name='ocorrencias_lista'),
     path('ocorrencias/nova/', views.ocorrencia_criar, name='ocorrencia_criar'),
     path('ocorrencias/<int:ocorrencia_id>/', views.ocorrencia_detalhe, name='ocorrencia_detalhe'),
+    path('ocorrencias/<int:ocorrencia_id>/editar/', views.ocorrencia_editar, name='ocorrencia_editar'),
     path('ocorrencias/<int:ocorrencia_id>/excluir/', views.ocorrencia_excluir, name='ocorrencia_excluir'),
     path('ocorrencias/api/agendamentos-por-data/', views.api_agendamentos_por_data, name='api_agendamentos_por_data'),
     path('ocorrencias/api/agendamento/<int:agendamento_id>/contexto/', views.api_agendamento_contexto, name='api_agendamento_contexto'),

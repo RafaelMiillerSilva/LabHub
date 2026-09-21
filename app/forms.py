@@ -14,15 +14,10 @@ from .validators import custom_username_validator
 
 
 def _processar_imagem(arquivo, max_lado=800, qualidade=80):
-    """Abre, reduz e comprime a imagem enviada; devolve (bytes, mime)."""
-    import io
-    from PIL import Image
-    img = Image.open(arquivo)
-    img = img.convert('RGB')
-    img.thumbnail((max_lado, max_lado))
-    buf = io.BytesIO()
-    img.save(buf, format='JPEG', quality=qualidade)
-    return buf.getvalue(), 'image/jpeg'
+    """Abre, reduz e comprime a imagem enviada com correção de rotação EXIF e seek(0)."""
+    from app.services.imagem_service import processar_imagem
+    return processar_imagem(arquivo, max_lado=max_lado, qualidade=qualidade, formato='JPEG')
+
 
 
 class BootstrapAuthenticationForm(AuthenticationForm):
@@ -326,14 +321,18 @@ class OcorrenciaForm(forms.ModelForm):
         self.fields['alunos'].required = False
         self.fields['equipamentos'].required = False
         self.fields['agendamento'].required = False
+        if self.instance and self.instance.pk and self.instance.data_hora_fato:
+            from django.utils import timezone
+            dt_local = timezone.localtime(self.instance.data_hora_fato) if timezone.is_aware(self.instance.data_hora_fato) else self.instance.data_hora_fato
+            self.initial['data_hora_fato'] = dt_local.strftime('%Y-%m-%dT%H:%M')
 
     def clean_fotos(self):
         arquivos = self.files.getlist('fotos')
-        extensoes_permitidas = ('.jpg', '.jpeg', '.png', '.webp', '.gif')
+        extensoes_permitidas = ('.jpg', '.jpeg', '.png', '.webp', '.gif', '.jfif')
         for arq in arquivos:
-            if arq.size > 10 * 1024 * 1024:
-                raise ValidationError(f"O arquivo '{arq.name}' excede o tamanho máximo de 10MB.")
+            if arq.size > 15 * 1024 * 1024:
+                raise ValidationError(f"O arquivo '{arq.name}' excede o tamanho máximo de 15MB.")
             ext = arq.name.lower()
-            if not ext.endswith(extensoes_permitidas):
-                raise ValidationError(f"O arquivo '{arq.name}' não é uma imagem válida (JPG, PNG ou WebP).")
+            if not any(ext.endswith(e) for e in extensoes_permitidas):
+                raise ValidationError(f"O arquivo '{arq.name}' não é uma imagem suportada (JPG, PNG ou WebP).")
         return arquivos

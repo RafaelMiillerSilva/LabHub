@@ -72,6 +72,7 @@ from .perfil import (
 from .ocorrencias import (
     ocorrencias_lista,
     ocorrencia_criar,
+    ocorrencia_editar,
     ocorrencia_detalhe,
     ocorrencia_excluir,
     api_agendamentos_por_data,
@@ -130,6 +131,7 @@ __all__ = [
     'verificar_senha',
     'ocorrencias_lista',
     'ocorrencia_criar',
+    'ocorrencia_editar',
     'ocorrencia_detalhe',
     'ocorrencia_excluir',
     'api_agendamentos_por_data',
