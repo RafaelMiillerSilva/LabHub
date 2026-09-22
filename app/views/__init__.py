@@ -54,6 +54,7 @@ from .notificacoes import (
     listar_notificacoes,
     marcar_lidas,
     limpar_notificacoes,
+    enviar_notificacao_geral,
 )
 from .chat import (
     chat_inbox,
@@ -122,6 +123,7 @@ __all__ = [
     'listar_notificacoes',
     'marcar_lidas',
     'limpar_notificacoes',
+    'enviar_notificacao_geral',
     'chat_inbox',
     'chat_conversa',
     'api_chat_contatos',

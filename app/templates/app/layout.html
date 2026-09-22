@@ -231,7 +231,8 @@
             position: absolute;
             right: 0;
             top: calc(100% + 6px);
-            width: 340px;
+            width: 375px;
+            max-width: 90vw;
             max-height: 400px;
             overflow-y: auto;
             background: rgba(255, 255, 255, 0.98);
@@ -258,6 +259,36 @@
             font-size: 14px;
             color: var(--lh-text);
             background: var(--lh-surface-subtle);
+            gap: 8px;
+        }
+
+        .notif-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+        }
+
+        .notif-enviar-btn {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--lh-primary);
+            background: var(--lh-primary-light);
+            border: 1px solid transparent;
+            padding: 3px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            line-height: 1.4;
+        }
+
+        .notif-enviar-btn:hover {
+            color: #ffffff;
+            background: var(--lh-primary);
         }
 
         .notif-limpar {
@@ -270,11 +301,33 @@
             padding: 2px 6px;
             border-radius: 4px;
             transition: all 0.15s;
+            white-space: nowrap;
         }
 
         .notif-limpar:hover {
             color: var(--lh-primary-hover);
             background: var(--lh-primary-light);
+        }
+
+        /* Modal Notificação Geral centralizado na tela */
+        #modalNotifGeral.modal {
+            text-align: center;
+            padding: 0 !important;
+        }
+        #modalNotifGeral.modal:before {
+            content: '';
+            display: inline-block;
+            height: 100%;
+            vertical-align: middle;
+            margin-right: -4px;
+        }
+        #modalNotifGeral .modal-dialog {
+            display: inline-block;
+            text-align: left;
+            vertical-align: middle;
+            max-width: 480px;
+            width: 92%;
+            margin: 0 auto;
         }
 
         .notif-item {
@@ -1033,6 +1086,17 @@
             border-bottom-color: var(--lh-border-subtle);
         }
 
+        [data-theme="dark"] .notif-enviar-btn {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            border-color: rgba(59, 130, 246, 0.35);
+        }
+
+        [data-theme="dark"] .notif-enviar-btn:hover {
+            background: var(--lh-primary);
+            color: #ffffff;
+        }
+
         [data-theme="dark"] .notif-item:hover {
             background: rgba(255, 255, 255, 0.04);
         }
@@ -1189,7 +1253,14 @@
                             <div class="notif-dropdown" id="notifDropdown">
                                 <div class="notif-header">
                                     <span>🔔 Notificações</span>
-                                    <button class="notif-limpar" id="notifLimpar">Limpar</button>
+                                    <div class="notif-header-actions">
+                                        {% if user.perfil.tipo == 'ADMINISTRADOR' or user.is_staff or user.is_superuser %}
+                                        <button type="button" class="notif-enviar-btn" id="btnAbrirModalNotifGeral" title="Enviar notificação para todos os usuários">
+                                            📢 Enviar notificação
+                                        </button>
+                                        {% endif %}
+                                        <button class="notif-limpar" id="notifLimpar">Limpar</button>
+                                    </div>
                                 </div>
                                 <div id="notifLista">
                                     <div class="notif-vazio">📭 Nenhuma notificação</div>
@@ -1300,6 +1371,49 @@
             </div>
         </div>
     </div>
+
+    {% if user.is_authenticated and user.perfil.tipo == 'ADMINISTRADOR' or user.is_staff or user.is_superuser %}
+    <!-- Modal Enviar Notificação Geral (Admins) -->
+    <div class="modal fade" id="modalNotifGeral" tabindex="-1" role="dialog" aria-labelledby="modalNotifGeralTitulo" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background:var(--lh-gradient-primary); color:#ffffff; display:flex; justify-content:space-between; align-items:center;">
+                    <h4 class="modal-title" id="modalNotifGeralTitulo" style="font-weight:700; margin:0; font-size:16px; display:flex; align-items:center; gap:8px;">
+                        📢 Enviar Notificação Geral
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar" style="color:#ffffff; opacity:0.85; font-size:22px; line-height:1; border:none; background:none; cursor:pointer;">&times;</button>
+                </div>
+                <form id="formNotifGeral" autocomplete="off">
+                    {% csrf_token %}
+                    <div class="modal-body" style="padding:22px;">
+                        <p style="font-size:13px; color:var(--lh-text-muted); margin-bottom:14px; line-height:1.5;">
+                            Esta mensagem será transmitida diretamente para a central de notificações de <strong>todos os usuários</strong> do LabHub.
+                        </p>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label for="notifGeralMensagem" style="font-weight:600; font-size:13px; color:var(--lh-text); margin-bottom:6px; display:block;">
+                                Mensagem da notificação:
+                            </label>
+                            <textarea id="notifGeralMensagem" name="mensagem" class="form-control" rows="4" maxlength="500" required
+                                placeholder="Digite a mensagem para todos os usuários..."
+                                style="resize:vertical; font-size:14px; line-height:1.4; border-radius:var(--lh-radius);"></textarea>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--lh-text-muted); margin-top:4px;">
+                            <span>Máximo de 500 caracteres</span>
+                            <span id="notifGeralCharCount">0/500</span>
+                        </div>
+                        <div id="notifGeralErro" style="display:none; margin-top:12px; font-size:13px; padding:10px 14px; border-radius:6px; background:rgba(239, 68, 68, 0.12); color:#dc2626; border:1px solid rgba(239, 68, 68, 0.25);"></div>
+                    </div>
+                    <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="lh-btn lh-btn--ghost lh-btn--sm" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="lh-btn lh-btn--primary lh-btn--sm" id="btnNotifGeralEnviar">
+                            <span id="btnNotifGeralText">🚀 Enviar para Todos</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     {% if not user.is_authenticated %}
     <!-- Modal de autenticação global para visitantes -->
@@ -1625,6 +1739,102 @@
                 limpar.addEventListener('click', function () {
                     postAjax('{% url "limpar_notificacoes" %}', function () {
                         carregarNotificacoes();
+                    });
+                });
+            }
+
+            var btnAbrirModal = document.getElementById('btnAbrirModalNotifGeral');
+            var modalNotifGeral = $('#modalNotifGeral');
+            var formNotifGeral = document.getElementById('formNotifGeral');
+            var txtNotifGeral = document.getElementById('notifGeralMensagem');
+            var charCountNotif = document.getElementById('notifGeralCharCount');
+            var erroNotifGeral = document.getElementById('notifGeralErro');
+            var btnEnviarNotif = document.getElementById('btnNotifGeralEnviar');
+            var btnEnviarText = document.getElementById('btnNotifGeralText');
+
+            if (btnAbrirModal && modalNotifGeral.length) {
+                btnAbrirModal.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (dropdown) dropdown.classList.remove('open');
+                    if (formNotifGeral) formNotifGeral.reset();
+                    if (charCountNotif) charCountNotif.textContent = '0/500';
+                    if (erroNotifGeral) {
+                        erroNotifGeral.style.display = 'none';
+                        erroNotifGeral.textContent = '';
+                    }
+                    modalNotifGeral.modal('show');
+                    setTimeout(function () {
+                        if (txtNotifGeral) txtNotifGeral.focus();
+                    }, 350);
+                });
+            }
+
+            if (txtNotifGeral && charCountNotif) {
+                txtNotifGeral.addEventListener('input', function () {
+                    charCountNotif.textContent = this.value.length + '/500';
+                });
+            }
+
+            if (formNotifGeral) {
+                formNotifGeral.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    var msg = (txtNotifGeral ? txtNotifGeral.value : '').trim();
+                    if (!msg) {
+                        if (erroNotifGeral) {
+                            erroNotifGeral.textContent = 'Por favor, digite a mensagem a ser enviada.';
+                            erroNotifGeral.style.display = 'block';
+                        }
+                        if (txtNotifGeral) txtNotifGeral.focus();
+                        return;
+                    }
+
+                    if (btnEnviarNotif) {
+                        btnEnviarNotif.disabled = true;
+                        if (btnEnviarText) btnEnviarText.textContent = '⏳ Enviando...';
+                    }
+                    if (erroNotifGeral) erroNotifGeral.style.display = 'none';
+
+                    var params = new URLSearchParams();
+                    params.append('mensagem', msg);
+
+                    fetch('{% url "enviar_notificacao_geral" %}', {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': getCSRFToken(),
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: params.toString()
+                    })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (btnEnviarNotif) {
+                            btnEnviarNotif.disabled = false;
+                            if (btnEnviarText) btnEnviarText.textContent = '🚀 Enviar para Todos';
+                        }
+                        if (data.ok) {
+                            modalNotifGeral.modal('hide');
+                            if (window.LabHubFlash) {
+                                window.LabHubFlash(data.message || 'Notificação enviada para todos os usuários!', 'success');
+                            }
+                            carregarNotificacoes();
+                        } else {
+                            if (erroNotifGeral) {
+                                erroNotifGeral.textContent = data.message || 'Não foi possível enviar a notificação.';
+                                erroNotifGeral.style.display = 'block';
+                            }
+                        }
+                    })
+                    .catch(function () {
+                        if (btnEnviarNotif) {
+                            btnEnviarNotif.disabled = false;
+                            if (btnEnviarText) btnEnviarText.textContent = '🚀 Enviar para Todos';
+                        }
+                        if (erroNotifGeral) {
+                            erroNotifGeral.textContent = 'Erro de comunicação com o servidor ao enviar a notificação.';
+                            erroNotifGeral.style.display = 'block';
+                        }
                     });
                 });
             }

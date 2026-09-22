@@ -6,8 +6,10 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 
+from django.contrib.auth.models import User
+from django.db.models import Q
 from app.models import Notificacao
-from .common import is_usuario_aprovado
+from .common import is_admin_aprovado, is_usuario_aprovado
 
 
 @login_required
@@ -71,6 +73,44 @@ def limpar_notificacoes(request):
     Notificacao.objects.filter(destinatario=request.user).delete()
 
     return JsonResponse({'ok': True, 'message': 'Notificações apagadas com sucesso.'})
+
+
+@login_required
+def enviar_notificacao_geral(request):
+    """Envia uma notificação para todos os usuários ativos do sistema (apenas administradores)."""
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'message': 'Método não permitido.'}, status=405)
+
+    if not (request.user.is_superuser or is_admin_aprovado(request.user)):
+        return JsonResponse({
+            'ok': False,
+            'message': 'Acesso negado. Apenas administradores podem enviar notificações gerais.'
+        }, status=403)
+
+    mensagem = request.POST.get('mensagem', '').strip()
+    if not mensagem:
+        return JsonResponse({'ok': False, 'message': 'A mensagem não pode estar vazia.'}, status=400)
+
+    if len(mensagem) > 1000:
+        return JsonResponse({'ok': False, 'message': 'A mensagem não pode ter mais de 1000 caracteres.'}, status=400)
+
+    usuarios = list(User.objects.filter(is_active=True).filter(
+        Q(perfil__aprovado=True) | Q(is_superuser=True) | Q(is_staff=True)
+    ).distinct())
+
+    if not usuarios:
+        return JsonResponse({'ok': False, 'message': 'Nenhum usuário ativo encontrado para notificar.'}, status=400)
+
+    notificacoes = [
+        Notificacao(destinatario=u, mensagem=mensagem)
+        for u in usuarios
+    ]
+    Notificacao.objects.bulk_create(notificacoes)
+
+    return JsonResponse({
+        'ok': True,
+        'message': f'Notificação enviada com sucesso para {len(notificacoes)} usuário(s).'
+    })
 
 
 def _tempo_relativo(dt):

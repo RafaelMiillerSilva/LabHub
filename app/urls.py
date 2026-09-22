@@ -70,6 +70,7 @@ urlpatterns = [
     path('notificacoes/', views.listar_notificacoes, name='listar_notificacoes'),
     path('notificacoes/lidas/', views.marcar_lidas, name='marcar_lidas'),
     path('notificacoes/limpar/', views.limpar_notificacoes, name='limpar_notificacoes'),
+    path('notificacoes/enviar-geral/', views.enviar_notificacao_geral, name='enviar_notificacao_geral'),
 
     # Chat
     path('chat/', views.chat_inbox, name='chat_inbox'),

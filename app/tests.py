@@ -14,7 +14,7 @@ from django.utils import timezone
 from app.backends import EmailBackend
 from app.forms import CadastroForm, EquipamentoForm
 from app.models import (
-    Agendamento, Aluno, Equipamento, ItemDispositivo,
+    Agendamento, Aluno, Equipamento, ItemDispositivo, Notificacao,
     Ocorrencia, OcorrenciaFoto, Relacao, RelacaoAlunoEquipamento, Sala, Turma
 )
 
@@ -1621,6 +1621,106 @@ class RelacaoKioskETravaSenhaTest(TestCase):
         resp = self.client.get(reverse('home'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'labhub_relacao_bloqueada_url')
+
+
+class NotificacaoGeralAdminTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+        # Admin aprovado
+        self.admin = User.objects.create_user(
+            username='admin_notif',
+            email='admin_notif@test.com',
+            password='Password123!'
+        )
+        self.admin.perfil.tipo = 'ADMINISTRADOR'
+        self.admin.perfil.aprovado = True
+        self.admin.perfil.save()
+
+        # Professor aprovado
+        self.prof = User.objects.create_user(
+            username='prof_notif',
+            email='prof_notif@test.com',
+            password='Password123!'
+        )
+        self.prof.perfil.tipo = 'PROFESSOR'
+        self.prof.perfil.aprovado = True
+        self.prof.perfil.save()
+
+        # Usuário pendente (não deve receber notificação)
+        self.pendente = User.objects.create_user(
+            username='user_pendente',
+            email='pendente@test.com',
+            password='Password123!'
+        )
+        self.pendente.perfil.tipo = 'PROFESSOR'
+        self.pendente.perfil.aprovado = False
+        self.pendente.perfil.save()
+
+    def test_admin_enviar_notificacao_geral_sucesso(self):
+        self.client.force_login(self.admin)
+        url = reverse('enviar_notificacao_geral')
+        resp = self.client.post(url, {'mensagem': 'Aviso de manutenção no laboratório!'})
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['ok'])
+        self.assertIn('sucesso', data['message'])
+
+        # Verifica se ambos (admin e professor aprovado) receberam a notificação
+        notifs_admin = Notificacao.objects.filter(destinatario=self.admin)
+        notifs_prof = Notificacao.objects.filter(destinatario=self.prof)
+        notifs_pendente = Notificacao.objects.filter(destinatario=self.pendente)
+
+        self.assertEqual(notifs_admin.count(), 1)
+        self.assertEqual(notifs_admin.first().mensagem, 'Aviso de manutenção no laboratório!')
+        self.assertEqual(notifs_prof.count(), 1)
+        self.assertEqual(notifs_prof.first().mensagem, 'Aviso de manutenção no laboratório!')
+        self.assertEqual(notifs_pendente.count(), 0)
+
+    def test_professor_nao_pode_enviar_notificacao_geral(self):
+        self.client.force_login(self.prof)
+        url = reverse('enviar_notificacao_geral')
+        resp = self.client.post(url, {'mensagem': 'Tentativa por professor'})
+        self.assertEqual(resp.status_code, 403)
+        data = resp.json()
+        self.assertFalse(data['ok'])
+        self.assertEqual(Notificacao.objects.count(), 0)
+
+    def test_usuario_anonimo_redirecionado(self):
+        url = reverse('enviar_notificacao_geral')
+        resp = self.client.post(url, {'mensagem': 'Tentativa anônima'})
+        self.assertEqual(resp.status_code, 302)
+
+    def test_metodo_get_nao_permitido(self):
+        self.client.force_login(self.admin)
+        url = reverse('enviar_notificacao_geral')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 405)
+
+    def test_mensagem_vazia_retorna_erro(self):
+        self.client.force_login(self.admin)
+        url = reverse('enviar_notificacao_geral')
+        resp = self.client.post(url, {'mensagem': '   '})
+        self.assertEqual(resp.status_code, 400)
+        data = resp.json()
+        self.assertFalse(data['ok'])
+        self.assertIn('vazia', data['message'])
+
+    def test_botoes_e_modal_apenas_para_admin_no_layout(self):
+        # Admin visualiza o botão e o modal
+        self.client.force_login(self.admin)
+        resp_admin = self.client.get(reverse('home'))
+        self.assertEqual(resp_admin.status_code, 200)
+        self.assertContains(resp_admin, 'id="btnAbrirModalNotifGeral"')
+        self.assertContains(resp_admin, 'id="modalNotifGeral"')
+
+        # Professor NÃO visualiza o botão nem o modal
+        self.client.force_login(self.prof)
+        resp_prof = self.client.get(reverse('home'))
+        self.assertEqual(resp_prof.status_code, 200)
+        self.assertNotContains(resp_prof, 'id="btnAbrirModalNotifGeral"')
+        self.assertNotContains(resp_prof, 'id="modalNotifGeral"')
+
 
 
 
