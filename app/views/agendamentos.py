@@ -14,6 +14,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Count, F, Max, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 
 import csv
@@ -682,8 +683,11 @@ def relacoes_lista(request):
     Exibe a listagem dedicada de Relações de Alunos e Equipamentos.
     Ordenada pela data/hora de preenchimento mais recente primeiro (preenchido_em DESC).
     Relações pendentes/vazias ficam após, respeitando a ordem de criação (-criado_em).
+    Suporta paginação sob demanda (parâmetros page e limit) e resposta AJAX em JSON.
     """
     if not is_usuario_aprovado(request.user):
+        if is_ajax(request) or request.GET.get('format') == 'json':
+            return JsonResponse({'ok': False, 'message': 'Acesso negado.'}, status=403)
         return redirect('home')
 
     # Extensão dinâmica dos agendamentos fixos
@@ -694,6 +698,21 @@ def relacoes_lista(request):
     f_data_fim = request.GET.get('data_fim', '').strip()
     f_aula = request.GET.get('aula', '').strip()
     f_usuario = request.GET.get('usuario', '').strip()
+
+    # Parâmetros de paginação sob demanda
+    try:
+        page = int(request.GET.get('page', 1))
+    except (TypeError, ValueError):
+        page = 1
+    if page < 1:
+        page = 1
+
+    try:
+        limit = int(request.GET.get('limit', 15))
+    except (TypeError, ValueError):
+        limit = 15
+    if limit < 1 or limit > 100:
+        limit = 15
 
     # Query de Relacao ordenando preenchidas recentemente no topo, seguidas por pendentes mais recentes
     relacoes_qs = (
@@ -739,8 +758,16 @@ def relacoes_lista(request):
             preenchido_em__isnull=True
         ).distinct()
 
+    total_relacoes = relacoes_qs.count()
+
+    # Fatiamento no banco de dados para evitar alto consumo de memória e lentidão
+    start = (page - 1) * limit
+    end = start + limit
+    has_more = end < total_relacoes
+    relacoes_pagina = list(relacoes_qs[start:end])
+
     lista_relacoes = []
-    for rel in relacoes_qs:
+    for rel in relacoes_pagina:
         ags = list(rel.agendamentos.order_by('aula'))
         if not ags:
             continue
@@ -800,6 +827,40 @@ def relacoes_lista(request):
             'preenchido_em': rel.preenchido_em,
         })
 
+    # Resposta para requisições AJAX ("Carregar mais") ou chamada como API JSON
+    if is_ajax(request) or request.GET.get('format') == 'json':
+        html_linhas = render_to_string('app/_relacao_linhas.html', {
+            'relacoes': lista_relacoes,
+            'request': request,
+        })
+        relacoes_json = []
+        for item in lista_relacoes:
+            relacoes_json.append({
+                'id': item['rel'].id,
+                'ag_principal_id': item['ag_principal'].id,
+                'data': item['data'].strftime('%d/%m/%Y'),
+                'aulas_formatadas': item['aulas_formatadas'],
+                'espaco_equip': item['espaco_equip'],
+                'turma': item['turma'].nome if item['turma'] else '',
+                'professor': item['professor'].get_full_name() or item['professor'].username,
+                'esta_preenchida': item['esta_preenchida'],
+                'preenchido_em': item['preenchido_em'].strftime('%d/%m/%Y %H:%M') if item['preenchido_em'] else None,
+                'total_com_aparelho': item['total_com_aparelho'],
+                'aparelhos_resumo': item['aparelhos_resumo'],
+                'total_alunos_turma': item['total_alunos_turma'],
+            })
+        return JsonResponse({
+            'ok': True,
+            'html': html_linhas,
+            'has_more': has_more,
+            'hasMore': has_more,
+            'page': page,
+            'limit': limit,
+            'total': total_relacoes,
+            'count': len(lista_relacoes),
+            'relacoes': relacoes_json,
+        })
+
     usuarios_filtro = (
         User.objects.filter(agendamentos__isnull=False)
         .distinct()
@@ -810,7 +871,11 @@ def relacoes_lista(request):
     return render(request, 'app/relacoes.html', {
         'title': 'Relação de Alunos e Equipamentos',
         'relacoes': lista_relacoes,
-        'total_relacoes': len(lista_relacoes),
+        'total_relacoes': total_relacoes,
+        'has_more': has_more,
+        'hasMore': has_more,
+        'page': page,
+        'limit': limit,
         'usuarios_filtro': usuarios_filtro,
         'aulas_filtro': aulas_filtro,
         'f_data_inicio': f_data_inicio,

@@ -1722,6 +1722,108 @@ class NotificacaoGeralAdminTest(TestCase):
         self.assertNotContains(resp_prof, 'id="modalNotifGeral"')
 
 
+class RelacoesPaginacaoTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='prof_paginacao',
+            email='paginacao@test.com',
+            password='Password123!'
+        )
+        self.user.perfil.tipo = 'PROFESSOR'
+        self.user.perfil.aprovado = True
+        self.user.perfil.save()
+
+        self.sala = Sala.objects.create(
+            nome='Laboratório Info',
+            localizacao='Bloco B',
+            capacidade=30,
+            ativo=True
+        )
+        self.turma = Turma.objects.create(nome='Turma Teste', turno='MANHA')
+
+        # Criar 25 agendamentos e relações
+        self.relacoes = []
+        d_base = date.today() - timedelta(days=30)
+        for i in range(25):
+            d = d_base + timedelta(days=i)
+            rel = Relacao.objects.create()
+            ag = Agendamento.objects.create(
+                data=d,
+                aula=((i % 5) + 1),
+                professor=self.user,
+                turma=self.turma,
+                tipo='SALA',
+                sala=self.sala,
+                relacao=rel
+            )
+            self.relacoes.append(rel)
+
+    def test_primeira_pagina_carrega_apenas_limite(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('relacoes_lista'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['total_relacoes'], 25)
+        self.assertEqual(len(resp.context['relacoes']), 15)
+        self.assertTrue(resp.context['has_more'])
+        self.assertTrue(resp.context['hasMore'])
+        self.assertEqual(resp.context['page'], 1)
+        self.assertEqual(resp.context['limit'], 15)
+        self.assertContains(resp, 'id="btn-carregar-mais"')
+
+    def test_segunda_pagina_via_ajax(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(
+            reverse('relacoes_lista'),
+            {'page': '2', 'limit': '15'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['ok'])
+        self.assertEqual(data['page'], 2)
+        self.assertEqual(data['limit'], 15)
+        self.assertEqual(data['total'], 25)
+        self.assertEqual(data['count'], 10)
+        self.assertFalse(data['has_more'])
+        self.assertFalse(data['hasMore'])
+        self.assertIn('tr-relacao-row', data['html'])
+        self.assertEqual(len(data['relacoes']), 10)
+
+    def test_paginacao_com_limite_customizado(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(
+            reverse('relacoes_lista'),
+            {'page': '1', 'limit': '10'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(data['count'], 10)
+        self.assertTrue(data['has_more'])
+        self.assertEqual(data['total'], 25)
+
+    def test_usuario_nao_aprovado_bloqueado_ajax(self):
+        user_pendente = User.objects.create_user(
+            username='pendente_ajax',
+            email='pendente_ajax@test.com',
+            password='Password123!'
+        )
+        user_pendente.perfil.aprovado = False
+        user_pendente.perfil.save()
+
+        self.client.force_login(user_pendente)
+        resp = self.client.get(
+            reverse('relacoes_lista'),
+            {'page': '1'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(resp.status_code, 403)
+        data = resp.json()
+        self.assertFalse(data['ok'])
+
+
+
 
 
 

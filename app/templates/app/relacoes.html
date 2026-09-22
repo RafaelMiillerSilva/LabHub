@@ -184,142 +184,31 @@
                             <th style="font-size:12px; font-weight:700; color:var(--lh-text-muted);">Aparelhos Atribuídos</th>
                             <th style="font-size:12px; font-weight:700; color:var(--lh-text-muted); text-align:center;">Alunos</th>
                             <th style="font-size:12px; font-weight:700; color:var(--lh-text-muted); text-align:right;">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in relacoes %}
-                        <tr class="tr-relacao-row" data-rel-id="{{ item.rel.id }}">
-                            <td style="text-align:center; padding:12px 8px;">
-                                <input type="checkbox" name="ids" value="{{ item.ag_principal.id }}" class="check-relacao-item" style="cursor:pointer; width:16px; height:16px; accent-color:var(--lh-primary);">
-                            </td>
-                            <td style="font-weight:700; font-size:13px; color:var(--lh-text); white-space:nowrap;">
-                                {{ item.data|date:"d/m/Y" }}
-                                {% if item.fixo %}
-                                <span title="Agendamento Fixo Semanal" style="cursor:default; font-size:13px; margin-left:4px;">📌</span>
-                                {% endif %}
-                            </td>
-                            <td style="white-space:nowrap;">
-                                <span class="rel-badge-aulas">
-                                    {{ item.aulas_formatadas }}
-                                </span>
-                            </td>
-                            <td style="font-size:13px;">
-                                <div style="font-weight:600; color:var(--lh-text);">
-                                    {{ item.espaco_equip }}
-                                </div>
-                            </td>
-                            <td style="font-size:13px; font-weight:600; white-space:nowrap;">
-                                {{ item.turma.nome }}
-                                <span style="font-size:11px; font-weight:normal; color:var(--lh-text-muted);">({{ item.turma.get_turno_display }})</span>
-                            </td>
-                            <td style="font-size:13px;">
-                                {{ item.professor.get_full_name|default:item.professor.username }}
-                            </td>
-                            <td>
-                                {% if item.esta_preenchida %}
-                                <div class="status-preenchido">
-                                    <span class="lh-badge lh-badge--success" style="font-size:11px; font-weight:700;">
-                                        ✓ Preenchida
-                                    </span>
-                                    {% if item.preenchido_em %}
-                                    <span class="status-timestamp">
-                                        em {{ item.preenchido_em|date:"d/m/Y H:i" }}
-                                    </span>
-                                    {% endif %}
-                                </div>
-                                {% else %}
-                                <span class="lh-badge lh-badge--warning" style="font-size:11px; font-weight:700;">
-                                    ⏳ Pendente
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td style="font-size:12.5px;">
-                                {% if item.total_com_aparelho > 0 %}
-                                <div style="font-weight:700; color:var(--lh-primary); display:flex; align-items:center; gap:6px;">
-                                    <span class="lh-badge lh-badge--primary" style="font-size:11px;">
-                                        {{ item.total_com_aparelho }} aparelho{{ item.total_com_aparelho|pluralize }}
-                                    </span>
-                                    <span style="font-size:12px; color:var(--lh-text-muted); font-weight:normal; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ item.aparelhos_resumo }}">
-                                        {{ item.aparelhos_resumo }}
-                                    </span>
-                                </div>
-                                {% else %}
-                                <span style="color:var(--lh-text-muted); font-style:italic; font-size:12px;">
-                                    Nenhum aparelho atribuído
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td style="text-align:center; white-space:nowrap;">
-                                {% if item.total_alunos_turma > 0 %}
-                                <button type="button" class="lh-btn lh-btn--ghost lh-btn--sm btn-toggle-alunos" data-target="#drawer-alunos-{{ item.rel.id }}" style="padding:4px 10px; font-size:12px;">
-                                    👥 {{ item.total_alunos_turma }} alunos
-                                </button>
-                                {% else %}
-                                <span style="font-size:12px; color:var(--lh-text-muted);">—</span>
-                                {% endif %}
-                            </td>
-                            <td style="text-align:right; white-space:nowrap;">
-                                <a href="{% url 'relacao_agendamento' item.ag_principal.id %}" class="lh-btn lh-btn--ghost lh-btn--sm" style="padding:4px 10px; font-size:12px;">
-                                    ✏️ Preencher
-                                </a>
-                            </td>
-                        </tr>
-
-                        <!-- Gaveta Retrátil com Alunos e Aparelhos da Relação -->
-                        {% if item.total_alunos_turma > 0 %}
-                        <tr id="drawer-alunos-{{ item.rel.id }}" class="drawer-relacao" style="display:none;">
-                            <td colspan="10" style="padding:16px 20px;">
-                                <div class="drawer-card-inner">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--lh-border-subtle); padding-bottom:8px; flex-wrap:wrap; gap:8px;">
-                                        <h4 style="margin:0; font-size:14px; font-weight:700; color:var(--lh-text);">
-                                            👥 Alunos da Turma: {{ item.turma.nome }} ({{ item.data|date:"d/m/Y" }} — {{ item.aulas_formatadas }})
-                                        </h4>
-                                        <div style="display:flex; align-items:center; gap:8px;">
-                                            <span style="font-size:12px; color:var(--lh-text-muted);">
-                                                {{ item.total_com_aparelho }} de {{ item.total_alunos_turma }} alunos com equipamento atribuído
-                                            </span>
-                                            <a href="{% url 'relacao_agendamento' item.ag_principal.id %}" class="lh-btn lh-btn--primary lh-btn--sm" style="font-size:11.5px; padding:3px 8px;">
-                                                Gerenciar Atribuições
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:10px;">
-                                        {% for linha in item.linhas_alunos %}
-                                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border:1px solid var(--lh-border); border-radius:6px; background:var(--lh-surface);">
-                                            <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:8px;">
-                                                <span style="font-size:12.5px; font-weight:600; color:var(--lh-text); display:block;">{{ linha.aluno.nome }}</span>
-                                                <span style="font-size:11px; color:var(--lh-text-muted);">RA: {{ linha.aluno.ra_formatado }}</span>
-                                            </div>
-                                            <div>
-                                                {% if linha.equipamento %}
-                                                <span class="lh-badge lh-badge--primary" style="font-size:11.5px; font-weight:700; padding:2px 8px;">
-                                                    {{ linha.equipamento }}
-                                                </span>
-                                                {% else %}
-                                                <span style="font-size:11.5px; color:var(--lh-text-muted); font-style:italic;">
-                                                    Sem aparelho
-                                                </span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endif %}
-
-                        {% empty %}
-                        <tr>
+                                    <tbody id="tbody-relacoes">
+                        {% if relacoes %}
+                            {% include "app/_relacao_linhas.html" %}
+                        {% else %}
+                        <tr id="linha-relacoes-vazia">
                             <td colspan="10" style="text-align:center; padding:48px 16px; color:var(--lh-text-muted);">
                                 <div style="font-size:32px; margin-bottom:8px;">📭</div>
                                 <p style="margin:0; font-size:15px; font-weight:600;">Nenhuma relação encontrada.</p>
                                 <p style="margin:4px 0 0; font-size:13px;">Tente ajustar os filtros acima para visualizar outros registros.</p>
                             </td>
                         </tr>
-                        {% endfor %}
+                        {% endif %}
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Botão Carregar Mais sob demanda -->
+        <div id="container-carregar-mais" style="text-align:center; margin-top:20px; margin-bottom:24px; {% if not has_more %}display:none;{% endif %}">
+            <button type="button" id="btn-carregar-mais" class="lh-btn lh-btn--outline" style="min-width:240px; padding:10px 24px; font-weight:700; font-size:13.5px; border-radius:var(--lh-radius); cursor:pointer;">
+                <span class="btn-texto">🔄 Carregar mais relações</span>
+                <span class="btn-spinner" style="display:none;">⏳ Carregando relações...</span>
+            </button>
+            <div id="msg-fim-relacoes" style="display:none; font-size:13px; color:var(--lh-text-muted); margin-top:8px;">
+                ✓ Todas as relações foram carregadas.
             </div>
         </div>
     </form>
@@ -331,11 +220,29 @@
     document.addEventListener('DOMContentLoaded', function () {
         var checkTodosTopo = document.getElementById('check-selecionar-todos-topo');
         var checkTodosTabela = document.getElementById('check-todos-tabela');
-        var itemCheckboxes = document.querySelectorAll('.check-relacao-item');
+        var tbodyRelacoes = document.getElementById('tbody-relacoes');
         var badgeContador = document.getElementById('badge-contador-selecionados');
-        var totalItens = itemCheckboxes.length;
+        var btnCarregarMais = document.getElementById('btn-carregar-mais');
+        var containerCarregarMais = document.getElementById('container-carregar-mais');
+        var msgFimRelacoes = document.getElementById('msg-fim-relacoes');
+
+        var paginaAtual = {{ page|default:1 }};
+        var limitePorPagina = {{ limit|default:15 }};
+        var hasMore = {% if has_more %}true{% else %}false{% endif %};
+        var carregando = false;
+
+        function vincularCheckboxes() {
+            var itemCheckboxes = document.querySelectorAll('.check-relacao-item');
+            itemCheckboxes.forEach(function (chk) {
+                chk.removeEventListener('change', atualizarContador);
+                chk.addEventListener('change', atualizarContador);
+            });
+            atualizarContador();
+        }
 
         function atualizarContador() {
+            var itemCheckboxes = document.querySelectorAll('.check-relacao-item');
+            var totalItens = itemCheckboxes.length;
             var selecionados = document.querySelectorAll('.check-relacao-item:checked').length;
             if (badgeContador) {
                 badgeContador.textContent = selecionados + ' selecionado' + (selecionados === 1 ? '' : 's') + ' de ' + totalItens;
@@ -357,6 +264,7 @@
         }
 
         function marcarTodos(estado) {
+            var itemCheckboxes = document.querySelectorAll('.check-relacao-item');
             itemCheckboxes.forEach(function (chk) {
                 chk.checked = estado;
             });
@@ -375,9 +283,72 @@
             });
         }
 
-        itemCheckboxes.forEach(function (chk) {
-            chk.addEventListener('change', atualizarContador);
-        });
+        // Carregar mais relações via AJAX
+        if (btnCarregarMais) {
+            btnCarregarMais.addEventListener('click', function () {
+                if (carregando || !hasMore) return;
+                carregando = true;
+
+                var btnTexto = btnCarregarMais.querySelector('.btn-texto');
+                var btnSpinner = btnCarregarMais.querySelector('.btn-spinner');
+                btnCarregarMais.disabled = true;
+                if (btnTexto) btnTexto.style.display = 'none';
+                if (btnSpinner) btnSpinner.style.display = 'inline';
+
+                var proximaPagina = paginaAtual + 1;
+                var urlParams = new URLSearchParams(window.location.search);
+                urlParams.set('page', proximaPagina);
+                urlParams.set('limit', limitePorPagina);
+
+                fetch('{% url "relacoes_lista" %}?' + urlParams.toString(), {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    carregando = false;
+                    btnCarregarMais.disabled = false;
+                    if (btnTexto) btnTexto.style.display = 'inline';
+                    if (btnSpinner) btnSpinner.style.display = 'none';
+
+                    if (data.ok && data.html) {
+                        paginaAtual = data.page;
+                        hasMore = (data.has_more !== undefined) ? data.has_more : data.hasMore;
+
+                        // Anexa novas linhas à tabela sem resetar visualização
+                        var tempTbody = document.createElement('tbody');
+                        tempTbody.innerHTML = data.html.trim();
+
+                        while (tempTbody.firstChild) {
+                            tbodyRelacoes.appendChild(tempTbody.firstChild);
+                        }
+
+                        vincularCheckboxes();
+
+                        if (!hasMore) {
+                            btnCarregarMais.style.display = 'none';
+                            if (msgFimRelacoes) msgFimRelacoes.style.display = 'block';
+                        }
+                    } else {
+                        if (window.LabHubFlash) {
+                            window.LabHubFlash(data.message || 'Nenhum registro adicional encontrado.', 'info');
+                        }
+                        btnCarregarMais.style.display = 'none';
+                        if (msgFimRelacoes) msgFimRelacoes.style.display = 'block';
+                    }
+                })
+                .catch(function () {
+                    carregando = false;
+                    btnCarregarMais.disabled = false;
+                    if (btnTexto) btnTexto.style.display = 'inline';
+                    if (btnSpinner) btnSpinner.style.display = 'none';
+                    if (window.LabHubFlash) {
+                        window.LabHubFlash('Erro de conexão ao carregar mais relações. Tente novamente.', 'danger');
+                    }
+                });
+            });
+        }
 
         // Submissão dos botões de exportação com validação visual
         var formExportacao = document.getElementById('form-exportacao-relacao');
@@ -423,7 +394,7 @@
             }
         });
 
-        atualizarContador();
+        vincularCheckboxes();
     });
 </script>
 {% endblock %}
