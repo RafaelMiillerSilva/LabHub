@@ -938,6 +938,57 @@ class AgendamentosRelacaoExportTest(TestCase):
         self.assertIn('attachment; filename="relacao_agendamentos_', resp['Content-Disposition'])
         self.assertTrue(resp.content.startswith(b'%PDF'))
 
+    def test_relacao_linha_clicavel_e_botao_baixar(self):
+        """Linhas na tabela de Relações possuem classe clicável, data-url e botão direto de baixar relação."""
+        self.client.force_login(self.prof1)
+        resp = self.client.get(reverse('relacoes_lista'))
+        self.assertEqual(resp.status_code, 200)
+        conteudo = resp.content.decode('utf-8')
+
+        url_esperada = reverse('relacao_agendamento', args=[self.ag1.id])
+        self.assertIn('tr-relacao-row', conteudo)
+        self.assertIn(f'data-url="{url_esperada}"', conteudo)
+        self.assertIn('Clique para abrir a relação inteira', conteudo)
+        self.assertIn(f'{reverse("exportar_relacoes")}?ids={self.ag1.id}&formato=pdf', conteudo)
+        self.assertIn('📄 Baixar', conteudo)
+
+    def test_relacao_agendamento_tem_botao_baixar_relacao(self):
+        """Tela de detalhes da relação possui botão no header para baixar a relação inteira em PDF."""
+        self.client.force_login(self.prof1)
+        resp = self.client.get(reverse('relacao_agendamento', args=[self.ag1.id]))
+        self.assertEqual(resp.status_code, 200)
+        conteudo = resp.content.decode('utf-8')
+
+        self.assertIn('btn-baixar-relacao-pdf', conteudo)
+        self.assertIn(f'{reverse("exportar_relacoes")}?ids={self.ag1.id}&formato=pdf', conteudo)
+        self.assertIn('Baixar Relação', conteudo)
+
+    def test_exportar_relacao_csv_com_alunos_e_equipamentos(self):
+        """Exportar relação para CSV inclui todos os alunos da turma e equipamentos atribuídos."""
+        aluno_a = Aluno.objects.create(nome='Amanda Castro', ra='12345', turma=self.turma)
+        aluno_b = Aluno.objects.create(nome='Bernardo Silva', ra='67890', turma=self.turma)
+
+        RelacaoAlunoEquipamento.objects.create(
+            agendamento=self.ag1,
+            relacao=self.r1,
+            aluno=aluno_a,
+            equipamento='CHROME-07'
+        )
+
+        self.client.force_login(self.prof1)
+        resp = self.client.post(reverse('exportar_relacoes'), {
+            'formato': 'csv',
+            'ids': [str(self.ag1.id)],
+        })
+        self.assertEqual(resp.status_code, 200)
+        conteudo = resp.content.decode('utf-8')
+
+        self.assertIn('Amanda Castro', conteudo)
+        self.assertIn('CHROME-07', conteudo)
+        self.assertIn('Bernardo Silva', conteudo)
+        self.assertIn('Sem aparelho', conteudo)
+        self.assertIn('Espaço / Equipamentos;Turma;Turno', conteudo)
+
     def test_sincronizacao_equipamentos_aulas_consecutivas(self):
         """Salvar equipamentos em uma aula consecutiva sincroniza os registros na mesma relação."""
         d_nova = date(2026, 9, 21)

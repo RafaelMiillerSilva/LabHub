@@ -38,6 +38,7 @@ from app.models import (
     Turma,
 )
 from app.services.historico_service import registrar_acao
+from app.services.pdf_service import gerar_pdf_relacoes
 from .common import (
     AULAS_HORARIOS,
     DIAS_SEMANA_LONGO,
@@ -944,7 +945,7 @@ def exportar_agendamentos(request):
 
 
 def _gerar_csv_agendamentos(agendamentos_qs, timestamp_str):
-    """Gera resposta HTTP com arquivo CSV nativo contendo os agendamentos selecionados e suas relações."""
+    """Gera resposta HTTP com arquivo CSV nativo contendo a relação inteira detalhada dos agendamentos e seus alunos/equipamentos."""
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = f'attachment; filename="relacao_agendamentos_{timestamp_str}.csv"'
     response.write('\ufeff')  # BOM para Excel reconhecer UTF-8
@@ -959,6 +960,10 @@ def _gerar_csv_agendamentos(agendamentos_qs, timestamp_str):
         'Turma',
         'Turno',
         'Professor / Solicitante',
+        'Nº Aluno',
+        'Nome do Aluno',
+        'RA',
+        'Aparelho Atribuído',
         'Fixo Semanal',
         'Observação',
         'Data de Registro',
@@ -974,204 +979,68 @@ def _gerar_csv_agendamentos(agendamentos_qs, timestamp_str):
                 partes.append(", ".join(itens_str))
 
         itens_rel = list(ag.relacao.itens.all()) if ag.relacao else list(ag.relacoes.all())
-        relacoes_com_aparelho = [
-            f"{r.aluno.nome} ({r.equipamento})"
+        itens_salvos = {
+            r.aluno_id: r.equipamento.strip()
             for r in itens_rel
             if r.equipamento and r.equipamento.strip()
-        ]
-        if relacoes_com_aparelho:
-            partes.append(f"Aparelhos atribuídos ({len(relacoes_com_aparelho)}): " + ", ".join(relacoes_com_aparelho))
+        }
+
+        if itens_salvos:
+            resumo_ap = [f"{r.aluno.nome} ({r.equipamento})" for r in itens_rel if r.equipamento and r.equipamento.strip()]
+            partes.append(f"Aparelhos atribuídos ({len(itens_salvos)}): " + ", ".join(resumo_ap))
         elif not partes:
             partes.append("Nenhum equipamento listado")
 
         espaco_equip = " | ".join(partes)
+        turma = ag.turma
+        alunos = list(turma.alunos.all().order_by('nome')) if turma else []
 
-        writer.writerow([
-            ag.id,
-            ag.data.strftime('%d/%m/%Y'),
-            f"{ag.aula}ª Aula",
-            ag.get_tipo_display(),
-            espaco_equip,
-            ag.turma.nome if ag.turma else '',
-            ag.turma.get_turno_display() if ag.turma else '',
-            ag.professor.get_full_name() or ag.professor.username,
-            'Sim' if ag.fixo else 'Não',
-            ag.observacao or '',
-            ag.criado_em.strftime('%d/%m/%Y %H:%M') if ag.criado_em else '',
-        ])
+        if alunos:
+            for idx, aluno in enumerate(alunos, 1):
+                aparelho = itens_salvos.get(aluno.id, 'Sem aparelho')
+                ra_str = aluno.ra_formatado if hasattr(aluno, 'ra_formatado') else aluno.ra
+                writer.writerow([
+                    ag.id,
+                    ag.data.strftime('%d/%m/%Y'),
+                    f"{ag.aula}ª Aula",
+                    ag.get_tipo_display(),
+                    espaco_equip,
+                    turma.nome if turma else '',
+                    turma.get_turno_display() if turma else '',
+                    ag.professor.get_full_name() or ag.professor.username,
+                    idx,
+                    aluno.nome,
+                    ra_str or '—',
+                    aparelho,
+                    'Sim' if ag.fixo else 'Não',
+                    ag.observacao or '',
+                    ag.criado_em.strftime('%d/%m/%Y %H:%M') if ag.criado_em else '',
+                ])
+        else:
+            writer.writerow([
+                ag.id,
+                ag.data.strftime('%d/%m/%Y'),
+                f"{ag.aula}ª Aula",
+                ag.get_tipo_display(),
+                espaco_equip,
+                turma.nome if turma else '',
+                turma.get_turno_display() if turma else '',
+                ag.professor.get_full_name() or ag.professor.username,
+                '—',
+                'Nenhum aluno cadastrado' if turma else '—',
+                '—',
+                '—',
+                'Sim' if ag.fixo else 'Não',
+                ag.observacao or '',
+                ag.criado_em.strftime('%d/%m/%Y %H:%M') if ag.criado_em else '',
+            ])
 
     return response
 
 
 def _gerar_pdf_agendamentos(agendamentos_qs, usuario):
-    """Gera resposta HTTP com arquivo PDF estilizado via ReportLab contendo os agendamentos selecionados."""
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=landscape(A4),
-        leftMargin=24,
-        rightMargin=24,
-        topMargin=28,
-        bottomMargin=28,
-    )
-
-    styles = getSampleStyleSheet()
-
-    title_style = ParagraphStyle(
-        'DocTitle',
-        parent=styles['Heading1'],
-        fontName='Helvetica-Bold',
-        fontSize=18,
-        leading=22,
-        textColor=colors.HexColor('#1A4A8A'),
-        spaceAfter=4,
-    )
-
-    meta_style = ParagraphStyle(
-        'DocMeta',
-        parent=styles['Normal'],
-        fontName='Helvetica',
-        fontSize=9,
-        leading=12,
-        textColor=colors.HexColor('#64748B'),
-        spaceAfter=14,
-    )
-
-    th_style = ParagraphStyle(
-        'TableHeader',
-        fontName='Helvetica-Bold',
-        fontSize=9,
-        leading=11,
-        textColor=colors.white,
-        alignment=0,
-    )
-
-    td_style = ParagraphStyle(
-        'TableCell',
-        fontName='Helvetica',
-        fontSize=8,
-        leading=11,
-        textColor=colors.HexColor('#1E293B'),
-        alignment=0,
-    )
-
-    td_badge_sala = ParagraphStyle(
-        'TableBadgeSala',
-        fontName='Helvetica-Bold',
-        fontSize=8,
-        leading=10,
-        textColor=colors.HexColor('#047857'),
-    )
-
-    td_badge_disp = ParagraphStyle(
-        'TableBadgeDisp',
-        fontName='Helvetica-Bold',
-        fontSize=8,
-        leading=10,
-        textColor=colors.HexColor('#B45309'),
-    )
-
-    elements = []
-
-    # Cabeçalho do Relatório
-    elements.append(Paragraph("LabHub — Relação de Agendamentos", title_style))
-    data_emissao = date.today().strftime('%d/%m/%Y')
-    total_registros = agendamentos_qs.count()
-    emitido_por = usuario.get_full_name() or usuario.username
-    elements.append(
-        Paragraph(
-            f"Relatório gerado em <b>{data_emissao}</b> | Total de registros: <b>{total_registros}</b> | Solicitado por: <b>{emitido_por}</b>",
-            meta_style,
-        )
-    )
-
-    # Larguras das colunas para preencher os 793.89 pontos utilizáveis de A4 landscape
-    col_widths = [65, 45, 70, 180, 100, 130, 194]
-
-    table_data = [
-        [
-            Paragraph("Data", th_style),
-            Paragraph("Aula", th_style),
-            Paragraph("Tipo", th_style),
-            Paragraph("Espaço / Equipamentos", th_style),
-            Paragraph("Turma", th_style),
-            Paragraph("Professor / Solicitante", th_style),
-            Paragraph("Observação", th_style),
-        ]
-    ]
-
-    for ag in agendamentos_qs:
-        partes_pdf = []
-        if ag.tipo == 'SALA':
-            tipo_p = Paragraph("Sala de Aula", td_badge_sala)
-            partes_pdf.append(f"<b>{ag.sala.nome if ag.sala else 'Sala não informada'}</b>")
-        else:
-            tipo_p = Paragraph("Equip. Móveis", td_badge_disp)
-            itens_str = [f"{it.get_categoria_display()} ({it.quantidade})" for it in ag.itens.all()]
-            if itens_str:
-                partes_pdf.append("<b>" + ", ".join(itens_str) + "</b>")
-
-        itens_rel = list(ag.relacao.itens.all()) if ag.relacao else list(ag.relacoes.all())
-        relacoes_com_aparelho = [
-            r.equipamento.strip()
-            for r in itens_rel
-            if r.equipamento and r.equipamento.strip()
-        ]
-        if relacoes_com_aparelho:
-            resumo = ", ".join(relacoes_com_aparelho[:6])
-            if len(relacoes_com_aparelho) > 6:
-                resumo += f" (+{len(relacoes_com_aparelho)-6})"
-            partes_pdf.append(f'<font color="#1A4A8A"><b>{len(relacoes_com_aparelho)} aparelho(s) entregues:</b></font> {resumo}')
-        elif not partes_pdf:
-            partes_pdf.append("Nenhum equipamento listado")
-
-        espaco_equip = "<br/>".join(partes_pdf)
-
-        turma_str = f"{ag.turma.nome} ({ag.turma.get_turno_display()})" if ag.turma else '—'
-        prof_str = ag.professor.get_full_name() or ag.professor.username
-        obs_str = ag.observacao if ag.observacao else '—'
-
-        table_data.append([
-            Paragraph(ag.data.strftime('%d/%m/%Y'), td_style),
-            Paragraph(f"{ag.aula}ª Aula", td_style),
-            tipo_p,
-            Paragraph(espaco_equip, td_style),
-            Paragraph(turma_str, td_style),
-            Paragraph(prof_str, td_style),
-            Paragraph(obs_str, td_style),
-        ])
-
-    tabela = Table(table_data, colWidths=col_widths, repeatRows=1)
-
-    t_style = [
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1A4A8A')),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-        ('LEFTPADDING', (0, 0), (-1, -1), 6),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
-    ]
-
-    for row_idx in range(1, len(table_data)):
-        bg_color = colors.HexColor('#F8FAFC') if row_idx % 2 == 1 else colors.white
-        t_style.append(('BACKGROUND', (0, row_idx), (-1, row_idx), bg_color))
-
-    tabela.setStyle(TableStyle(t_style))
-    elements.append(tabela)
-
-    def _adicionar_rodape(canvas, doc):
-        canvas.saveState()
-        canvas.setFont('Helvetica', 8)
-        canvas.setFillColor(colors.HexColor('#94A3B8'))
-        canvas.drawString(24, 15, 'LabHub — Sistema de Gestão de Laboratórios e Equipamentos')
-        canvas.drawRightString(817, 15, f'Página {canvas.getPageNumber()}')
-        canvas.restoreState()
-
-    doc.build(elements, onFirstPage=_adicionar_rodape, onLaterPages=_adicionar_rodape)
-    buffer.seek(0)
-
+    """Gera resposta HTTP com arquivo PDF estilizado via ReportLab contendo a relação inteira dos agendamentos selecionados."""
+    buffer = gerar_pdf_relacoes(agendamentos_qs, usuario)
     timestamp_str = date.today().strftime('%Y%m%d')
     response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="relacao_agendamentos_{timestamp_str}.pdf"'

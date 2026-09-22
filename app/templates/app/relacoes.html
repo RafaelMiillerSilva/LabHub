@@ -29,6 +29,15 @@
         border-color: rgba(99, 102, 241, 0.3);
     }
 
+    .tr-relacao-row {
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+
+    .tr-relacao-row:hover {
+        background-color: var(--lh-surface-subtle) !important;
+    }
+
     .tr-selecionada {
         background-color: rgba(26, 74, 138, 0.05) !important;
     }
@@ -376,6 +385,15 @@
                     formExportacao.submit();
                 }
             });
+        });
+
+        // Clique em qualquer parte da linha para abrir a relação inteira
+        $(document).on('click', '.tr-relacao-row', function (e) {
+            if ($(e.target).closest('input, label, button, a').length) return;
+            var url = $(this).attr('data-url');
+            if (url) {
+                window.location.href = url;
+            }
         });
 
         // Alternador da listagem detalhada de alunos por relação

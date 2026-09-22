@@ -150,6 +150,12 @@
     </div>
 
     <div class="relacao-botoes-acao">
+        <!-- Botão Baixar Relação em PDF -->
+        <a href="{% url 'exportar_relacoes' %}?ids={{ ag.id }}&formato=pdf" class="btn-kiosk-action btn-baixar-relacao-pdf" target="_blank" title="Baixar relação inteira em PDF">
+            <span style="font-size: 15px;">📄</span>
+            <span>Baixar Relação</span>
+        </a>
+
         <!-- Botão Modo Tela Cheia -->
         <button type="button" class="btn-kiosk-action" id="btnModoTelaCheia" title="Expandir em Tela Cheia">
             <span id="iconeTelaCheia" style="font-size: 15px;">⛶</span>

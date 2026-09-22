@@ -16,6 +16,7 @@ from reportlab.platypus import (
     HRFlowable,
     Image as RLImage,
     KeepTogether,
+    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -413,5 +414,454 @@ def gerar_pdf_ocorrencia(ocorrencia, usuario_solicitante):
     ]))
 
     doc.build(elements)
+    buffer.seek(0)
+    return buffer
+
+
+def gerar_pdf_relacoes(agendamentos_qs, usuario):
+    """
+    Gera um buffer de memória com o PDF completo da relação inteira de alunos e equipamentos.
+    Cada relação possui:
+    - Cabeçalho institucional do SISTEMA DE GESTÃO DE LABORATÓRIO;
+    - Bloco de informações da aula (data, turma, aula/horário, professor, espaço/dispositivos, status);
+    - Tabela completa de todos os alunos da turma (#, Nome, RA, Aparelho Atribuído, Assinatura/Visto);
+    - Faixa de resumo de totais (alunos, atribuídos, pendentes);
+    - Bloco com campos de assinatura do Professor Responsável e Coordenação;
+    - Quebra de página automática entre múltiplas relações distintas.
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=28,
+        rightMargin=28,
+        topMargin=28,
+        bottomMargin=28,
+    )
+
+    styles = getSampleStyleSheet()
+
+    primary_color = colors.HexColor('#1E3A8A')
+    accent_color = colors.HexColor('#D97706')
+    dark_text = colors.HexColor('#0F172A')
+    muted_text = colors.HexColor('#64748B')
+    border_color = colors.HexColor('#CBD5E1')
+    bg_subtle = colors.HexColor('#F8FAFC')
+    header_row_bg = colors.HexColor('#1E3A8A')
+
+    title_style = ParagraphStyle(
+        'RelDocTitle',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=15,
+        leading=18,
+        textColor=primary_color,
+        spaceAfter=2,
+    )
+
+    badge_rel_style = ParagraphStyle(
+        'RelDocBadge',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=11,
+        leading=14,
+        textColor=accent_color,
+        alignment=2,  # Direita
+    )
+
+    meta_style = ParagraphStyle(
+        'RelDocMeta',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=8,
+        leading=11,
+        textColor=muted_text,
+    )
+
+    meta_right_style = ParagraphStyle(
+        'RelDocMetaRight',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=8,
+        leading=11,
+        textColor=muted_text,
+        alignment=2,  # Direita
+    )
+
+    section_heading = ParagraphStyle(
+        'RelSectionHeading',
+        parent=styles['Heading2'],
+        fontName='Helvetica-Bold',
+        fontSize=9.5,
+        leading=12.5,
+        textColor=primary_color,
+        spaceBefore=8,
+        spaceAfter=4,
+    )
+
+    body_style = ParagraphStyle(
+        'RelBodyText',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=8.5,
+        leading=12,
+        textColor=dark_text,
+    )
+
+    body_bold = ParagraphStyle(
+        'RelBodyBold',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=8.5,
+        leading=12,
+        textColor=dark_text,
+    )
+
+    th_style = ParagraphStyle(
+        'RelThStyle',
+        fontName='Helvetica-Bold',
+        fontSize=8,
+        leading=10.5,
+        textColor=colors.white,
+    )
+
+    th_center = ParagraphStyle(
+        'RelThCenter',
+        fontName='Helvetica-Bold',
+        fontSize=8,
+        leading=10.5,
+        textColor=colors.white,
+        alignment=1,
+    )
+
+    td_style = ParagraphStyle(
+        'RelTdStyle',
+        fontName='Helvetica',
+        fontSize=8,
+        leading=10.5,
+        textColor=dark_text,
+    )
+
+    td_bold = ParagraphStyle(
+        'RelTdBold',
+        fontName='Helvetica-Bold',
+        fontSize=8,
+        leading=10.5,
+        textColor=dark_text,
+    )
+
+    td_center = ParagraphStyle(
+        'RelTdCenter',
+        fontName='Helvetica',
+        fontSize=8,
+        leading=10.5,
+        textColor=dark_text,
+        alignment=1,
+    )
+
+    td_primary = ParagraphStyle(
+        'RelTdPrimary',
+        fontName='Helvetica-Bold',
+        fontSize=8,
+        leading=10.5,
+        textColor=primary_color,
+    )
+
+    sig_style = ParagraphStyle(
+        'RelSigStyle',
+        parent=styles['Normal'],
+        alignment=1,
+        fontSize=8.5,
+        leading=12,
+        textColor=dark_text,
+    )
+
+    horarios_aulas = {
+        1: ('07:00', '07:50'),
+        2: ('07:50', '08:40'),
+        3: ('08:40', '09:30'),
+        4: ('09:45', '10:35'),
+        5: ('10:35', '11:25'),
+        6: ('11:25', '12:15'),
+        7: ('13:25', '14:15'),
+        8: ('14:15', '15:05'),
+        9: ('15:05', '15:55'),
+    }
+
+    # Agrupa agendamentos por relação (ex.: aulas consecutivas vinculadas à mesma relação)
+    grupos = []
+    relacoes_vistas = set()
+    ags_avulsos_vistos = set()
+
+    for ag in agendamentos_qs:
+        if ag.relacao_id:
+            if ag.relacao_id in relacoes_vistas:
+                continue
+            relacoes_vistas.add(ag.relacao_id)
+            ags_rel = list(ag.relacao.agendamentos.select_related('sala', 'turma', 'professor').prefetch_related('itens').order_by('aula'))
+            if not ags_rel:
+                ags_rel = [ag]
+            grupos.append({
+                'rel': ag.relacao,
+                'ag_principal': ags_rel[0],
+                'agendamentos': ags_rel,
+            })
+        else:
+            if ag.id in ags_avulsos_vistos:
+                continue
+            ags_avulsos_vistos.add(ag.id)
+            grupos.append({
+                'rel': None,
+                'ag_principal': ag,
+                'agendamentos': [ag],
+            })
+
+    elements = []
+    dt_emissao = timezone.localtime(timezone.now())
+
+    for idx_grupo, grupo in enumerate(grupos):
+        if idx_grupo > 0:
+            elements.append(PageBreak())
+
+        rel = grupo['rel']
+        ag_princ = grupo['ag_principal']
+        ags = grupo['agendamentos']
+        turma = ag_princ.turma
+        prof = ag_princ.professor
+        data_aula = ag_princ.data
+
+        # Formatação de horários e aulas
+        if rel and hasattr(rel, 'aulas_formatadas'):
+            aulas_rotulo = rel.aulas_formatadas()
+        else:
+            aulas_nums = [a.aula for a in ags]
+            if len(aulas_nums) == 1:
+                aulas_rotulo = f"{aulas_nums[0]}ª Aula"
+            elif len(aulas_nums) == 2:
+                aulas_rotulo = f"{aulas_nums[0]}ª e {aulas_nums[1]}ª Aula"
+            else:
+                aulas_rotulo = f"{', '.join(str(n) for n in aulas_nums[:-1])} e {aulas_nums[-1]}ª Aula"
+
+        if ags:
+            ini_h = horarios_aulas.get(ags[0].aula, ('', ''))[0]
+            fim_h = horarios_aulas.get(ags[-1].aula, ('', ''))[1]
+            if ini_h and fim_h:
+                horario_completo = f"{aulas_rotulo} ({ini_h} às {fim_h})"
+            else:
+                horario_completo = aulas_rotulo
+        else:
+            horario_completo = aulas_rotulo
+
+        # Espaços e equipamentos solicitados
+        espacos_list = []
+        for a in ags:
+            if a.tipo == 'SALA' and a.sala:
+                if a.sala.nome not in espacos_list:
+                    espacos_list.append(a.sala.nome)
+            elif a.tipo == 'DISPOSITIVO':
+                itens_disp = [f"{it.get_categoria_display()} ({it.quantidade})" for it in a.itens.all()]
+                if itens_disp:
+                    desc = "Dispositivos Móveis (" + ", ".join(itens_disp) + ")"
+                else:
+                    desc = "Dispositivos Móveis (Sala de Aula)"
+                if desc not in espacos_list:
+                    espacos_list.append(desc)
+        espaco_str = ", ".join(espacos_list) if espacos_list else "Sala de Aula"
+
+        # Status da relação
+        if rel and rel.esta_preenchida:
+            if rel.preenchido_em:
+                dt_p = timezone.localtime(rel.preenchido_em) if timezone.is_aware(rel.preenchido_em) else rel.preenchido_em
+                status_str = f"✓ Preenchida em {dt_p:%d/%m/%Y às %H:%M}"
+            else:
+                status_str = "✓ Preenchida"
+        else:
+            status_str = "⏳ Pendente de Preenchimento"
+
+        prof_nome = prof.get_full_name() or prof.username if prof else "Professor(a) Responsável"
+        turma_str = f"{turma.nome} ({turma.get_turno_display()})" if turma else "Turma não informada"
+
+        # 1. Cabeçalho Institucional
+        header_data = [
+            [
+                Paragraph("<b>SISTEMA DE GESTÃO DE LABORATÓRIO</b>", title_style),
+                Paragraph("<b>RELAÇÃO DE ALUNOS E EQUIPAMENTOS</b>", badge_rel_style),
+            ],
+            [
+                Paragraph("Documento gerado automaticamente pelo SISTEMA DE GESTÃO DE LABORATÓRIO, Registro permanente para controle de patrimônio escolar.", meta_style),
+                Paragraph(f"Emitido em: {dt_emissao:%d/%m/%Y às %H:%M}", meta_right_style),
+            ],
+        ]
+        t_header = Table(header_data, colWidths=[360, 179])
+        t_header.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 1),
+            ('TOPPADDING', (0,0), (-1,-1), 0),
+        ]))
+        elements.append(t_header)
+        elements.append(HRFlowable(width="100%", thickness=1.5, color=primary_color, spaceBefore=4, spaceAfter=6))
+
+        # 2. Informações Gerais do Agendamento / Relação
+        info_data = [
+            [
+                Paragraph("<b>Data da Aula:</b>", body_style),
+                Paragraph(f"{data_aula:%d/%m/%Y}", body_bold),
+                Paragraph("<b>Aula / Horário:</b>", body_style),
+                Paragraph(horario_completo, body_bold),
+            ],
+            [
+                Paragraph("<b>Turma:</b>", body_style),
+                Paragraph(turma_str, body_bold),
+                Paragraph("<b>Professor(a):</b>", body_style),
+                Paragraph(prof_nome, body_bold),
+            ],
+            [
+                Paragraph("<b>Espaço / Equip.:</b>", body_style),
+                Paragraph(espaco_str, body_style),
+                Paragraph("<b>Status da Relação:</b>", body_style),
+                Paragraph(status_str, body_style),
+            ],
+        ]
+        if ag_princ.observacao and ag_princ.observacao.strip():
+            info_data.append([
+                Paragraph("<b>Observações:</b>", body_style),
+                Paragraph(ag_princ.observacao.strip(), body_style),
+                Paragraph("", body_style),
+                Paragraph("", body_style),
+            ])
+
+        t_info = Table(info_data, colWidths=[105, 165, 105, 164])
+        t_info_style = [
+            ('BACKGROUND', (0,0), (-1,-1), bg_subtle),
+            ('BOX', (0,0), (-1,-1), 0.5, border_color),
+            ('INNERGRID', (0,0), (-1,-1), 0.5, border_color),
+            ('TOPPADDING', (0,0), (-1,-1), 4),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+            ('LEFTPADDING', (0,0), (-1,-1), 6),
+            ('RIGHTPADDING', (0,0), (-1,-1), 6),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ]
+        if ag_princ.observacao and ag_princ.observacao.strip():
+            t_info_style.append(('SPAN', (1, 3), (3, 3)))
+        t_info.setStyle(TableStyle(t_info_style))
+        elements.append(t_info)
+
+        # 3. Tabela de Alunos e Equipamentos Atribuídos
+        elements.append(Paragraph("RELAÇÃO DE ALUNOS E EQUIPAMENTOS ATRIBUÍDOS", section_heading))
+
+        alunos_list = list(turma.alunos.all().order_by('nome')) if turma else []
+        if rel:
+            itens_map = {item.aluno_id: item.equipamento for item in rel.itens.all() if item.equipamento and item.equipamento.strip()}
+        else:
+            itens_rel = list(ag_princ.relacoes.all())
+            itens_map = {item.aluno_id: item.equipamento for item in itens_rel if item.equipamento and item.equipamento.strip()}
+
+        col_widths = [28, 215, 80, 116, 100]
+        table_rows = [
+            [
+                Paragraph("<b>#</b>", th_center),
+                Paragraph("<b>Nome do Aluno</b>", th_style),
+                Paragraph("<b>RA</b>", th_center),
+                Paragraph("<b>Aparelho / Patrimônio</b>", th_style),
+                Paragraph("<b>Assinatura / Visto</b>", th_center),
+            ]
+        ]
+
+        if alunos_list:
+            for idx, aluno in enumerate(alunos_list, 1):
+                equip = itens_map.get(aluno.id, '')
+                if equip:
+                    equip_cell = Paragraph(f"<b>{equip}</b>", td_primary)
+                else:
+                    equip_cell = Paragraph('<font color="#94A3B8"><i>Sem aparelho</i></font>', td_style)
+
+                ra_fmt = aluno.ra_formatado if hasattr(aluno, 'ra_formatado') else aluno.ra
+                visto_cell = Paragraph('<font color="#CBD5E1">___________________</font>', td_center)
+
+                table_rows.append([
+                    Paragraph(str(idx), td_center),
+                    Paragraph(aluno.nome, td_bold),
+                    Paragraph(ra_fmt or '—', td_center),
+                    equip_cell,
+                    visto_cell,
+                ])
+        else:
+            table_rows.append([
+                Paragraph("—", td_center),
+                Paragraph("<i>Nenhum aluno cadastrado nesta turma.</i>", td_style),
+                Paragraph("—", td_center),
+                Paragraph("—", td_style),
+                Paragraph("—", td_center),
+            ])
+
+        t_alunos = Table(table_rows, colWidths=col_widths, repeatRows=1)
+        t_alunos_style = [
+            ('BACKGROUND', (0,0), (-1,0), header_row_bg),
+            ('BOX', (0,0), (-1,-1), 0.5, border_color),
+            ('INNERGRID', (0,0), (-1,-1), 0.5, border_color),
+            ('TOPPADDING', (0,0), (-1,-1), 3),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+            ('LEFTPADDING', (0,0), (-1,-1), 4),
+            ('RIGHTPADDING', (0,0), (-1,-1), 4),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ]
+        for r_idx in range(1, len(table_rows)):
+            bg_color = bg_subtle if r_idx % 2 == 1 else colors.white
+            t_alunos_style.append(('BACKGROUND', (0, r_idx), (-1, r_idx), bg_color))
+
+        t_alunos.setStyle(TableStyle(t_alunos_style))
+        elements.append(t_alunos)
+        elements.append(Spacer(1, 6))
+
+        # 4. Resumo de Totais
+        total_alunos = len(alunos_list)
+        total_com_aparelho = sum(1 for a in alunos_list if a.id in itens_map)
+        total_sem_aparelho = total_alunos - total_com_aparelho
+
+        resumo_p = Paragraph(
+            f"<b>Total de Alunos:</b> {total_alunos}&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;"
+            f"<b>Aparelhos Atribuídos:</b> {total_com_aparelho}&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;"
+            f"<b>Alunos sem Aparelho:</b> {total_sem_aparelho}",
+            ParagraphStyle('RelResumo', parent=styles['Normal'], fontSize=8.5, leading=11, textColor=dark_text, alignment=1)
+        )
+        t_resumo = Table([[resumo_p]], colWidths=[539])
+        t_resumo.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,-1), bg_subtle),
+            ('BOX', (0,0), (-1,-1), 0.5, border_color),
+            ('TOPPADDING', (0,0), (-1,-1), 4),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ]))
+        elements.append(t_resumo)
+
+        # 5. Assinaturas (Protegido por KeepTogether para não quebrar no fim da página)
+        sig_data = [
+            [
+                Paragraph(f"____________________________________________<br/><b>Professor(a) Responsável</b><br/><font size=7.5 color='#64748B'>{prof_nome}</font>", sig_style),
+                Paragraph("____________________________________________<br/><b>Coordenação</b><br/><font size=7.5 color='#64748B'>Responsável pelo Laboratório</font>", sig_style),
+            ]
+        ]
+        t_sig = Table(sig_data, colWidths=[269, 270])
+        t_sig.setStyle(TableStyle([
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('VALIGN', (0,0), (-1,-1), 'BOTTOM'),
+            ('TOPPADDING', (0,0), (-1,-1), 16),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ]))
+
+        elements.append(KeepTogether([
+            Spacer(1, 10),
+            t_sig,
+        ]))
+
+    def _adicionar_rodape_relacao(canvas, doc):
+        canvas.saveState()
+        canvas.setFont('Helvetica', 8)
+        canvas.setFillColor(colors.HexColor('#94A3B8'))
+        canvas.drawString(28, 15, 'LabHub — Sistema de Gestão de Laboratório')
+        canvas.drawRightString(567, 15, f'Página {canvas.getPageNumber()}')
+        canvas.restoreState()
+
+    doc.build(elements, onFirstPage=_adicionar_rodape_relacao, onLaterPages=_adicionar_rodape_relacao)
     buffer.seek(0)
     return buffer
