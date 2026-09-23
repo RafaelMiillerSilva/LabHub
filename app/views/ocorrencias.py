@@ -5,6 +5,7 @@ Acesso restrito exclusivamente a administradores aprovados.
 
 import os
 from datetime import date, datetime
+from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -168,11 +169,15 @@ def ocorrencia_criar(request):
             ag = Agendamento.objects.filter(id=int(agendamento_id)).first()
 
         # Ajusta querysets dos campos ManyToMany para validação do formulário
-        if ag and ag.turma_id:
-            form.fields['alunos'].queryset = Aluno.objects.filter(turma_id=ag.turma_id)
-        else:
-            form.fields['alunos'].queryset = Aluno.objects.all()
-        form.fields['equipamentos'].queryset = Equipamento.objects.all()
+        f_alunos = form.fields.get('alunos')
+        if isinstance(f_alunos, forms.ModelMultipleChoiceField):
+            if ag and ag.turma_id:
+                f_alunos.queryset = Aluno.objects.filter(turma_id=ag.turma_id)
+            else:
+                f_alunos.queryset = Aluno.objects.all()
+        f_equip = form.fields.get('equipamentos')
+        if isinstance(f_equip, forms.ModelMultipleChoiceField):
+            f_equip.queryset = Equipamento.objects.all()
 
         if form.is_valid():
             ocorrencia = form.save(commit=False)
@@ -308,11 +313,15 @@ def ocorrencia_editar(request, ocorrencia_id):
         elif ag_atual:
             ag = ag_atual
 
-        if ag and ag.turma_id:
-            form.fields['alunos'].queryset = Aluno.objects.filter(turma_id=ag.turma_id)
-        else:
-            form.fields['alunos'].queryset = Aluno.objects.all()
-        form.fields['equipamentos'].queryset = Equipamento.objects.all()
+        f_alunos = form.fields.get('alunos')
+        if isinstance(f_alunos, forms.ModelMultipleChoiceField):
+            if ag and ag.turma_id:
+                f_alunos.queryset = Aluno.objects.filter(turma_id=ag.turma_id)
+            else:
+                f_alunos.queryset = Aluno.objects.all()
+        f_equip = form.fields.get('equipamentos')
+        if isinstance(f_equip, forms.ModelMultipleChoiceField):
+            f_equip.queryset = Equipamento.objects.all()
 
         if form.is_valid():
             ocorrencia_salva = form.save(commit=False)
@@ -622,13 +631,13 @@ def ocorrencia_foto_cortar(request, foto_id):
         return JsonResponse({'sucesso': False, 'erro': 'Nenhum arquivo de imagem enviado.'}, status=400)
 
     try:
-        nome_orig = getattr(arquivo, 'name', '') or f"recorte_{foto_obj.id}.jpg"
+        nome_orig = getattr(arquivo, 'name', '') or f"recorte_{foto_id}.jpg"
         novo_conteudo = processar_foto_para_storage(arquivo, nome_original=nome_orig)
-        nome_final = f"recorte_{foto_obj.id}_{timezone.now():%Y%m%d%H%M%S}.jpg"
+        nome_final = f"recorte_{foto_id}_{timezone.now():%Y%m%d%H%M%S}.jpg"
         foto_obj.foto.save(nome_final, novo_conteudo, save=True)
         return JsonResponse({
             'sucesso': True,
-            'url': reverse('foto_ocorrencia', args=[foto_obj.id]),
+            'url': reverse('foto_ocorrencia', args=[foto_id]),
             'mensagem': 'Foto recortada com sucesso!',
         })
     except Exception as e:

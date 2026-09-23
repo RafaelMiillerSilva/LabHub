@@ -538,8 +538,6 @@ class Ocorrencia(models.Model):
     if TYPE_CHECKING:
         id: int
         fotos: RelatedManager
-        alunos: RelatedManager
-        equipamentos: RelatedManager
 
     agendamento = models.ForeignKey(
         Agendamento, on_delete=models.SET_NULL, null=True, blank=True,
@@ -585,6 +583,10 @@ class Ocorrencia(models.Model):
 
 
 class OcorrenciaFoto(models.Model):
+    if TYPE_CHECKING:
+        id: int
+        ocorrencia_id: int
+
     ocorrencia = models.ForeignKey(
         Ocorrencia, on_delete=models.CASCADE, related_name='fotos',
         verbose_name='Ocorrência'

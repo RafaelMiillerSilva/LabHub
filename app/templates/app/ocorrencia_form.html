@@ -628,7 +628,7 @@
                     {% for f in ocorrencia.fotos.all %}
                     <div class="oc-preview-item" id="foto-existente-{{ f.id }}" style="position:relative;">
                         <img src="{% url 'foto_ocorrencia' f.id %}" alt="Foto da ocorrência" loading="lazy" onerror="this.onerror=null; this.src='{{ f.foto.url }}';">
-                        <button type="button" class="oc-btn-cortar-thumb" style="bottom: 26px;" onclick="abrirCropParaExistente('{% url 'foto_ocorrencia' f.id %}', '{{ f.id }}')" title="Recortar esta foto">
+                        <button type="button" class="oc-btn-cortar-thumb" style="bottom: 26px;" data-url="{% url 'foto_ocorrencia' f.id %}" data-id="{{ f.id }}" onclick="abrirCropParaExistente(this.dataset.url, this.dataset.id)" title="Recortar esta foto">
                             ✂️ Cortar
                         </button>
                         <label style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.75); color:#fff; font-size:11px; padding:4px 6px; display:flex; align-items:center; justify-content:center; gap:5px; margin:0; cursor:pointer; user-select:none;">
@@ -859,6 +859,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.dataTransfer && e.dataTransfer.files.length) {
             adicionarArquivos(e.dataTransfer.files);
         }
+    });
+
     const formOcorrencia = document.getElementById('formOcorrencia');
     let fotosSelecionadas = [];
 

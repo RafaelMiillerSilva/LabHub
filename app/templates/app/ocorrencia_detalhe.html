@@ -483,7 +483,7 @@
         {% if ocorrencia.fotos.exists %}
         <div class="oc-gallery-grid">
             {% for f in ocorrencia.fotos.all %}
-            <div class="oc-gallery-item" onclick="abrirFotoModal('{% url 'foto_ocorrencia' f.id %}', '{{ f.id }}')">
+            <div class="oc-gallery-item" data-url="{% url 'foto_ocorrencia' f.id %}" data-id="{{ f.id }}" onclick="abrirFotoModal(this.dataset.url, this.dataset.id)">
                 <img src="{% url 'foto_ocorrencia' f.id %}" alt="Foto da Ocorrência" loading="lazy" onerror="this.onerror=null; this.src='{{ f.foto.url }}';">
             </div>
             {% endfor %}

@@ -211,7 +211,7 @@
         </div>
 
         <!-- Botão Carregar Mais sob demanda -->
-        <div id="container-carregar-mais" style="text-align:center; margin-top:20px; margin-bottom:24px; {% if not has_more %}display:none;{% endif %}">
+        <div id="container-carregar-mais" data-pagina="{{ page|default:1 }}" data-limite="{{ limit|default:15 }}" data-has-more="{% if has_more %}true{% else %}false{% endif %}" style="text-align:center; margin-top:20px; margin-bottom:24px; display:{% if has_more %}block{% else %}none{% endif %};">
             <button type="button" id="btn-carregar-mais" class="lh-btn lh-btn--outline" style="min-width:240px; padding:10px 24px; font-weight:700; font-size:13.5px; border-radius:var(--lh-radius); cursor:pointer;">
                 <span class="btn-texto">🔄 Carregar mais relações</span>
                 <span class="btn-spinner" style="display:none;">⏳ Carregando relações...</span>
@@ -235,9 +235,9 @@
         var containerCarregarMais = document.getElementById('container-carregar-mais');
         var msgFimRelacoes = document.getElementById('msg-fim-relacoes');
 
-        var paginaAtual = {{ page|default:1 }};
-        var limitePorPagina = {{ limit|default:15 }};
-        var hasMore = {% if has_more %}true{% else %}false{% endif %};
+        var paginaAtual = parseInt(containerCarregarMais ? containerCarregarMais.getAttribute('data-pagina') : '1', 10) || 1;
+        var limitePorPagina = parseInt(containerCarregarMais ? containerCarregarMais.getAttribute('data-limite') : '15', 10) || 15;
+        var hasMore = containerCarregarMais ? (containerCarregarMais.getAttribute('data-has-more') === 'true') : false;
         var carregando = false;
 
         function vincularCheckboxes() {

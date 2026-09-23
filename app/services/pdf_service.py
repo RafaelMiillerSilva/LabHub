@@ -6,6 +6,7 @@ tabelas, metadados institucionais e campos de assinatura.
 
 import io
 import os
+from typing import Any
 from PIL import Image as PILImage
 from django.utils import timezone
 
@@ -731,7 +732,7 @@ def gerar_pdf_relacoes(agendamentos_qs, usuario):
             ])
 
         t_info = Table(info_data, colWidths=[105, 165, 105, 164])
-        t_info_style = [
+        t_info_style: list[Any] = [
             ('BACKGROUND', (0,0), (-1,-1), bg_subtle),
             ('BOX', (0,0), (-1,-1), 0.5, border_color),
             ('INNERGRID', (0,0), (-1,-1), 0.5, border_color),

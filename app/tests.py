@@ -1573,7 +1573,7 @@ class ImagemServiceTest(TestCase):
         resp_foto = self.client.get(reverse('foto_perfil', args=[self.user.id]))
         self.assertEqual(resp_foto.status_code, 200)
         self.assertEqual(resp_foto['Content-Type'], 'image/jpeg')
-        self.assertEqual(bytes(resp_foto.content), bytes(self.user.perfil.foto_dados))
+        self.assertEqual(resp_foto.content, self.user.perfil.foto_dados)
 
     def test_processar_imagem_jpeg_progressivo_e_exif(self):
         """processar_imagem processa JPEGs progressivos com metadados EXIF sem corromper."""

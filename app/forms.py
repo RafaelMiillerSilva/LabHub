@@ -317,7 +317,8 @@ class OcorrenciaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['professor'].queryset = User.objects.filter(is_active=True).order_by('first_name', 'username')
+        if isinstance(self.fields.get('professor'), forms.ModelChoiceField):
+            self.fields['professor'].queryset = User.objects.filter(is_active=True).order_by('first_name', 'username')
         self.fields['alunos'].required = False
         self.fields['equipamentos'].required = False
         self.fields['agendamento'].required = False

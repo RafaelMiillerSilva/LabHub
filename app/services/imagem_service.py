@@ -10,7 +10,7 @@ from PIL import Image, ImageFile, ImageOps
 from django.core.files.base import ContentFile
 
 # Permite leitura resiliente de JPEGs progressivos ou com pequenos truncamentos de streaming
-ImageFile.LOAD_TRUNCATED_IMAGES = True
+setattr(ImageFile, 'LOAD_TRUNCATED_IMAGES', True)
 
 
 def processar_imagem(arquivo, max_lado=1920, qualidade=85, formato='JPEG'):
