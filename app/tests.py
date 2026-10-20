@@ -558,6 +558,58 @@ class AgendamentoFixoCancelamentoEdicaoTest(TestCase):
         self.assertEqual(ag1.sala, self.sala2)
         self.assertEqual(ag2.sala, self.sala2)
 
+    def test_cancelar_fixo_todos_nao_ressuscita_ao_estender(self):
+        """Ao cancelar fixo com 'todos', estender_agendamentos_fixos não deve recriar as aulas canceladas."""
+        from app.views.agendamentos import estender_agendamentos_fixos
+
+        grupo_id = 'test-nao-ressuscitar-uuid'
+        d1 = date.today() + timedelta(days=1)
+        d2 = date.today() + timedelta(days=8)
+        d3 = date.today() + timedelta(days=15)
+
+        ag1 = Agendamento.objects.create(data=d1, aula=6, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1, fixo=True, fixo_grupo_id=grupo_id)
+        ag2 = Agendamento.objects.create(data=d2, aula=6, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1, fixo=True, fixo_grupo_id=grupo_id)
+        ag3 = Agendamento.objects.create(data=d3, aula=6, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1, fixo=True, fixo_grupo_id=grupo_id)
+
+        self.client.force_login(self.prof1)
+        self.client.post(reverse('cancelar_reserva', args=[ag2.id]), {'cancelar_tipo': 'todos'})
+
+        self.assertTrue(Agendamento.objects.filter(id=ag1.id).exists())
+        self.assertFalse(Agendamento.objects.filter(id=ag2.id).exists())
+        self.assertFalse(Agendamento.objects.filter(id=ag3.id).exists())
+
+        # Executa a extensão automática (que roda ao recarregar a página de agendamentos)
+        estender_agendamentos_fixos()
+
+        # Garante que d2 e d3 não voltaram
+        self.assertFalse(Agendamento.objects.filter(data=d2, aula=6, sala=self.sala1).exists())
+        self.assertFalse(Agendamento.objects.filter(data=d3, aula=6, sala=self.sala1).exists())
+
+    def test_cancelar_reserva_duplicada_ajax_retorna_ok(self):
+        """Se o cancelamento de aula dupla disparar exclusão para ambos os IDs e o segundo já tiver sido excluído, retorna 200 ok."""
+        d = date.today() + timedelta(days=2)
+        ag = Agendamento.objects.create(data=d, aula=1, tipo='SALA', professor=self.prof1, turma=self.turma1, sala=self.sala1)
+        reserva_id = ag.id
+
+        self.client.force_login(self.prof1)
+        # Primeiro cancelamento
+        resp1 = self.client.post(
+            reverse('cancelar_reserva', args=[reserva_id]),
+            {'cancelar_tipo': 'hoje'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(resp1.status_code, 200)
+        self.assertTrue(resp1.json().get('ok'))
+
+        # Segundo cancelamento subsequente com o mesmo ID
+        resp2 = self.client.post(
+            reverse('cancelar_reserva', args=[reserva_id]),
+            {'cancelar_tipo': 'hoje'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(resp2.status_code, 200)
+        self.assertTrue(resp2.json().get('ok'))
+
     def test_icone_lixeira_agenda_semanal_visibilidade(self):
         """Na agenda semanal, admin vê ícone de lixeira em todos os agendamentos e professor só nos seus."""
         d = date.today()

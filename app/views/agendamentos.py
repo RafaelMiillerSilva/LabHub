@@ -153,14 +153,14 @@ def estender_agendamentos_fixos():
     hoje = date.today()
     fim_ano = date(hoje.year, 12, 31)
 
-    # Encontra grupos fixos cuja última data é anterior ao fim do ano
+    # Encontra grupos fixos ativos cuja última data é anterior ao fim do ano (ignora grupos já expirados/encerrados)
     grupos = (
         Agendamento.objects
         .filter(fixo=True)
         .exclude(fixo_grupo_id='')
         .values('fixo_grupo_id')
         .annotate(ultima_data=Max('data'))
-        .filter(ultima_data__lt=fim_ano)
+        .filter(ultima_data__gte=hoje, ultima_data__lt=fim_ano)
     )
 
     for grupo in grupos:
@@ -1135,7 +1135,7 @@ def exportar_excel_mes(request):
                 else:
                     textos = []
                     for r in reservas_slot:
-                        local = r.sala.nome if r.tipo == 'SALA' else 'Equip'
+                        local = r.sala.nome if (r.tipo == 'SALA' and r.sala) else 'Equip'
                         textos.append(f"{local} - {r.turma.nome} ({r.professor.username})")
                     linha_dados.append("\n".join(textos))
             
@@ -1291,7 +1291,12 @@ def cancelar_reserva(request, agendamento_id):
 
     if request.method == 'POST':
         try:
-            ag = get_object_or_404(Agendamento, id=agendamento_id)
+            ag = Agendamento.objects.filter(id=agendamento_id).first()
+            if not ag:
+                if is_ajax(request):
+                    return JsonResponse({'ok': True, 'message': 'Reserva já cancelada.', 'acao': 'recarregar_pagina'})
+                return redirect('agendamentos')
+
             is_admin = is_admin_aprovado(request.user)
 
             if ag.professor != request.user and not is_admin:
@@ -1307,10 +1312,13 @@ def cancelar_reserva(request, agendamento_id):
             if cancelar_tipo == 'todos' and ag.fixo:
                 # Cancelar todos os futuros do grupo fixo
                 if ag.fixo_grupo_id:
+                    grupo_id = ag.fixo_grupo_id
                     removidos = Agendamento.objects.filter(
-                        fixo_grupo_id=ag.fixo_grupo_id,
+                        fixo_grupo_id=grupo_id,
                         data__gte=ag.data,
                     ).delete()[0]
+                    # Desativa o grupo nas ocorrências passadas para que não sejam reestendidas
+                    Agendamento.objects.filter(fixo_grupo_id=grupo_id).update(fixo_grupo_id='')
                 else:
                     removidos = Agendamento.objects.filter(
                         professor=ag.professor,
@@ -1321,6 +1329,15 @@ def cancelar_reserva(request, agendamento_id):
                     ).delete()[0]
                 msg = f'{removidos} reserva(s) fixa(s) cancelada(s).'
             else:
+                if ag.fixo and ag.fixo_grupo_id:
+                    grupo_id = ag.fixo_grupo_id
+                    tem_outros_futuros = Agendamento.objects.filter(
+                        fixo_grupo_id=grupo_id,
+                        data__gt=ag.data
+                    ).exists()
+                    if not tem_outros_futuros:
+                        # Esta é a última reserva da série fixa; encerra o grupo nas anteriores para não ser reestendida
+                        Agendamento.objects.filter(fixo_grupo_id=grupo_id).update(fixo_grupo_id='')
                 ag.delete()
                 msg = 'Reserva cancelada com sucesso.'
 

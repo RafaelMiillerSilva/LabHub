@@ -1598,7 +1598,13 @@
                 }
                 if (!formFixoPendente) return;
                 var inputTipo = formFixoPendente.querySelector('[name=cancelar_tipo]');
-                if (inputTipo) inputTipo.value = 'hoje';
+                if (!inputTipo) {
+                    inputTipo = document.createElement('input');
+                    inputTipo.type = 'hidden';
+                    inputTipo.name = 'cancelar_tipo';
+                    formFixoPendente.appendChild(inputTipo);
+                }
+                inputTipo.value = 'hoje';
                 if (formFixoPendente.getAttribute('data-ajax') === 'true' && typeof window.LabHubAjaxSubmit === 'function') {
                     window.LabHubAjaxSubmit(formFixoPendente);
                 } else {
@@ -1617,7 +1623,13 @@
                 }
                 if (!formFixoPendente) return;
                 var inputTipo = formFixoPendente.querySelector('[name=cancelar_tipo]');
-                if (inputTipo) inputTipo.value = 'todos';
+                if (!inputTipo) {
+                    inputTipo = document.createElement('input');
+                    inputTipo.type = 'hidden';
+                    inputTipo.name = 'cancelar_tipo';
+                    formFixoPendente.appendChild(inputTipo);
+                }
+                inputTipo.value = 'todos';
                 if (formFixoPendente.getAttribute('data-ajax') === 'true' && typeof window.LabHubAjaxSubmit === 'function') {
                     window.LabHubAjaxSubmit(formFixoPendente);
                 } else {

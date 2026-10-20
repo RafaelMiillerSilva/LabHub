@@ -648,7 +648,7 @@ document.addEventListener("DOMContentLoaded", function() {
             function dispararCancelamento(tipo) {
                 executarExclusao(agendamentoId, tipo)
                     .then(function (res) {
-                        if (agendamentoSegundaId && res.ok && (!isFixo || tipo === 'hoje')) {
+                        if (agendamentoSegundaId && res.ok) {
                             return executarExclusao(agendamentoSegundaId, tipo);
                         }
                         return res;

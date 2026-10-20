@@ -85,6 +85,9 @@ class HistoricoAcao(models.Model):
 # Salas de aula (cadastradas pelo administrador)
 # ---------------------------------------------------------------------------
 class Sala(models.Model):
+    if TYPE_CHECKING:
+        id: int
+
     nome = models.CharField(max_length=100, unique=True)
     localizacao = models.CharField(max_length=100, blank=True, verbose_name='Localização')
     capacidade = models.PositiveIntegerField(default=0, help_text='Número de alunos')
@@ -290,9 +293,8 @@ class Relacao(models.Model):
             return f"{', '.join(str(n) for n in aulas_nums[:-1])} e {aulas_nums[-1]}ª Aula"
 
     def __str__(self):
-        ags = self.agendamentos.all()
-        if ags.exists():
-            ag = ags.first()
+        ag = self.agendamentos.first()
+        if ag:
             return f"Relação {ag.data:%d/%m/%Y} - {ag.turma.nome} ({self.aulas_formatadas()})"
         return f"Relação #{self.id}"
 
@@ -304,7 +306,10 @@ class Relacao(models.Model):
 class Agendamento(models.Model):
     if TYPE_CHECKING:
         id: int
+        sala_id: int | None
         relacao_id: int | None
+        professor_id: int
+        turma_id: int
         itens: RelatedManager
         relacoes: RelatedManager
         ocorrencias: RelatedManager
