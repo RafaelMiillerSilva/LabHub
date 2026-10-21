@@ -7,6 +7,10 @@ if TYPE_CHECKING:
 
 
 class Perfil(models.Model):
+    if TYPE_CHECKING:
+        id: int
+        def get_tipo_display(self) -> str: ...
+
     CHOICES_TIPO = (
         ('PROFESSOR', 'Professor'),
         ('ADMINISTRADOR', 'Administrador'),
@@ -42,6 +46,10 @@ class Perfil(models.Model):
 
 
 class HistoricoAcao(models.Model):
+    if TYPE_CHECKING:
+        id: int
+        def get_acao_display(self) -> str: ...
+
     CHOICES_ACAO = (
         ('APROVADO', 'Aprovado'),
         ('NEGADO', 'Negado'),
@@ -87,6 +95,7 @@ class HistoricoAcao(models.Model):
 class Sala(models.Model):
     if TYPE_CHECKING:
         id: int
+        equipamentos_fixos: RelatedManager
 
     nome = models.CharField(max_length=100, unique=True)
     localizacao = models.CharField(max_length=100, blank=True, verbose_name='Localização')
@@ -110,6 +119,11 @@ class Sala(models.Model):
 # Equipamentos móveis (notebooks, tablets, celulares, projetores...)
 # ---------------------------------------------------------------------------
 class Equipamento(models.Model):
+    if TYPE_CHECKING:
+        id: int
+        def get_categoria_display(self) -> str: ...
+        def get_status_display(self) -> str: ...
+
     CATEGORIA_CHOICES = (
         ('NOTEBOOK', 'Notebook'),
         ('CHROMEBOOK', 'Chromebook'),
@@ -177,6 +191,7 @@ class Equipamento(models.Model):
 class Turma(models.Model):
     if TYPE_CHECKING:
         alunos: RelatedManager
+        def get_turno_display(self) -> str: ...
 
     TURNO_CHOICES = (
         ('MANHA', 'Manhã'),
@@ -208,6 +223,10 @@ class Turma(models.Model):
 # Alunos (vinculados a uma turma)
 # ---------------------------------------------------------------------------
 class Aluno(models.Model):
+    if TYPE_CHECKING:
+        id: int
+        turma_id: int
+
     turma = models.ForeignKey(Turma, on_delete=models.CASCADE, related_name='alunos')
     nome = models.CharField(max_length=120)
     ra = models.CharField(max_length=30, verbose_name='RA (registro)')
@@ -313,6 +332,7 @@ class Agendamento(models.Model):
         itens: RelatedManager
         relacoes: RelatedManager
         ocorrencias: RelatedManager
+        def get_tipo_display(self) -> str: ...
 
     TIPO_CHOICES = (
         ('SALA', 'Sala de Aula'),
@@ -409,6 +429,10 @@ class Agendamento(models.Model):
 # Item de um agendamento de dispositivos: qual equipamento e quantos.
 # ---------------------------------------------------------------------------
 class ItemDispositivo(models.Model):
+    if TYPE_CHECKING:
+        id: int
+        def get_categoria_display(self) -> str: ...
+
     agendamento = models.ForeignKey(
         Agendamento, on_delete=models.CASCADE, related_name='itens'
     )
@@ -432,6 +456,9 @@ class ItemDispositivo(models.Model):
 # Relação aluno x equipamento dentro de uma Relacao (e agendamento).
 # ---------------------------------------------------------------------------
 class RelacaoAlunoEquipamento(models.Model):
+    if TYPE_CHECKING:
+        id: int
+
     agendamento = models.ForeignKey(
         Agendamento, on_delete=models.CASCADE, related_name='relacoes',
         null=True, blank=True
@@ -460,6 +487,9 @@ class RelacaoAlunoEquipamento(models.Model):
 # Pedido de redefinição de senha (fluxo "esqueci minha senha" mediado por admin)
 # ---------------------------------------------------------------------------
 class PedidoRedefinicaoSenha(models.Model):
+    if TYPE_CHECKING:
+        id: int
+
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='pedidos_senha'
     )
@@ -488,6 +518,9 @@ class PedidoRedefinicaoSenha(models.Model):
 # Notificações do sistema para os professores
 # ---------------------------------------------------------------------------
 class Notificacao(models.Model):
+    if TYPE_CHECKING:
+        id: int
+
     destinatario = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='notificacoes'
     )
@@ -512,6 +545,11 @@ class Notificacao(models.Model):
 # Chat entre Usuários
 # ---------------------------------------------------------------------------
 class MensagemChat(models.Model):
+    if TYPE_CHECKING:
+        id: int
+        remetente_id: int
+        destinatario_id: int
+
     remetente = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='mensagens_enviadas'
     )

@@ -4,7 +4,17 @@ Cobre regras de equipamentos, autenticação por email, segurança de senhas e c
 """
 
 from datetime import date, timedelta
-from django.contrib.auth.models import User
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User as _User
+    from app.models import Perfil
+
+    class User(_User):
+        id: int
+        perfil: Perfil
+else:
+    from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import Client, TestCase
@@ -133,17 +143,17 @@ class AutenticacaoEmailBackendTest(TestCase):
 
     def test_autenticar_por_email(self):
         """Testa login com sucesso usando endereço de e-mail."""
-        user = self.backend.authenticate(None, username='joao@exemplo.com', password='SenhaSegura@123')
+        user = self.backend.authenticate(None, username='joao@exemplo.com', password='SenhaSegura@123')  # type: ignore[arg-type]
         self.assertEqual(user, self.user)
 
     def test_autenticar_por_username(self):
         """Testa login com sucesso usando username."""
-        user = self.backend.authenticate(None, username='joaosilva', password='SenhaSegura@123')
+        user = self.backend.authenticate(None, username='joaosilva', password='SenhaSegura@123')  # type: ignore[arg-type]
         self.assertEqual(user, self.user)
 
     def test_autenticar_senha_incorreta(self):
         """Testa rejeição de login com senha incorreta."""
-        user = self.backend.authenticate(None, username='joao@exemplo.com', password='SenhaErrada')
+        user = self.backend.authenticate(None, username='joao@exemplo.com', password='SenhaErrada')  # type: ignore[arg-type]
         self.assertIsNone(user)
 
 
@@ -305,7 +315,7 @@ class UsuarioEspacosTest(TestCase):
             password='SenhaSegura@123'
         )
         backend = EmailBackend()
-        autenticado = backend.authenticate(None, username='Mariana dos Santos', password='SenhaSegura@123')
+        autenticado = backend.authenticate(None, username='Mariana dos Santos', password='SenhaSegura@123')  # type: ignore[arg-type]
         self.assertEqual(autenticado, user)
 
     def test_minha_conta_atualizar_username_com_espacos(self):
@@ -877,6 +887,8 @@ class AgendamentosRelacaoExportTest(TestCase):
         })
         ag_aula2 = Agendamento.objects.get(data=d_nova, aula=2, professor=self.prof1, turma=self.turma)
         self.assertIsNotNone(ag_aula2.relacao)
+        assert ag_aula1.relacao is not None
+        assert ag_aula2.relacao is not None
 
         # Ambas devem compartilhar a mesma instância de Relacao
         self.assertEqual(ag_aula1.relacao.id, ag_aula2.relacao.id)
@@ -942,6 +954,7 @@ class AgendamentosRelacaoExportTest(TestCase):
         RelacaoAlunoEquipamento.objects.create(
             agendamento=ag_passado, aluno=aluno, equipamento='NOTE-01', relacao=ag_passado.relacao
         )
+        assert ag_passado.relacao is not None
         ag_passado.relacao.atualizar_status_preenchimento()
 
         # Agora não deve mais exibir o alerta
@@ -1119,6 +1132,8 @@ class AgendamentosRelacaoExportTest(TestCase):
         qs = Agendamento.objects.filter(data=d, aula=1, professor=self.prof1, tipo='DISPOSITIVO')
         self.assertEqual(qs.count(), 1)
         ag = qs.first()
+        self.assertIsNotNone(ag)
+        assert ag is not None
         self.assertEqual(ag.observacao, 'Obs atualizada')
         self.assertEqual(ag.itens.get(categoria='NOTEBOOK').quantidade, 2)
 
@@ -1326,6 +1341,7 @@ class OcorrenciasTests(TestCase):
         # Verifica no banco de dados
         oco = Ocorrencia.objects.filter(agendamento=self.ag).first()
         self.assertIsNotNone(oco)
+        assert oco is not None
         self.assertEqual(oco.professor, self.prof)
         self.assertEqual(oco.criado_por, self.admin)
         self.assertIn(self.aluno1, oco.alunos.all())
@@ -1775,9 +1791,13 @@ class NotificacaoGeralAdminTest(TestCase):
         notifs_pendente = Notificacao.objects.filter(destinatario=self.pendente)
 
         self.assertEqual(notifs_admin.count(), 1)
-        self.assertEqual(notifs_admin.first().mensagem, 'Aviso de manutenção no laboratório!')
+        notif_admin = notifs_admin.first()
+        assert notif_admin is not None
+        self.assertEqual(notif_admin.mensagem, 'Aviso de manutenção no laboratório!')
         self.assertEqual(notifs_prof.count(), 1)
-        self.assertEqual(notifs_prof.first().mensagem, 'Aviso de manutenção no laboratório!')
+        notif_prof = notifs_prof.first()
+        assert notif_prof is not None
+        self.assertEqual(notif_prof.mensagem, 'Aviso de manutenção no laboratório!')
         self.assertEqual(notifs_pendente.count(), 0)
 
     def test_professor_nao_pode_enviar_notificacao_geral(self):
